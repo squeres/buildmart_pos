@@ -1,199 +1,398 @@
-# BuildMart POS — Construction Materials Store Management System
+# BuildMart POS
 
-A complete point-of-sale and store management system built with PHP + MySQL,
-designed specifically for construction materials / hardware stores.
-
----
-
-## Stack
-
-- **Backend:** PHP 8.1+ (monolithic, server-side rendering)
-- **Database:** MySQL 5.7+ / MariaDB 10.3+
-- **Frontend:** Vanilla JS + Feather Icons CDN, IBM Plex Sans font
-- **Theme:** Dark industrial (amber accent)
-- **Languages:** English 🇬🇧 + Russian 🇷🇺
+BuildMart POS — это PHP/MySQL-система для магазина стройматериалов, хозяйственных товаров и складского учета.
+Проект развивается как монолитное веб-приложение с серверным рендерингом и на текущий момент покрывает кассу, каталог товаров, мультисклад, документы, отчеты, клиентов, поставщиков и накладные по продаже.
 
 ---
 
-## Quick Setup
+## Что умеет система
 
-### 1. Requirements
+- касса (POS) с печатью обычного чека
+- история продаж, просмотр продажи и отмена продажи
+- мультискладской учет с глобальным выбором склада в шапке
+- товары с гибкими единицами измерения и цепочками вида `палета -> мешок -> кг`
+- несколько цен по товару и по единицам измерения
+- поступления, приемка, перемещения между складами
+- остатки, минимальные остатки, low stock и отчеты
+- клиенты, поставщики и отдельный справочник моих ИП / организаций
+- отдельные накладные по продаже с просмотром, печатью и Excel-экспортом
+- смены кассиров
+- роли и права доступа
+- русский и английский интерфейс
 
-- PHP 8.1+, with extensions: `pdo_mysql`, `mbstring`, `gd`, `fileinfo`
-- MySQL 5.7+ or MariaDB 10.3+
-- Apache with `mod_rewrite` (or Nginx with equivalent config)
+---
 
-### 2. Database
+## Технологии
 
-```sql
--- Create DB and import schema
-mysql -u root -p < database.sql
+- **Backend:** PHP 8.1+
+- **База данных:** MySQL 5.7+ / MariaDB 10.3+
+- **Frontend:** Vanilla JS, SSR-шаблоны, Feather Icons
+- **Экспорт в Excel:** PhpSpreadsheet
+- **Интерфейс:** темная тема, адаптированная под ежедневную работу в магазине
+
+---
+
+## Актуальная архитектура
+
+### Склады
+
+В проекте уже есть мультискладная логика:
+
+- глобальный выбор склада в шапке
+- работа как с конкретным складом, так и в режиме `Все склады`
+- складские остатки хранятся в `stock_balances`
+- продажи, перемещения и документы привязаны к складам
+
+### Единицы измерения
+
+Единицы измерения у товара больше не ограничены одной строкой `products.unit` для пользовательской работы.
+
+Сейчас логика такая:
+
+- базовая единица хранения лежит в `products.unit`
+- пользовательские единицы лежат в `product_units`
+- у каждой единицы есть `unit_code`, `unit_label`, `ratio_to_base`, `sort_order`, `is_default`
+- остаток хранится в базовой единице
+- в интерфейсе товар можно продавать, принимать и перемещать в пользовательской единице
+- все списания и приходования пересчитываются в базовую единицу
+
+### Цены
+
+В проекте поддерживается несколько уровней цен:
+
+- `price_types`
+- `product_prices`
+- `product_unit_prices`
+
+То есть цена может зависеть и от типа цены, и от единицы измерения товара.
+
+### Документы
+
+Отдельно существуют:
+
+- поступления (`modules/receipts`)
+- приемка (`modules/acceptance`)
+- перемещения (`modules/transfers`)
+- накладные по продаже (`modules/sale_invoices`)
+
+Это самостоятельные документы со своим просмотром, печатью и, где реализовано, экспортом.
+
+---
+
+## Быстрый старт
+
+### 1. Требования
+
+Нужно установить:
+
+- PHP 8.1+ с расширениями `pdo_mysql`, `mbstring`, `gd`, `fileinfo`
+- MySQL / MariaDB
+- Composer
+- веб-сервер Apache или Nginx
+
+### 2. Установка зависимостей
+
+```bash
+composer install
 ```
 
-Or via phpMyAdmin: create database `buildmart_pos`, then import `database.sql`.
+Если папка `vendor/` уже есть и зависимости установлены, этот шаг можно пропустить.
 
-### 3. Configure
+### 3. Создание базы данных
 
-Edit `config/config.php` (or use environment variables):
+Создайте пустую базу, например `buildmart_pos`, и импортируйте основной дамп:
 
-```php
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'buildmart_pos');
-define('DB_USER', 'your_user');
-define('DB_PASS', 'your_password');
+```bash
+mysql -u root -p buildmart_pos < database.sql
 ```
 
-Or set environment variables:
+Для новой установки обычно достаточно `database.sql`.
+
+### 4. Настройка окружения
+
+Скопируйте пример:
+
+```bash
+copy .env.example .env
 ```
+
+И заполните `.env`:
+
+```env
 DB_HOST=localhost
 DB_NAME=buildmart_pos
 DB_USER=root
-DB_PASS=secret
+DB_PASS=change_me
+BASE_URL=https://buildmart.local
 ```
 
-### 4. Permissions
+Проект автоматически подхватывает `.env` в `config/config.php`.
 
-```bash
-chmod 755 uploads/products/
-```
+### 5. Настройка веб-сервера
 
-### 5. Web server
+#### OpenServer / OSPanel
 
-**Apache** — the included `.htaccess` handles everything.
-Point your virtual host document root to the project folder.
+Для локальной Windows-разработки удобно использовать домен вида:
 
-**Nginx** example:
+- `https://buildmart.local`
+
+Корень сайта должен указывать на папку проекта:
+
+- `C:\OSPanel\home\buildmart`
+
+#### Apache
+
+В проекте уже есть `.htaccess`.
+
+#### Nginx
+
+Пример базовой конфигурации:
+
 ```nginx
 server {
     root /var/www/buildmart;
     index index.php;
-    location / { try_files $uri $uri/ /index.php$is_args$args; }
-    location ~ \.php$ { fastcgi_pass unix:/run/php/php8.1-fpm.sock; include fastcgi_params; }
-    location ~* ^/(core|lang)/ { deny all; }
+
+    location / {
+        try_files $uri $uri/ /index.php$is_args$args;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+    location ~* ^/(core|lang)/ {
+        deny all;
+    }
 }
 ```
 
+### 6. Права на загрузки
+
+Папка для изображений товаров:
+
+- `uploads/products/`
+
+Убедитесь, что веб-сервер может в нее записывать.
+
 ---
 
-## Initial Access
+## Что создается из коробки
 
-No default application users are seeded in `database.sql`.
-Create the first administrator manually after installation, using a strong password and, if enabled, a non-trivial PIN.
+После импорта `database.sql` в базе уже будут:
+
+- роли (`admin`, `manager`, `cashier`)
+- системный клиент `Покупатель`
+- базовые настройки магазина
+- базовые типы цен
+- структура складов и документов
+
+При этом:
+
+- демонстрационные пользователи по умолчанию не создаются
+- пароли в сиды не зашиты
 
 ---
 
-## Project Structure
+## Первый вход
 
+Если в базе нет пользователей, первого администратора нужно создать вручную.
+
+Пример генерации bcrypt-хеша:
+
+```bash
+php -r "echo password_hash('StrongPassword123!', PASSWORD_BCRYPT), PHP_EOL;"
 ```
+
+После этого можно вставить пользователя в таблицу `users`, указав роль администратора.
+
+Если у вас уже есть рабочий дамп проекта, можно использовать его вместо ручного создания первого пользователя.
+
+---
+
+## Основные разделы системы
+
+### Касса
+
+- поиск товара по названию, SKU и штрихкоду
+- работа с несколькими единицами измерения внутри одной карточки товара
+- скидки по строке и по чеку
+- наличные / карта / смешанная оплата
+- печать обычного чека
+- контроль открытой смены
+
+### Товары
+
+- гибкие единицы измерения
+- несколько цен по товару и по единицам
+- минимальный остаток в удобной единице отображения
+- изображения, SKU, штрихкод, категория, НДС
+- активные и неактивные товары
+
+### Склады и движение товаров
+
+- остатки по складам
+- поступления
+- приемка
+- перемещения
+- корректировки и списания
+- история движений
+
+### Продажи
+
+- история продаж
+- просмотр продажи
+- печать чека
+- отмена продажи
+- отдельные накладные по продаже
+
+### Клиенты и контрагенты
+
+- физлица и юрлица
+- реквизиты клиента
+- ИИН/БИН в интерфейсе
+- история покупок
+- скидка клиента
+
+### Мои ИП / организации
+
+Отдельный справочник моих отправителей:
+
+- несколько ИП / организаций
+- реквизиты
+- ответственные лица
+- используется при создании накладной по продаже
+
+### Накладные по продаже
+
+Сценарий сделан отдельно от самой продажи:
+
+- продажа остается обычной кассовой операцией
+- при необходимости по продаже создается отдельная накладная
+- накладную можно открыть, распечатать и экспортировать в Excel
+
+---
+
+## Структура проекта
+
+```text
 buildmart/
-├── index.php               # Dashboard (entry point)
-├── database.sql            # Full schema + seed data
-├── .htaccess               # Apache config
-├── config/
-│   └── config.php          # DB config, paths, constants
-├── core/
-│   ├── bootstrap.php       # Session, autoload, lang init
-│   ├── Database.php        # PDO singleton
-│   ├── Auth.php            # Authentication & RBAC
-│   ├── Lang.php            # Multilingual system
-│   └── helpers.php         # Global helper functions
-├── lang/
-│   ├── en.php              # English strings
-│   └── ru.php              # Russian strings
-├── assets/
-│   ├── css/app.css         # Main stylesheet (dark theme)
-│   └── js/app.js           # POS JS, cart, modals
-├── uploads/products/       # Product images (auto-created)
-├── views/
-│   ├── layouts/
-│   │   ├── header.php      # HTML layout header + sidebar
-│   │   └── footer.php      # HTML layout footer
-│   └── partials/
-│       ├── icons.php       # Feather icon helper
-│       └── 403.php         # Access denied page
-└── modules/
-    ├── auth/               # Login / Logout
-    ├── pos/                # POS cashier interface
-    ├── products/           # Product management
-    ├── categories/         # Categories
-    ├── inventory/          # Stock management
-    ├── customers/          # Customer profiles
-    ├── shifts/             # Cashier shifts
-    ├── sales/              # Sales history
-    ├── reports/            # Reports & analytics
-    ├── settings/           # Store settings
-    └── users/              # User management (Admin)
+├── assets/                 # CSS и JS
+├── config/                 # Конфигурация
+├── core/                   # Bootstrap, БД, auth, helpers
+├── lang/                   # Локализация
+├── migrations/             # Инкрементальные миграции
+├── modules/
+│   ├── acceptance/         # Приемка
+│   ├── auth/               # Авторизация
+│   ├── business_entities/  # Мои ИП / организации
+│   ├── categories/         # Категории
+│   ├── customers/          # Клиенты
+│   ├── inventory/          # Остатки и складской quick edit
+│   ├── pos/                # Касса
+│   ├── products/           # Товары
+│   ├── receipts/           # Поступления
+│   ├── reports/            # Отчеты
+│   ├── sales/              # Продажи
+│   ├── sale_invoices/      # Накладные по продаже
+│   ├── settings/           # Настройки
+│   ├── shifts/             # Смены
+│   ├── suppliers/          # Поставщики
+│   ├── transfers/          # Перемещения между складами
+│   ├── ui/                 # Пользовательские настройки интерфейса
+│   ├── users/              # Пользователи и роли
+│   └── warehouses/         # Склады
+├── uploads/products/       # Изображения товаров
+├── vendor/                 # Composer-зависимости
+├── views/                  # Layouts и partials
+├── .env.example
+├── composer.json
+├── database.sql
+└── README.md
 ```
 
 ---
 
-## Features
+## Миграции
 
-### POS / Cash Register
-- Product search by name, SKU, or barcode
-- Category tabs for quick browsing
-- Cart with quantity editing and per-sale discounts
-- Cash / Card / Mixed payments
-- Automatic change calculation
-- Receipt printing (80mm thermal printer optimised)
-- Shift management
+Для чистой установки обычно достаточно `database.sql`.
 
-### Products
-- Full product catalog with EN + RU names
-- SKU, barcode, brand, category, unit of measure
-- Sale price, purchase cost, VAT rate
-- Stock quantity + low-stock alert threshold
-- Product images
-- 15 units of measure: pcs, kg, g, t, l, ml, m, m², m³, pack, roll, bag, box, pair, set
+Папка `migrations/` нужна, если вы обновляете уже существующую старую базу проекта. В ней есть миграции для:
 
-### Inventory
-- Stock receiving (with unit cost)
-- Stock adjustment (inventory count)
-- Write-off with reason
-- Complete movement history with audit trail
-- Low-stock / out-of-stock alerts
+- мультисклада
+- гибких единиц измерения
+- цен по единицам
+- минимального остатка в display unit
+- расширения перемещений
+- справочника моих ИП
+- накладных по продаже
+- и других доработок
 
-### Customers
-- Customer profiles with phone, email, company, INN
-- Loyalty discount % per customer
-- Purchase history
-- Lifetime spend tracking
-
-### Reports
-- Daily / weekly / monthly / custom periods
-- Revenue, profit, average receipt
-- Best-selling products
-- Revenue by category
-- Cashier performance
-- Low-stock report
-
-### Multilingual
-- English + Russian, easily extensible
-- Language stored per-user in DB
-- Language switcher in sidebar
-- All UI elements, units, statuses translated
+Если вы обновляете существующую базу, применяйте миграции последовательно и сначала делайте резервную копию.
 
 ---
 
-## Adding a New Language
+## Локализация
 
-1. Copy `lang/en.php` → `lang/xx.php` (replace `xx` with ISO code)
-2. Translate the strings
-3. Add to `SUPPORTED_LANGS` in `config/config.php`:
-   ```php
-   define('SUPPORTED_LANGS', ['en'=>'English','ru'=>'Русский','de'=>'Deutsch']);
-   ```
+Система поддерживает минимум два языка:
+
+- русский
+- английский
+
+Файлы локализации находятся в:
+
+- `lang/ru.php`
+- `lang/en.php`
+
+Для добавления нового языка:
+
+1. скопируйте `lang/en.php` в `lang/xx.php`
+2. переведите строки
+3. добавьте язык в `SUPPORTED_LANGS` в `config/config.php`
 
 ---
 
-## Security Notes
+## Безопасность
 
-- All SQL via prepared statements (no string interpolation in queries)
-- CSRF tokens on all forms
-- Password hashing with `password_hash(BCRYPT)`
-- Session regeneration on login
-- `htmlspecialchars()` on all output via `e()` helper
-- File uploads: extension whitelist + random filenames
-- `.htaccess` blocks direct access to `core/` and `lang/` dirs
-- HttpOnly + SameSite=Lax session cookies
-- No default admin credentials are shipped in the database seed
+В проекте уже используются базовые защитные меры:
+
+- prepared statements через PDO
+- CSRF-защита для действий изменения данных
+- хеширование паролей через `password_hash()`
+- регенерация сессии при логине
+- экранирование вывода через helper `e()`
+- ограничения на загрузку файлов
+- запрет прямого доступа к `core/` и `lang/`
+
+При боевом использовании дополнительно рекомендуется:
+
+- хранить доступ к БД только в `.env`
+- не коммитить реальные пароли и домены
+- использовать HTTPS
+- регулярно делать резервные копии базы
+
+---
+
+## Что важно помнить при поддержке проекта
+
+- остатки и движения работают через базовую единицу товара
+- пользовательские единицы — это слой отображения и ввода
+- low stock всегда сравнивается в базовой единице
+- продажа, приемка и перемещения должны валидировать остаток суммарно в базе
+- обычный чек и накладная по продаже — это разные сценарии
+
+---
+
+## Что обновлено в этом README
+
+README переведен на русский и приведен в соответствие с текущей структурой проекта:
+
+- `.env` как основной способ конфигурации
+- Composer / PhpSpreadsheet
+- мультисклад
+- гибкие единицы измерения
+- накладные по продаже
+- справочник моих ИП / организаций
+- обновленные модули документов
