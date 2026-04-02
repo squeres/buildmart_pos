@@ -1035,4 +1035,6 @@ return [
     'repl_only_below_min'   => 'Only items below minimum',
     'repl_below_min'        => 'Below minimum',
     'repl_target_less_than_min' => 'Target stock cannot be lower than minimum stock.',
+    'inv_low_stock_summary'     => 'Low-stock products: :count',
+    'inv_out_of_stock_summary'  => 'Out-of-stock products: :count',
 ];

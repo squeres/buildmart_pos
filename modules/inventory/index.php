@@ -132,14 +132,14 @@ include __DIR__ . '/../../views/layouts/header.php';
 <?php if ($outCount > 0): ?>
 <div class="flash flash-error mb-2">
   <?= feather_icon('x-circle',15) ?>
-  <span><?= $outCount ?> product(s) are <strong><?= __('out_of_stock') ?></strong></span>
+  <span><?= _r('inv_out_of_stock_summary', ['count' => $outCount]) ?></span>
   <a href="?filter=out" class="btn btn-sm btn-outline" style="margin-left:auto"><?= __('btn_view') ?></a>
 </div>
 <?php endif; ?>
 <?php if ($lowCount > 0): ?>
 <div class="flash flash-warning mb-2">
   <?= feather_icon('alert-triangle',15) ?>
-  <span><?= $lowCount ?> product(s) are <strong><?= __('low_stock') ?></strong></span>
+  <span><?= _r('inv_low_stock_summary', ['count' => $lowCount]) ?></span>
   <a href="?filter=low" class="btn btn-sm btn-outline" style="margin-left:auto"><?= __('btn_view') ?></a>
 </div>
 <?php endif; ?>

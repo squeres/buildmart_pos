@@ -689,4 +689,6 @@ return [
     'repl_only_below_min'   => 'Только товары ниже минимума',
     'repl_below_min'        => 'Ниже минимума',
     'repl_target_less_than_min' => 'Желаемый остаток не может быть меньше минимального.',
+    'inv_low_stock_summary'     => 'Товаров с низким остатком: :count',
+    'inv_out_of_stock_summary'  => 'Нет в наличии: :count',
 ];
