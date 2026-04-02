@@ -3,3 +3,8 @@
 .env.*
 /vendor/
 /uploads/
+*.zip
+*.log
+.tmp/
+.sessions/
+.osp/
