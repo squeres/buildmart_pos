@@ -1,0 +1,1 @@
+{"cart":[{"id":5,"sku":"AUTO-3CB6B7BE","unit":"штук","qty":1,"unit_price":10,"tax_rate":12,"line_discount_type":"percent","line_discount_value":0}],"customer_id":1,"payment_method":"card","cash_given":0,"card_amount":11.2,"notes":"","warehouse_id":1,"receipt_discount_type":"percent","receipt_discount_value":0,"apply_receipt_to_discounted_items":false}

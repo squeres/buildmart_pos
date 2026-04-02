@@ -1,0 +1,45 @@
+Options -Indexes
+Options +FollowSymLinks
+AddDefaultCharset UTF-8
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Prevent direct access to PHP core files
+<FilesMatch "^(bootstrap|config|helpers|Database|Auth|Lang)\.php$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Block sensitive files in web root
+<FilesMatch "^(\.env|composer\.(json|lock)|package(-lock)?\.json|.*\.(sql|zip|log|bak))$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Block access to config and core dirs from web
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+    # Block direct access to core/ and config/ directories
+    RewriteRule ^(core|lang)/.*\.php$ - [F,L]
+
+    # Allow assets
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+</IfModule>
+
+# PHP settings
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 12M
+    php_value session.cookie_httponly 1
+    php_value session.cookie_samesite Lax
+</IfModule>

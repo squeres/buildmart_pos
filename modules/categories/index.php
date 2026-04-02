@@ -1,0 +1,178 @@
+<?php
+require_once __DIR__ . '/../../core/bootstrap.php';
+require_once __DIR__ . '/../../views/partials/icons.php';
+Auth::requireLogin();
+Auth::requirePerm('categories');
+
+$pageTitle   = __('nav_categories');
+$breadcrumbs = [[$pageTitle, null]];
+$errors      = [];
+$editCat     = null;
+
+// Handle POST (add or edit)
+if (is_post()) {
+    if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
+
+    $editId  = (int)($_POST['edit_id'] ?? 0);
+    $nameEn  = sanitize($_POST['name_en'] ?? '');
+    $nameRu  = sanitize($_POST['name_ru'] ?? '');
+    $icon    = sanitize($_POST['icon']    ?? 'box');
+    $color   = sanitize($_POST['color']   ?? '#607D8B');
+    $sort    = (int)($_POST['sort_order'] ?? 0);
+    $active  = isset($_POST['is_active']) ? 1 : 0;
+
+    if (!$nameEn) $errors['name_en'] = _r('lbl_required');
+
+    if (!$errors) {
+        if ($editId) {
+            Database::exec(
+                "UPDATE categories SET name_en=?,name_ru=?,icon=?,color=?,sort_order=?,is_active=? WHERE id=?",
+                [$nameEn,$nameRu,$icon,$color,$sort,$active,$editId]
+            );
+            flash_success(_r('btn_save') . '!');
+        } else {
+            Database::insert(
+                "INSERT INTO categories (name_en,name_ru,icon,color,sort_order,is_active) VALUES (?,?,?,?,?,?)",
+                [$nameEn,$nameRu,$icon,$color,$sort,$active]
+            );
+            flash_success(_r('btn_save') . '!');
+        }
+        redirect('/modules/categories/');
+    }
+}
+
+// Load for edit
+$editId = (int)($_GET['edit'] ?? 0);
+if ($editId) $editCat = Database::row("SELECT * FROM categories WHERE id=?", [$editId]);
+
+// Delete
+if (isset($_GET['delete'])) {
+    $delId   = (int)$_GET['delete'];
+    $prodCnt = Database::value("SELECT COUNT(*) FROM products WHERE category_id=?", [$delId]);
+    if ($prodCnt) {
+        flash_error(_r('err_delete_in_use'));
+    } else {
+        Database::exec("DELETE FROM categories WHERE id=?", [$delId]);
+        flash_success(_r('prod_deleted'));
+    }
+    redirect('/modules/categories/');
+}
+
+$categories = Database::all(
+    "SELECT c.*, (SELECT COUNT(*) FROM products p WHERE p.category_id=c.id AND p.is_active=1) AS product_count
+     FROM categories c ORDER BY c.sort_order, c.name_en"
+);
+
+$featherIcons = ['box','layers','grid','tag','package','tool','droplet','zap','home','settings',
+                 'shopping-bag','shield','align-justify','droplets','database','archive'];
+
+include __DIR__ . '/../../views/layouts/header.php';
+?>
+
+<div class="page-header">
+  <h1 class="page-heading"><?= __('nav_categories') ?></h1>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start">
+
+  <!-- Category list -->
+  <div class="card">
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th><?= __('lbl_name') ?></th>
+            <th><?= __('lbl_name') ?> (RU)</th>
+            <th>Icon</th>
+            <th class="col-num"><?= __('nav_products') ?></th>
+            <th><?= __('lbl_status') ?></th>
+            <th class="col-actions"><?= __('lbl_actions') ?></th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php foreach ($categories as $c): ?>
+          <tr>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:8px">
+                <span style="width:10px;height:10px;border-radius:50%;background:<?= e($c['color']) ?>;flex-shrink:0;display:inline-block"></span>
+                <strong><?= e($c['name_en']) ?></strong>
+              </span>
+            </td>
+            <td><?= e($c['name_ru']) ?></td>
+            <td><span class="font-mono text-muted" style="font-size:12px"><?= e($c['icon']) ?></span></td>
+            <td class="col-num"><?= $c['product_count'] ?></td>
+            <td><?= $c['is_active'] ? '<span class="badge badge-success">'.__('lbl_active').'</span>' : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?></td>
+            <td class="col-actions">
+              <a href="?edit=<?= $c['id'] ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_edit') ?>"><?= feather_icon('edit-2',14) ?></a>
+              <?php if ($c['product_count'] == 0): ?>
+              <a href="?delete=<?= $c['id'] ?>" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
+                 data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></a>
+              <?php endif; ?>
+            </td>
+          </tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add/Edit form -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title"><?= $editCat ? __('btn_edit') : __('btn_add') ?> <?= __('nav_categories') ?></span>
+      <?php if ($editCat): ?>
+        <a href="<?= url('modules/categories/') ?>" class="btn btn-sm btn-ghost"><?= __('btn_cancel') ?></a>
+      <?php endif; ?>
+    </div>
+    <div class="card-body">
+      <form method="POST">
+        <?= csrf_field() ?>
+        <?php if ($editCat): ?>
+          <input type="hidden" name="edit_id" value="<?= $editCat['id'] ?>">
+        <?php endif; ?>
+
+        <div class="form-group">
+          <label class="form-label">Name (EN) <span class="req">*</span></label>
+          <input type="text" name="name_en" class="form-control" value="<?= e($editCat['name_en'] ?? '') ?>" required>
+          <?php if (isset($errors['name_en'])): ?><div class="form-error"><?= e($errors['name_en']) ?></div><?php endif; ?>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Название (RU)</label>
+          <input type="text" name="name_ru" class="form-control" value="<?= e($editCat['name_ru'] ?? '') ?>">
+        </div>
+        <div class="form-row form-row-2">
+          <div class="form-group">
+            <label class="form-label">Icon</label>
+            <select name="icon" class="form-control">
+              <?php foreach ($featherIcons as $ico): ?>
+                <option value="<?= $ico ?>" <?= ($editCat['icon']??'box')===$ico?'selected':'' ?>><?= $ico ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <input type="color" name="color" class="form-control" value="<?= e($editCat['color'] ?? '#607D8B') ?>" style="height:38px;padding:4px">
+          </div>
+        </div>
+        <div class="form-row form-row-2">
+          <div class="form-group">
+            <label class="form-label">Sort Order</label>
+            <input type="number" name="sort_order" class="form-control" value="<?= e($editCat['sort_order'] ?? 0) ?>" min="0">
+          </div>
+          <div class="form-group" style="display:flex;align-items:flex-end">
+            <label class="form-check">
+              <input type="checkbox" name="is_active" value="1" <?= ($editCat['is_active'] ?? 1) ? 'checked' : '' ?>>
+              <span class="form-check-label"><?= __('lbl_active') ?></span>
+            </label>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block"><?= feather_icon('save',15) ?> <?= __('btn_save') ?></button>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<?php include __DIR__ . '/../../views/layouts/footer.php'; ?>
+<script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+<script>feather.replace();</script>

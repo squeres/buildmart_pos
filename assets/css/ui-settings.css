@@ -1,0 +1,628 @@
+/* ================================================================
+   BuildMart POS — UI Settings & Customization Styles
+   ui-settings.css
+   ================================================================ */
+
+/* ── CSS Variables ───────────────────────────────────────────── */
+:root {
+  --drawer-width: 360px;
+  --drawer-bg: var(--surface, #1e1e1e);
+  --drawer-border: var(--border, #333);
+  --drawer-overlay: rgba(0,0,0,.55);
+  --toggle-on: #f59e0b;
+  --toggle-off: #444;
+  --pin-active: #f59e0b;
+}
+
+/* ── Drawer (slide-in panel) ─────────────────────────────────── */
+.ui-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  pointer-events: none;
+}
+.ui-drawer[aria-hidden="false"] {
+  pointer-events: all;
+}
+.ui-drawer-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--drawer-overlay);
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.ui-drawer[aria-hidden="false"] .ui-drawer-overlay {
+  opacity: 1;
+}
+.ui-drawer-panel {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--drawer-width);
+  max-width: 95vw;
+  background: var(--drawer-bg);
+  border-left: 1px solid var(--drawer-border);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform .28s cubic-bezier(.4,0,.2,1);
+  box-shadow: -4px 0 24px rgba(0,0,0,.3);
+}
+.ui-drawer[aria-hidden="false"] .ui-drawer-panel {
+  transform: translateX(0);
+}
+.ui-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--drawer-border);
+  flex-shrink: 0;
+}
+.ui-drawer-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #e5e5e5);
+}
+.ui-drawer-close {
+  background: none;
+  border: none;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: color .15s, background .15s;
+}
+.ui-drawer-close:hover {
+  color: var(--text-primary, #e5e5e5);
+  background: var(--surface-hover, #2a2a2a);
+}
+.ui-drawer-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+.ui-drawer-footer {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--drawer-border);
+  flex-shrink: 0;
+}
+.ui-drawer-footer .btn { flex: 1; justify-content: center; }
+
+.ui-drawer-hint {
+  font-size: 12px;
+  color: var(--text-muted, #888);
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+/* Drawer Tabs */
+.ui-drawer-tabs {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 16px;
+  background: var(--surface-alt, #252525);
+  border-radius: 8px;
+  padding: 3px;
+}
+.ui-drawer-tab {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  transition: all .15s;
+  text-align: center;
+}
+.ui-drawer-tab.active {
+  background: var(--surface, #1e1e1e);
+  color: var(--text-primary, #e5e5e5);
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.ui-drawer-tab-panel { display: none; }
+.ui-drawer-tab-panel.active { display: block; }
+
+/* ── Toggle Switch ──────────────────────────────────────────── */
+.toggle-switch {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+.toggle-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  display: block;
+  width: 36px;
+  height: 20px;
+  background: var(--toggle-off);
+  border-radius: 10px;
+  position: relative;
+  transition: background .2s;
+}
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  top: 3px;
+  left: 3px;
+  transition: transform .2s;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: var(--toggle-on);
+}
+.toggle-switch input:checked + .toggle-slider::after {
+  transform: translateX(16px);
+}
+
+/* ── Menu Config List ───────────────────────────────────────── */
+.menu-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.menu-config-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: var(--surface-alt, #252525);
+  border: 1px solid transparent;
+  transition: border-color .15s, background .15s;
+  cursor: default;
+}
+.menu-config-row:hover {
+  border-color: var(--drawer-border);
+  background: var(--surface-hover, #2a2a2a);
+}
+.menu-config-row.dragging {
+  opacity: .5;
+  border-color: var(--toggle-on);
+}
+.menu-config-row.drag-over {
+  border-color: var(--toggle-on);
+  background: rgba(245, 158, 11, .08);
+}
+.menu-drag-handle {
+  color: var(--text-muted, #666);
+  cursor: grab;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.menu-config-icon {
+  color: var(--text-muted, #888);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+.menu-config-label {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary, #e5e5e5);
+  font-weight: 500;
+}
+.menu-config-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.menu-pin-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted, #666);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: color .15s;
+}
+.menu-pin-btn:hover { color: var(--toggle-on); }
+.menu-pin-btn.active { color: var(--pin-active); }
+
+/* Nav pinned indicator */
+.nav-pinned::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--pin-active);
+  border-radius: 0 2px 2px 0;
+}
+.nav-link { position: relative; }
+
+/* ── View Mode Switcher ──────────────────────────────────────── */
+.view-switcher {
+  display: inline-flex;
+  gap: 2px;
+  background: var(--surface-alt, #252525);
+  border-radius: 8px;
+  padding: 3px;
+  border: 1px solid var(--drawer-border);
+}
+.view-switcher-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.view-switcher-btn:hover {
+  color: var(--text-primary, #e5e5e5);
+  background: var(--surface-hover, #2a2a2a);
+}
+.view-switcher-btn.active {
+  background: var(--surface, #1e1e1e);
+  color: var(--toggle-on);
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.view-switcher-btn svg { flex-shrink: 0; }
+
+/* ── Configure View Button ──────────────────────────────────── */
+.btn-configure-view {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface-alt, #252525);
+  border: 1px solid var(--drawer-border);
+  border-radius: 7px;
+  color: var(--text-muted, #888);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  text-decoration: none;
+}
+.btn-configure-view:hover {
+  color: var(--text-primary, #e5e5e5);
+  border-color: var(--toggle-on);
+}
+
+/* ── Column Configurator ─────────────────────────────────────── */
+.column-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.column-config-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: var(--surface-alt, #252525);
+  transition: background .15s;
+  cursor: default;
+}
+.column-config-row:hover {
+  background: var(--surface-hover, #2a2a2a);
+}
+.column-config-label {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary, #ccc);
+}
+.column-drag-handle {
+  color: var(--text-muted, #666);
+  cursor: grab;
+  flex-shrink: 0;
+  display: flex;
+}
+
+/* ── Presets Panel ───────────────────────────────────────────── */
+.presets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 7px;
+  background: var(--surface-alt, #252525);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all .15s;
+}
+.preset-row:hover { border-color: var(--drawer-border); }
+.preset-row.active {
+  border-color: var(--toggle-on);
+  background: rgba(245, 158, 11, .08);
+}
+.preset-scope-badge {
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.preset-scope-system   { background: #1e3a5f; color: #60a5fa; }
+.preset-scope-role     { background: #1e3a1e; color: #4ade80; }
+.preset-scope-warehouse{ background: #3a2a1e; color: #fb923c; }
+.preset-scope-user     { background: #2a1e3a; color: #c084fc; }
+.preset-name {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text-primary, #e5e5e5);
+}
+.preset-creator {
+  font-size: 11px;
+  color: var(--text-muted, #666);
+}
+.preset-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.preset-row:hover .preset-actions { opacity: 1; }
+.preset-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted, #666);
+  cursor: pointer;
+  padding: 3px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+}
+.preset-action-btn:hover { color: var(--text-primary, #e5e5e5); }
+.preset-action-btn.delete:hover { color: #ef4444; }
+
+.preset-save-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.preset-save-row input {
+  flex: 1;
+  padding: 7px 10px;
+  font-size: 12px;
+  background: var(--surface-alt, #252525);
+  border: 1px solid var(--drawer-border);
+  border-radius: 6px;
+  color: var(--text-primary, #e5e5e5);
+}
+.preset-save-row input:focus {
+  outline: none;
+  border-color: var(--toggle-on);
+}
+
+/* ── Filter Config ───────────────────────────────────────────── */
+.filter-config-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.filter-config-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  background: var(--surface-alt, #252525);
+}
+.filter-config-label {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-secondary, #ccc);
+}
+
+/* ── Price Type Tags ─────────────────────────────────────────── */
+.price-type-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  background: #1a1a1a;
+  color: #e5e5e5;
+  border: 1px solid #333;
+}
+
+/* ── Section heading inside drawer ─────────────────────────── */
+.ui-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin: 16px 0 8px;
+}
+.ui-section-title:first-child { margin-top: 0; }
+
+/* ── Sort Controls ──────────────────────────────────────────── */
+.sort-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.sort-select {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 12px;
+  background: var(--surface-alt, #252525);
+  border: 1px solid var(--drawer-border);
+  border-radius: 6px;
+  color: var(--text-primary, #e5e5e5);
+}
+.sort-dir-btn {
+  padding: 6px 10px;
+  background: var(--surface-alt, #252525);
+  border: 1px solid var(--drawer-border);
+  border-radius: 6px;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  transition: all .15s;
+}
+.sort-dir-btn:hover { color: var(--text-primary, #e5e5e5); }
+
+/* ── Page toolbar with configure btn ────────────────────────── */
+.page-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.page-toolbar .spacer { flex: 1; }
+
+/* ── POS List/Table mode ──────────────────────────────────────  */
+.pos-product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pos-list-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface-alt, #252525);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+.pos-list-row:hover {
+  border-color: var(--toggle-on);
+  background: var(--surface-hover, #2a2a2a);
+}
+.pos-list-row.out-of-stock { opacity: .45; pointer-events: none; }
+.pos-list-name {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #e5e5e5);
+}
+.pos-list-sku {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  font-family: var(--font-mono, monospace);
+}
+.pos-list-stock {
+  font-size: 12px;
+  color: var(--text-muted, #888);
+  min-width: 50px;
+  text-align: right;
+}
+.pos-list-prices {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.pos-list-price {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent, #f59e0b);
+}
+.pos-list-price-alt {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+}
+.pos-list-add {
+  background: var(--toggle-on);
+  border: none;
+  border-radius: 6px;
+  color: #000;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 18px;
+  font-weight: 700;
+  transition: background .15s, transform .1s;
+}
+.pos-list-add:hover { background: #fbbf24; transform: scale(1.08); }
+
+/* Compact POS table */
+.pos-compact-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.pos-compact-table th {
+  padding: 6px 8px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted, #888);
+  border-bottom: 1px solid var(--drawer-border);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: .04em;
+}
+.pos-compact-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--surface-alt, #252525);
+  color: var(--text-primary, #e5e5e5);
+}
+.pos-compact-table tr:hover td { background: var(--surface-alt, #252525); }
+.pos-compact-table tr.out-of-stock td { opacity: .4; }
+
+/* ── Page section for view config ───────────────────────────── */
+.module-page-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.module-page-controls .left-controls,
+.module-page-controls .right-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  :root { --drawer-width: 100vw; }
+  .view-switcher-btn span { display: none; }
+  .view-switcher-btn { padding: 6px 8px; }
+}
