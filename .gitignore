@@ -7,4 +7,18 @@
 *.log
 .tmp/
 .sessions/
+# temp
+*.tmp
+*.bak
+
+# local/session/ospanel
+.sessions/
 .osp/
+
+# env/secrets
+qa_cookies.txt
+
+# generated/test files
+_invoice_sample.xlsx
+page.tmp
+database.sql
