@@ -178,7 +178,8 @@ if (is_post()) {
             redirect($_SERVER['REQUEST_URI']);
         } catch (\Throwable $e) {
             Database::rollback();
-            flash_error($e->getMessage());
+            error_log($e->__toString());
+            flash_error(_r('err_db'));
         }
     }
 

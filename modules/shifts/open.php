@@ -20,18 +20,17 @@ if (is_post()) {
     $openingCash = sanitize_float($_POST['opening_cash'] ?? 0);
     $notes       = sanitize($_POST['notes'] ?? '');
 
-    $openGuard = shift_can_open_now(Auth::id());
-    if (!$openGuard['ok']) {
-        flash_warning($openGuard['message']);
+    try {
+        $result = ShiftService::openShift(Auth::id(), $openingCash, $notes);
+        flash_success($result['message']);
+    } catch (AppServiceException $e) {
+        flash_warning($e->getMessage());
+        redirect('/modules/shifts/');
+    } catch (Throwable $e) {
+        error_log($e->__toString());
+        flash_error(_r('err_db'));
         redirect('/modules/shifts/');
     }
-
-    Database::insert(
-        "INSERT INTO shifts (user_id, opening_cash, notes, status, opened_at) VALUES (?, ?, ?, 'open', NOW())",
-        [Auth::id(), $openingCash, $notes]
-    );
-
-    flash_success(_r('shift_opened'));
     redirect('/modules/pos/');
 }
 

@@ -6,6 +6,11 @@
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/Services/AppServiceException.php';
+require_once __DIR__ . '/Services/AuthService.php';
+require_once __DIR__ . '/Services/InventoryService.php';
+require_once __DIR__ . '/Services/ShiftService.php';
+require_once __DIR__ . '/Services/SaleService.php';
 require_once __DIR__ . '/Lang.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/helpers.php';

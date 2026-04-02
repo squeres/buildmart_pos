@@ -204,7 +204,8 @@ if (is_post()) {
             redirect('/modules/transfers/view.php?id=' . $transferId);
         } catch (\Throwable $e) {
             Database::rollback();
-            flash_error('Error: ' . $e->getMessage());
+            error_log($e->__toString());
+            flash_error(_r('err_db'));
         }
     }
 }

@@ -18,28 +18,24 @@ if (!is_array($body)) {
     json_response(['success' => false, 'message' => _r('err_validation')], 422);
 }
 
-$openGuard = shift_can_open_now(Auth::id());
-if (!$openGuard['ok']) {
-    $status = ($openGuard['code'] ?? '') === 'already_open' ? 200 : 409;
-    json_response([
-        'success' => ($openGuard['code'] ?? '') === 'already_open',
-        'message' => $openGuard['message'],
-        'shift_id' => (int)($openGuard['shift']['id'] ?? 0),
-        'already_open' => ($openGuard['code'] ?? '') === 'already_open',
-        'code' => $openGuard['code'] ?? 'shift_open_denied',
-    ], $status);
-}
-
 $openingCash = max(0, (float)sanitize_float($body['opening_cash'] ?? 0));
 $notes = sanitize($body['notes'] ?? '');
-
-$shiftId = Database::insert(
-    "INSERT INTO shifts (user_id, opening_cash, notes, status, opened_at) VALUES (?, ?, ?, 'open', NOW())",
-    [Auth::id(), $openingCash, $notes]
-);
-
-json_response([
-    'success' => true,
-    'message' => _r('shift_opened'),
-    'shift_id' => (int)$shiftId,
-]);
+try {
+    $result = ShiftService::openShift(Auth::id(), $openingCash, $notes);
+    json_response([
+        'success' => true,
+        'message' => $result['message'],
+        'shift_id' => $result['shift_id'],
+        'already_open' => $result['already_open'],
+        'code' => $result['already_open'] ? 'already_open' : 'shift_opened',
+    ]);
+} catch (AppServiceException $e) {
+    json_response([
+        'success' => false,
+        'message' => $e->getMessage(),
+        'code' => $e->appCode(),
+    ], 409);
+} catch (Throwable $e) {
+    error_log($e->__toString());
+    json_response(['success' => false, 'message' => _r('err_db')], 500);
+}

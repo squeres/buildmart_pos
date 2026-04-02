@@ -13,10 +13,7 @@ $breadcrumbs = [[$pageTitle, null]];
 
 // Check open shift
 $requireShift = setting('shifts_required', '1') === '1';
-$openShift = Database::row(
-    "SELECT * FROM shifts WHERE user_id=? AND status='open' LIMIT 1",
-    [Auth::id()]
-);
+$openShift = ShiftService::getOpenShiftForUser(Auth::id());
 $openShiftSaleState = $openShift ? shift_can_sell_now($openShift) : ['ok' => true];
 $openShiftExtensionState = $openShift ? shift_can_request_extension($openShift) : ['ok' => false];
 $canOpenShift = Auth::can('shifts');

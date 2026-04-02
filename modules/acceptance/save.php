@@ -179,31 +179,11 @@ try {
                 : ($salePrice > 0 ? $salePrice : (float)$prod['sale_price']);
 
             // ── Обновляем stock_balances (по-складской учёт) ──
-            $balanceRow = Database::row(
-                "SELECT qty FROM stock_balances WHERE product_id=? AND warehouse_id=? FOR UPDATE",
-                [$item['product_id'], $warehouseId]
-            );
-            $qtyBefore = $balanceRow ? (float)$balanceRow['qty'] : 0.0;
-            $qtyAfter  = $qtyBefore + $acceptedQtyBase;
-
-            if ($balanceRow) {
-                Database::exec(
-                    "UPDATE stock_balances SET qty=? WHERE product_id=? AND warehouse_id=?",
-                    [$qtyAfter, $item['product_id'], $warehouseId]
-                );
-            } else {
-                Database::exec(
-                    "INSERT INTO stock_balances (product_id, warehouse_id, qty) VALUES (?,?,?)
-                     ON DUPLICATE KEY UPDATE qty = qty + ?",
-                    [$item['product_id'], $warehouseId, $acceptedQtyBase, $acceptedQtyBase]
-                );
-            }
+            $qtyBefore = InventoryService::getAvailableStock((int)$item['product_id'], $warehouseId, true);
+            $qtyAfter = InventoryService::restoreStock((int)$item['product_id'], $warehouseId, $acceptedQtyBase);
 
             // ── Пересчитываем products.stock_qty как сумму по всем складам ──
-            $totalQty = (float)Database::value(
-                "SELECT COALESCE(SUM(qty), 0) FROM stock_balances WHERE product_id=?",
-                [$item['product_id']]
-            );
+            $totalQty = InventoryService::syncLegacyProductStockQty((int)$item['product_id']);
 
             // Обновляем цены и суммарный остаток
             save_product_unit_prices(
@@ -277,6 +257,7 @@ try {
 
 } catch (Throwable $e) {
     Database::rollback();
-    flash_error(_r('err_db').': '.$e->getMessage());
+    error_log($e->__toString());
+    flash_error(_r('err_db'));
     redirect('/modules/acceptance/view.php?id='.$id);
 }

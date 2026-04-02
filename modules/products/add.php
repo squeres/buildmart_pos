@@ -7,6 +7,9 @@ Auth::requirePerm('products');
 $id     = (int)($_GET['id'] ?? 0);
 $isEdit = $id > 0;
 $prod   = $isEdit ? Database::row("SELECT * FROM products WHERE id=?", [$id]) : null;
+if ($prod) {
+    $prod['stock_qty'] = InventoryService::getTotalStock($id);
+}
 
 if ($isEdit && !$prod) {
     flash_error(_r('err_not_found'));

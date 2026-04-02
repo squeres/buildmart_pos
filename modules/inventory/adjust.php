@@ -8,8 +8,16 @@ $pageTitle   = __('inv_adjust');
 $breadcrumbs = [[__('inv_title'), url('modules/inventory/')], [$pageTitle, null]];
 $productId   = (int)($_GET['product_id'] ?? 0);
 $errors      = [];
+$warehouseId = pos_warehouse_id();
 
-$products = Database::all("SELECT id,name_en,name_ru,sku,unit,stock_qty FROM products WHERE is_active=1 ORDER BY name_en");
+$products = Database::all(
+    "SELECT p.id, p.name_en, p.name_ru, p.sku, p.unit, COALESCE(sb.qty, 0) AS stock_qty
+     FROM products p
+     LEFT JOIN stock_balances sb ON sb.product_id = p.id AND sb.warehouse_id = ?
+     WHERE p.is_active = 1
+     ORDER BY p.name_en",
+    [$warehouseId]
+);
 
 if (is_post()) {
     if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
@@ -22,7 +30,6 @@ if (is_post()) {
     if ($newQty < 0) $errors['new_qty'] = _r('lbl_required');
 
     if (!$errors) {
-        $warehouseId = pos_warehouse_id();
         [$qtyBefore, $qtyAfter] = set_stock_balance($pid, $warehouseId, $newQty);
         $change = $qtyAfter - $qtyBefore;
         Database::insert(

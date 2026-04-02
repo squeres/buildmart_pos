@@ -153,7 +153,13 @@ function product_replenishment_state(array $product, ?float $currentStockQty = n
         'is_default' => 1,
     ]]);
 
-    $currentQty = stock_qty_round(max(0.0, $currentStockQty ?? (float)($product['stock_qty'] ?? 0)));
+    $resolvedCurrentQty = $currentStockQty;
+    if ($resolvedCurrentQty === null) {
+        $resolvedCurrentQty = ($productId > 0)
+            ? InventoryService::getTotalStock($productId)
+            : (float)($product['stock_qty'] ?? 0);
+    }
+    $currentQty = stock_qty_round(max(0.0, (float)$resolvedCurrentQty));
     $minStock = product_min_stock_data($product, $units);
     $targetStock = product_target_stock_data($product, $units);
     $classMeta = replenishment_class_meta($product['replenishment_class'] ?? 'C');

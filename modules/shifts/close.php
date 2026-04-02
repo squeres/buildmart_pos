@@ -24,14 +24,18 @@ if (is_post()) {
 
     $closingCash = sanitize_float($_POST['closing_cash'] ?? 0);
     $notes       = sanitize($_POST['notes'] ?? '');
-    $diff        = $closingCash - $expectedCash;
 
-    Database::exec(
-        "UPDATE shifts SET status='closed',closed_at=NOW(),closing_cash=?,expected_cash=?,cash_difference=?,notes=? WHERE id=?",
-        [$closingCash, $expectedCash, $diff, $notes, $id]
-    );
-
-    flash_success(_r('shift_closed'));
+    try {
+        ShiftService::closeShift($id, Auth::id(), $closingCash, $notes, Auth::can('all'));
+        flash_success(_r('shift_closed'));
+    } catch (AppServiceException $e) {
+        flash_error($e->getMessage());
+        redirect('/modules/shifts/');
+    } catch (Throwable $e) {
+        error_log($e->__toString());
+        flash_error(_r('err_db'));
+        redirect('/modules/shifts/');
+    }
     redirect('/modules/shifts/');
 }
 

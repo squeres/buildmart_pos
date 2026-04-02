@@ -6,6 +6,7 @@ Auth::requirePerm('reports');
 
 $pageTitle   = __('rep_title');
 $breadcrumbs = [[$pageTitle, null]];
+$liveStockSql = "COALESCE((SELECT SUM(sb.qty) FROM stock_balances sb WHERE sb.product_id = p.id), 0)";
 
 // Period selection
 $period = sanitize($_GET['period'] ?? 'month');
@@ -76,12 +77,12 @@ $lowStockOrderSql = replenishment_has_product_column('replenishment_class')
     ? "CASE p.replenishment_class WHEN 'A' THEN 1 WHEN 'B' THEN 2 ELSE 3 END, "
     : '';
 $lowStock = Database::all(
-    "SELECT p.id,p.name_en,p.name_ru,p.sku,p.unit,p.stock_qty,p.min_stock_qty,p.min_stock_display_unit_code,
+    "SELECT p.id,p.name_en,p.name_ru,p.sku,p.unit,{$liveStockSql} AS stock_qty,p.min_stock_qty,p.min_stock_display_unit_code,
             " . replenishment_product_select_sql('p') . ",
             c.name_en AS cat_en,c.name_ru AS cat_ru
      FROM products p JOIN categories c ON c.id=p.category_id
-     WHERE p.is_active=1 AND p.min_stock_qty>0 AND p.stock_qty<=p.min_stock_qty
-     ORDER BY {$lowStockOrderSql}(p.stock_qty/p.min_stock_qty) ASC LIMIT 20"
+     WHERE p.is_active=1 AND p.min_stock_qty>0 AND {$liveStockSql}<=p.min_stock_qty
+     ORDER BY {$lowStockOrderSql}({$liveStockSql}/p.min_stock_qty) ASC LIMIT 20"
 );
 
 // Category breakdown

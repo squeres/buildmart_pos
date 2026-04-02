@@ -65,7 +65,31 @@ class Database
         return self::run($sql, $params)->rowCount();
     }
 
+    public static function inTransaction(): bool
+    {
+        return self::connect()->inTransaction();
+    }
+
     public static function beginTransaction(): void { self::connect()->beginTransaction(); }
     public static function commit(): void           { self::connect()->commit(); }
     public static function rollback(): void         { self::connect()->rollBack(); }
+
+    public static function transaction(callable $callback): mixed
+    {
+        if (self::inTransaction()) {
+            return $callback(self::connect());
+        }
+
+        self::beginTransaction();
+        try {
+            $result = $callback(self::connect());
+            self::commit();
+            return $result;
+        } catch (Throwable $e) {
+            if (self::inTransaction()) {
+                self::rollback();
+            }
+            throw $e;
+        }
+    }
 }

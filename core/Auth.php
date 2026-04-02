@@ -80,15 +80,8 @@ class Auth
     /** Attempt login with email + password. Returns bool. */
     public static function attempt(string $email, string $password): bool
     {
-        $user = Database::row(
-            'SELECT u.*, r.slug AS role_slug, r.name AS role_name, r.permissions
-             FROM users u JOIN roles r ON r.id = u.role_id
-             WHERE u.email = ? AND u.is_active = 1
-             LIMIT 1',
-            [trim($email)]
-        );
-
-        if (!$user || !password_verify($password, $user['password'])) {
+        $user = AuthService::attemptPassword($email, $password);
+        if (!$user) {
             return false;
         }
 
@@ -99,17 +92,10 @@ class Auth
     /** Attempt login with PIN (for quick cashier login). */
     public static function attemptPin(string $pin): bool
     {
-        if (strlen(trim($pin)) < 4) return false;
-
-        $user = Database::row(
-            'SELECT u.*, r.slug AS role_slug, r.name AS role_name, r.permissions
-             FROM users u JOIN roles r ON r.id = u.role_id
-             WHERE u.pin = ? AND u.is_active = 1
-             LIMIT 1',
-            [trim($pin)]
-        );
-
-        if (!$user) return false;
+        $user = AuthService::attemptPin($pin);
+        if (!$user) {
+            return false;
+        }
         self::_startSession($user);
         return true;
     }

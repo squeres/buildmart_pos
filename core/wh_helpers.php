@@ -91,14 +91,11 @@ function user_default_warehouse_id(): int
 
 /**
  * Get stock qty for a product on a specific warehouse.
+ * stock_balances is the source of truth.
  */
 function get_stock_qty(int $productId, int $warehouseId): float
 {
-    $row = Database::row(
-        "SELECT qty FROM stock_balances WHERE product_id=? AND warehouse_id=?",
-        [$productId, $warehouseId]
-    );
-    return $row ? (float)$row['qty'] : 0.0;
+    return InventoryService::getAvailableStock($productId, $warehouseId);
 }
 
 /**
@@ -106,11 +103,7 @@ function get_stock_qty(int $productId, int $warehouseId): float
  */
 function get_total_stock_qty(int $productId): float
 {
-    $val = Database::value(
-        "SELECT COALESCE(SUM(qty), 0) FROM stock_balances WHERE product_id=?",
-        [$productId]
-    );
-    return (float)$val;
+    return InventoryService::getTotalStock($productId);
 }
 
 /**
@@ -120,36 +113,15 @@ function get_total_stock_qty(int $productId): float
  */
 function update_stock_balance(int $productId, int $warehouseId, float $delta): array
 {
-    // Lock the row for update
-    $row = Database::row(
-        "SELECT qty FROM stock_balances WHERE product_id=? AND warehouse_id=? FOR UPDATE",
-        [$productId, $warehouseId]
-    );
-
-    $qtyBefore = $row ? (float)$row['qty'] : 0.0;
-    $qtyAfter  = stock_qty_round($qtyBefore + $delta);
-
-    if ($row) {
-        Database::exec(
-            "UPDATE stock_balances SET qty=? WHERE product_id=? AND warehouse_id=?",
-            [$qtyAfter, $productId, $warehouseId]
-        );
-    } else {
-        Database::exec(
-            "INSERT INTO stock_balances (product_id, warehouse_id, qty) VALUES (?,?,?)
-             ON DUPLICATE KEY UPDATE qty = qty + ?",
-            [$productId, $warehouseId, max(0.0, $qtyAfter), stock_qty_round($delta)]
-        );
+    if ($delta > 0) {
+        return InventoryService::restoreStock($productId, $warehouseId, $delta);
+    }
+    if ($delta < 0) {
+        return InventoryService::deductStock($productId, $warehouseId, abs($delta));
     }
 
-    // Keep products.stock_qty in sync (total across all warehouses)
-    $total = Database::value(
-        "SELECT COALESCE(SUM(qty),0) FROM stock_balances WHERE product_id=?",
-        [$productId]
-    );
-    Database::exec("UPDATE products SET stock_qty=? WHERE id=?", [stock_qty_round((float)$total), $productId]);
-
-    return [$qtyBefore, $qtyAfter];
+    $current = InventoryService::getAvailableStock($productId, $warehouseId, true);
+    return [$current, $current];
 }
 
 /**
@@ -158,33 +130,7 @@ function update_stock_balance(int $productId, int $warehouseId, float $delta): a
  */
 function set_stock_balance(int $productId, int $warehouseId, float $qty): array
 {
-    $row = Database::row(
-        "SELECT qty FROM stock_balances WHERE product_id=? AND warehouse_id=? FOR UPDATE",
-        [$productId, $warehouseId]
-    );
-
-    $qtyBefore = $row ? (float)$row['qty'] : 0.0;
-    $qtyAfter  = max(0.0, stock_qty_round($qty));
-
-    if ($row) {
-        Database::exec(
-            "UPDATE stock_balances SET qty=? WHERE product_id=? AND warehouse_id=?",
-            [$qtyAfter, $productId, $warehouseId]
-        );
-    } else {
-        Database::exec(
-            "INSERT INTO stock_balances (product_id, warehouse_id, qty) VALUES (?,?,?)",
-            [$productId, $warehouseId, $qtyAfter]
-        );
-    }
-
-    $total = Database::value(
-        "SELECT COALESCE(SUM(qty),0) FROM stock_balances WHERE product_id=?",
-        [$productId]
-    );
-    Database::exec("UPDATE products SET stock_qty=? WHERE id=?", [stock_qty_round((float)$total), $productId]);
-
-    return [$qtyBefore, $qtyAfter];
+    return InventoryService::setStock($productId, $warehouseId, $qty);
 }
 
 /**

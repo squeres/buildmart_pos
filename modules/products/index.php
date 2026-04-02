@@ -8,6 +8,7 @@ $pageTitle   = __('prod_title');
 $breadcrumbs = [[$pageTitle, null]];
 $viewCfg     = UISettings::get('products');
 $priceTypes  = UISettings::visiblePriceTypes('products');
+$liveStockSql = "COALESCE((SELECT SUM(sb.qty) FROM stock_balances sb WHERE sb.product_id = p.id), 0)";
 
 $sortMap = [
     'name' => 'p.name_en',
@@ -16,7 +17,7 @@ $sortMap = [
     'replenishment' => replenishment_has_product_column('replenishment_class')
         ? "FIELD(p.replenishment_class,'A','B','C')"
         : "'C'",
-    'stock' => 'p.stock_qty',
+    'stock' => $liveStockSql,
     'min_stock' => 'p.min_stock_qty',
     'status' => 'p.is_active',
     'price_retail' => 'p.sale_price',
@@ -91,10 +92,10 @@ if ($catId > 0) {
     $baseParams[] = $catId;
 }
 if ($stockFilter === 'low') {
-    $baseWhere[] = 'p.min_stock_qty>0 AND p.stock_qty<=p.min_stock_qty';
+    $baseWhere[] = "p.min_stock_qty>0 AND {$liveStockSql}<=p.min_stock_qty";
 }
 if ($stockFilter === 'out') {
-    $baseWhere[] = 'p.stock_qty<=0';
+    $baseWhere[] = "{$liveStockSql}<=0";
 }
 
 $baseWhereSQL = implode(' AND ', $baseWhere);
@@ -116,7 +117,7 @@ $pg       = paginate($total, $page, $perPage);
 $orderBy  = $sortMap[$sortBy] ?? 'p.name_en';
 
 $products = Database::all(
-    "SELECT p.*, c.name_en AS cat_en, c.name_ru AS cat_ru,
+    "SELECT p.*, {$liveStockSql} AS stock_qty, c.name_en AS cat_en, c.name_ru AS cat_ru,
             EXISTS(SELECT 1 FROM inventory_movements im WHERE im.product_id = p.id LIMIT 1) AS has_moves
      FROM products p JOIN categories c ON c.id=p.category_id
      WHERE $whereSQL

@@ -7,8 +7,16 @@ Auth::requirePerm('inventory');
 $pageTitle   = __('inv_writeoff');
 $breadcrumbs = [[__('inv_title'), url('modules/inventory/')], [$pageTitle, null]];
 $errors      = [];
+$warehouseId = pos_warehouse_id();
 
-$products = Database::all("SELECT id,name_en,name_ru,sku,unit,stock_qty FROM products WHERE is_active=1 AND stock_qty>0 ORDER BY name_en");
+$products = Database::all(
+    "SELECT p.id, p.name_en, p.name_ru, p.sku, p.unit, COALESCE(sb.qty, 0) AS stock_qty
+     FROM products p
+     LEFT JOIN stock_balances sb ON sb.product_id = p.id AND sb.warehouse_id = ?
+     WHERE p.is_active = 1 AND COALESCE(sb.qty, 0) > 0
+     ORDER BY p.name_en",
+    [$warehouseId]
+);
 
 if (is_post()) {
     if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
@@ -22,13 +30,6 @@ if (is_post()) {
     if (!$notes) $errors['notes']      = _r('lbl_required');
 
     if (!$errors) {
-        $prod      = Database::row("SELECT stock_qty FROM products WHERE id=?", [$pid]);
-        $qtyBefore = (float)$prod['stock_qty'];
-        if ($qty > $qtyBefore) { $errors['qty'] = 'Cannot write off more than available stock ('.$qtyBefore.')'; }
-    }
-
-    if (!$errors) {
-        $warehouseId = pos_warehouse_id();
         $qtyBeforeWh = get_stock_qty($pid, $warehouseId);
         if ($qty > $qtyBeforeWh) {
             $errors['qty'] = 'Cannot write off more than available stock in the selected warehouse (' . $qtyBeforeWh . ')';
@@ -36,7 +37,6 @@ if (is_post()) {
     }
 
     if (!$errors) {
-        $warehouseId = pos_warehouse_id();
         [$qtyBefore, $qtyAfter] = update_stock_balance($pid, $warehouseId, -$qty);
         Database::insert(
             "INSERT INTO inventory_movements (product_id,warehouse_id,user_id,type,qty_change,qty_before,qty_after,notes,created_at)

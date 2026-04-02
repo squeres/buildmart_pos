@@ -14,6 +14,7 @@ $pageTitle   = $isEdit ? __('usr_edit') : __('usr_add');
 $breadcrumbs = [[__('usr_title'), url('modules/users/')], [$pageTitle, null]];
 $errors      = [];
 $f = $user ?? ['name'=>'','email'=>'','role_id'=>3,'language'=>'en','is_active'=>1,'pin'=>''];
+$f['pin'] = '';
 
 if (is_post()) {
     if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
@@ -39,14 +40,33 @@ if (is_post()) {
     if ($emailExists) $errors['email'] = 'Email already in use';
 
     if (!$errors) {
+        try {
+            $pinStorage = AuthService::preparePinStorage($f['pin']);
+        } catch (AppServiceException $e) {
+            $errors['pin'] = $e->getMessage();
+        }
+    }
+
+    if (!$errors) {
         if ($isEdit) {
-            $sql    = "UPDATE users SET name=?,email=?,role_id=?,language=?,is_active=?,pin=?,default_warehouse_id=?,updated_at=NOW() WHERE id=?";
-            $params = [$f['name'],$f['email'],$f['role_id'],$f['language'],$f['is_active'],$f['pin'],$f['default_warehouse_id'],$id];
-            if ($pass) {
-                $sql    = "UPDATE users SET name=?,email=?,role_id=?,language=?,is_active=?,pin=?,default_warehouse_id=?,password=?,must_change_password=0,updated_at=NOW() WHERE id=?";
-                $params = [$f['name'],$f['email'],$f['role_id'],$f['language'],$f['is_active'],$f['pin'],$f['default_warehouse_id'],password_hash($pass,PASSWORD_BCRYPT),$id];
+            $fields = ['name=?','email=?','role_id=?','language=?','is_active=?','default_warehouse_id=?'];
+            $params = [$f['name'],$f['email'],$f['role_id'],$f['language'],$f['is_active'],$f['default_warehouse_id']];
+            if (AuthService::hasPinHashColumn()) {
+                $fields[] = 'pin=?';
+                $fields[] = 'pin_hash=?';
+                $params[] = $pinStorage['pin'];
+                $params[] = $pinStorage['pin_hash'];
+            } else {
+                $fields[] = 'pin=?';
+                $params[] = $pinStorage['pin'];
             }
-            Database::exec($sql,$params);
+            if ($pass) {
+                $fields[] = 'password=?';
+                $fields[] = 'must_change_password=0';
+                $params[] = password_hash($pass,PASSWORD_BCRYPT);
+            }
+            $params[] = $id;
+            Database::exec("UPDATE users SET " . implode(',', $fields) . ",updated_at=NOW() WHERE id=?", $params);
             // Update warehouse access
             $whIds = array_map('intval', $_POST['warehouse_ids'] ?? []);
             Database::exec("DELETE FROM warehouse_user_access WHERE user_id=?", [$id]);
@@ -57,9 +77,24 @@ if (is_post()) {
                 );
             }
         } else {
+            $columns = ['name','email','password','role_id','language','is_active','default_warehouse_id','must_change_password'];
+            $placeholders = ['?','?','?','?','?','?','?','0'];
+            $params = [$f['name'],$f['email'],password_hash($pass,PASSWORD_BCRYPT),$f['role_id'],$f['language'],$f['is_active'],$f['default_warehouse_id']];
+            if (AuthService::hasPinHashColumn()) {
+                $columns[] = 'pin';
+                $columns[] = 'pin_hash';
+                $placeholders[] = '?';
+                $placeholders[] = '?';
+                $params[] = $pinStorage['pin'];
+                $params[] = $pinStorage['pin_hash'];
+            } else {
+                $columns[] = 'pin';
+                $placeholders[] = '?';
+                $params[] = $pinStorage['pin'];
+            }
             $newId = Database::insert(
-                "INSERT INTO users (name,email,password,role_id,language,is_active,pin,default_warehouse_id,must_change_password) VALUES (?,?,?,?,?,?,?,?,0)",
-                [$f['name'],$f['email'],password_hash($pass,PASSWORD_BCRYPT),$f['role_id'],$f['language'],$f['is_active'],$f['pin'],$f['default_warehouse_id']]
+                "INSERT INTO users (" . implode(',', $columns) . ") VALUES (" . implode(',', $placeholders) . ")",
+                $params
             );
             $whIds = array_map('intval', $_POST['warehouse_ids'] ?? []);
             foreach ($whIds as $wid) {
@@ -131,6 +166,8 @@ include __DIR__ . '/../../views/layouts/header.php';
         <div class="form-group">
           <label class="form-label"><?= __('usr_pin') ?></label>
           <input type="text" name="pin" class="form-control mono" maxlength="6" value="<?= e($f['pin']??'') ?>" placeholder="••••">
+          <?php if (isset($errors['pin'])): ?><div class="form-error"><?= e($errors['pin']) ?></div><?php endif; ?>
+          <?php if ($isEdit): ?><div class="form-hint"><?= e('Оставьте пустым, чтобы отключить PIN и не показывать старое значение.') ?></div><?php endif; ?>
         </div>
       </div>
       <label class="form-check">
