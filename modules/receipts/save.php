@@ -10,7 +10,6 @@
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('receipts');
 
 if (!is_post()) { redirect('/modules/receipts/'); }
 if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect('/modules/receipts/'); }
@@ -18,6 +17,11 @@ if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect('/modules/receipts/'
 $id     = (int)($_POST['id'] ?? 0);
 $action = sanitize($_POST['action'] ?? 'save_draft');
 $isEdit = $id > 0;
+
+Auth::requirePerm($isEdit ? 'receipts.edit' : 'receipts.create');
+if ($action === 'save_and_post') {
+    Auth::requirePerm('receipts.post');
+}
 
 // ── Validate header ─────────────────────────────────────────────
 $docNo         = sanitize($_POST['doc_no']        ?? '');

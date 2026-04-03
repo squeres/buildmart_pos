@@ -7,6 +7,12 @@ require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
 Auth::requirePerm('receipts');
+$canCreateReceipts = Auth::can('receipts.create');
+$canEditReceipts = Auth::can('receipts.edit');
+$canPostReceipts = Auth::can('receipts.post');
+$canCancelReceipts = Auth::can('receipts.cancel');
+$canExportReceipts = Auth::can('receipts.export');
+$canOpenAcceptance = Auth::can('acceptance');
 
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { redirect('/modules/receipts/'); }
@@ -144,10 +150,12 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
   </div>
   <div class="page-actions">
-    <?php if ($doc['status'] === 'draft'): ?>
+    <?php if ($doc['status'] === 'draft' && $canEditReceipts): ?>
     <a href="<?= url('modules/receipts/edit.php?id='.$id) ?>" class="btn btn-secondary">
       <?= feather_icon('edit-2',15) ?> <?= __('btn_edit') ?>
     </a>
+    <?php endif; ?>
+    <?php if ($doc['status'] === 'draft' && $canPostReceipts): ?>
     <form method="POST" action="<?= url('modules/receipts/post.php') ?>" style="display:inline">
       <?= csrf_field() ?>
       <input type="hidden" name="id" value="<?= (int)$id ?>">
@@ -157,7 +165,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </button>
     </form>
     <?php endif; ?>
-    <?php if ($doc['status'] === 'pending_acceptance'): ?>
+    <?php if ($doc['status'] === 'pending_acceptance' && $canOpenAcceptance): ?>
     <a href="<?= url('modules/acceptance/view.php?id='.$id) ?>" class="btn btn-warning">
       <?= feather_icon('clipboard',15) ?> <?= __('acc_go_to_acceptance') ?>
     </a>
@@ -165,13 +173,17 @@ include __DIR__ . '/../../views/layouts/header.php';
     <a href="<?= url('modules/receipts/print.php?id='.$id) ?>" target="_blank" class="btn btn-ghost">
       <?= feather_icon('printer',15) ?> <?= __('btn_print') ?>
     </a>
+    <?php if ($canExportReceipts): ?>
     <a href="<?= url('modules/receipts/export_excel.php?id='.$id) ?>" class="btn btn-ghost">
       <?= feather_icon('download',15) ?> Excel
     </a>
+    <?php endif; ?>
+    <?php if ($canCreateReceipts): ?>
     <a href="<?= url('modules/receipts/duplicate.php?id='.$id) ?>" class="btn btn-ghost">
       <?= feather_icon('copy',15) ?> <?= __('gr_duplicate') ?>
     </a>
-    <?php if (in_array($doc['status'], ['draft','pending_acceptance','accepted'], true)): ?>
+    <?php endif; ?>
+    <?php if ($canCancelReceipts && in_array($doc['status'], ['draft','pending_acceptance','accepted'], true)): ?>
     <form method="POST" action="<?= url('modules/receipts/cancel.php') ?>" style="display:inline">
       <?= csrf_field() ?>
       <input type="hidden" name="id" value="<?= (int)$id ?>">

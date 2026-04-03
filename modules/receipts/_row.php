@@ -4,6 +4,9 @@
  * Variables: $idx, $item, $products, $unitOptions
  */
 $unitOptions = $unitOptions ?? unit_options();
+$canCreateProducts = $canCreateProducts ?? true;
+$canManageReceiptProducts = $canManageReceiptProducts ?? true;
+$canEditProducts = $canEditProducts ?? true;
 $rowUnitOptions = $unitOptions;
 if (!empty($item['product_id'])) {
     $productRow = null;
@@ -43,17 +46,21 @@ if (!empty($item['product_id'])) {
             style="flex-shrink:0;height:28px;padding:0 10px;display:none;align-items:center;justify-content:center">
       <?= e(__('btn_auto')) ?>
     </button>
+    <?php if ($canCreateProducts): ?>
     <button type="button" class="btn-qc btn-new-product-row"
             title="<?= __('gr_quick_add_product') ?>"
             style="flex-shrink:0;width:28px;height:28px">
       <?= feather_icon('plus', 13) ?>
     </button>
+    <?php endif; ?>
+    <?php if ($canEditProducts): ?>
     <button type="button" class="btn-qc btn-edit-product-row"
             title="<?= __('btn_edit') ?>"
             style="flex-shrink:0;width:28px;height:28px"
             <?= empty($item['product_id']) ? 'disabled' : '' ?>>
       <?= feather_icon('edit-2', 13) ?>
     </button>
+    <?php endif; ?>
   </div>
 
   <!-- Manual name override -->

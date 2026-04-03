@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
 Auth::requirePerm('suppliers');
+$canManageSuppliers = Auth::can('suppliers.manage');
 
 $pageTitle   = __('sup_title');
 $breadcrumbs = [[$pageTitle, null]];
@@ -15,6 +16,11 @@ $editSup     = null;
 
 // ── Handle DELETE ──────────────────────────────────────────────
 if (isset($_GET['delete'])) {
+    if (!$canManageSuppliers) {
+        http_response_code(403);
+        include ROOT_PATH . '/views/partials/403.php';
+        exit;
+    }
     $delId  = (int)$_GET['delete'];
     $inUse  = Database::value("SELECT COUNT(*) FROM goods_receipts WHERE supplier_id=?", [$delId]);
     if ($inUse) {
@@ -28,6 +34,11 @@ if (isset($_GET['delete'])) {
 
 // ── Handle POST (add/edit) ─────────────────────────────────────
 if (is_post()) {
+    if (!$canManageSuppliers) {
+        http_response_code(403);
+        include ROOT_PATH . '/views/partials/403.php';
+        exit;
+    }
     if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
 
     $editId  = (int)($_POST['edit_id'] ?? 0);
@@ -64,6 +75,11 @@ if (is_post()) {
 
 // ── Load for edit ──────────────────────────────────────────────
 $editId = (int)($_GET['edit'] ?? 0);
+if ($editId && !$canManageSuppliers) {
+    http_response_code(403);
+    include ROOT_PATH . '/views/partials/403.php';
+    exit;
+}
 if ($editId) $editSup = Database::row("SELECT * FROM suppliers WHERE id=?", [$editId]);
 
 $suppliers = Database::all(
@@ -78,7 +94,7 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= __('sup_title') ?></h1>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 380px;gap:16px;align-items:start">
+<div style="display:grid;grid-template-columns:<?= $canManageSuppliers ? '1fr 380px' : '1fr' ?>;gap:16px;align-items:start">
 
   <!-- List -->
   <div class="card">
@@ -110,10 +126,12 @@ include __DIR__ . '/../../views/layouts/header.php';
                 : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?>
             </td>
             <td class="col-actions">
+              <?php if ($canManageSuppliers): ?>
               <a href="?edit=<?= $s['id'] ?>" class="btn btn-sm btn-ghost btn-icon"><?= feather_icon('edit-2',14) ?></a>
               <?php if ($s['doc_count'] == 0): ?>
               <a href="?delete=<?= $s['id'] ?>" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
                  data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></a>
+              <?php endif; ?>
               <?php endif; ?>
             </td>
           </tr>
@@ -127,6 +145,7 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
 
   <!-- Add/Edit form -->
+  <?php if ($canManageSuppliers): ?>
   <div class="card">
     <div class="card-header">
       <span class="card-title"><?= $editSup ? __('sup_edit') : __('sup_add') ?></span>
@@ -188,6 +207,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </form>
     </div>
   </div>
+  <?php endif; ?>
 </div>
 
 <?php include __DIR__ . '/../../views/layouts/footer.php'; ?>

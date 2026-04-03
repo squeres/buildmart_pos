@@ -10,6 +10,8 @@ require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
 Auth::requirePerm('acceptance');
+$canProcessAcceptance = Auth::can('acceptance.process');
+$canAcceptAcceptance = Auth::can('acceptance.accept');
 
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) { redirect('/modules/acceptance/'); }
@@ -42,7 +44,7 @@ $items = Database::all(
     [$id]
 );
 
-$isEditable  = $doc['status'] === 'pending_acceptance';
+$isEditable  = $doc['status'] === 'pending_acceptance' && ($canProcessAcceptance || $canAcceptAcceptance);
 $pageTitle   = __('acc_title') . ': ' . $doc['doc_no'];
 $breadcrumbs = [[__('acc_title'), url('modules/acceptance/')], [$doc['doc_no'], null]];
 
@@ -445,17 +447,22 @@ include __DIR__ . '/../../views/layouts/header.php';
 <?php if ($isEditable): ?>
 <div class="card">
   <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap">
+    <?php if ($canProcessAcceptance): ?>
     <button type="submit" name="action" value="save" class="btn btn-secondary btn-lg">
       <?= feather_icon('save',17) ?> <?= __('btn_save') ?>
     </button>
+    <?php endif; ?>
+    <?php if ($canAcceptAcceptance): ?>
     <button type="submit" name="action" value="accept" class="btn btn-primary btn-lg"
             data-doc-confirm="accept">
       <?= feather_icon('check-circle',17) ?> <?= __('acc_accept_btn') ?>
     </button>
+    <?php endif; ?>
     <a href="<?= url('modules/acceptance/') ?>" class="btn btn-ghost btn-lg"><?= __('btn_back') ?></a>
   </div>
 </div>
 
+<?php if ($canAcceptAcceptance): ?>
 <div class="qc-overlay" id="modal-accept-confirm" role="dialog" aria-modal="true">
   <div class="qc-modal">
     <div class="qc-modal-header">
@@ -511,6 +518,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
   </div>
 </div>
+<?php endif; ?>
 
 <div class="qc-overlay" id="modal-sale-markup" role="dialog" aria-modal="true">
   <div class="qc-modal" style="max-width:420px">

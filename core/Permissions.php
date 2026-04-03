@@ -55,24 +55,33 @@ function permission_groups(): array
             'group_key' => 'nav_receipts',
             'items' => [
                 ['key' => 'receipts', 'label_key' => 'perm_access'],
+                ['key' => 'receipts.create', 'label_key' => 'perm_create'],
+                ['key' => 'receipts.edit', 'label_key' => 'perm_edit'],
+                ['key' => 'receipts.post', 'label_key' => 'perm_post'],
+                ['key' => 'receipts.cancel', 'label_key' => 'perm_cancel'],
+                ['key' => 'receipts.export', 'label_key' => 'perm_export'],
             ],
         ],
         [
             'group_key' => 'nav_acceptance',
             'items' => [
                 ['key' => 'acceptance', 'label_key' => 'perm_access'],
+                ['key' => 'acceptance.process', 'label_key' => 'perm_process'],
+                ['key' => 'acceptance.accept', 'label_key' => 'perm_accept'],
             ],
         ],
         [
             'group_key' => 'nav_suppliers',
             'items' => [
                 ['key' => 'suppliers', 'label_key' => 'perm_access'],
+                ['key' => 'suppliers.manage', 'label_key' => 'perm_manage'],
             ],
         ],
         [
             'group_key' => 'nav_warehouses',
             'items' => [
                 ['key' => 'warehouses', 'label_key' => 'perm_access'],
+                ['key' => 'warehouses.manage', 'label_key' => 'perm_manage'],
             ],
         ],
         [

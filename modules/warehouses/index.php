@@ -7,6 +7,7 @@ require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
 Auth::requirePerm('warehouses');
+$canManageWarehouses = Auth::can('warehouses.manage');
 
 $pageTitle   = __('wh_title');
 $breadcrumbs = [[$pageTitle, null]];
@@ -14,6 +15,11 @@ $errors      = [];
 $editWh      = null;
 
 if (isset($_GET['delete'])) {
+    if (!$canManageWarehouses) {
+        http_response_code(403);
+        include ROOT_PATH . '/views/partials/403.php';
+        exit;
+    }
     $delId = (int)$_GET['delete'];
     $inUse = Database::value("SELECT COUNT(*) FROM goods_receipts WHERE warehouse_id=?", [$delId]);
     if ($inUse) {
@@ -26,6 +32,11 @@ if (isset($_GET['delete'])) {
 }
 
 if (is_post()) {
+    if (!$canManageWarehouses) {
+        http_response_code(403);
+        include ROOT_PATH . '/views/partials/403.php';
+        exit;
+    }
     if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
 
     $editId = (int)($_POST['edit_id'] ?? 0);
@@ -55,6 +66,11 @@ if (is_post()) {
 }
 
 $editId = (int)($_GET['edit'] ?? 0);
+if ($editId && !$canManageWarehouses) {
+    http_response_code(403);
+    include ROOT_PATH . '/views/partials/403.php';
+    exit;
+}
 if ($editId) $editWh = Database::row("SELECT * FROM warehouses WHERE id=?", [$editId]);
 
 $warehouses = Database::all(
@@ -69,7 +85,7 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= __('wh_title') ?></h1>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start">
+<div style="display:grid;grid-template-columns:<?= $canManageWarehouses ? '1fr 340px' : '1fr' ?>;gap:16px;align-items:start">
   <div class="card">
     <div class="table-wrap">
       <table class="table">
@@ -92,10 +108,12 @@ include __DIR__ . '/../../views/layouts/header.php';
               ? '<span class="badge badge-success">'.__('lbl_active').'</span>'
               : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?></td>
             <td class="col-actions">
+              <?php if ($canManageWarehouses): ?>
               <a href="?edit=<?= $w['id'] ?>" class="btn btn-sm btn-ghost btn-icon"><?= feather_icon('edit-2',14) ?></a>
               <?php if ($w['doc_count'] == 0 && $w['id'] != 1): ?>
               <a href="?delete=<?= $w['id'] ?>" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
                  data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></a>
+              <?php endif; ?>
               <?php endif; ?>
             </td>
           </tr>
@@ -105,6 +123,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
   </div>
 
+  <?php if ($canManageWarehouses): ?>
   <div class="card">
     <div class="card-header">
       <span class="card-title"><?= $editWh ? __('wh_edit') : __('wh_add') ?></span>
@@ -139,6 +158,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </form>
     </div>
   </div>
+  <?php endif; ?>
 </div>
 
 <?php include __DIR__ . '/../../views/layouts/footer.php'; ?>

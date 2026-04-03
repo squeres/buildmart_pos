@@ -9,6 +9,8 @@ require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
 Auth::requirePerm('acceptance');
+$canProcessAcceptance = Auth::can('acceptance.process');
+$canAcceptAcceptance = Auth::can('acceptance.accept');
 
 $pageTitle   = __('acc_title');
 $breadcrumbs = [[$pageTitle, null]];
@@ -174,7 +176,7 @@ include __DIR__ . '/../../views/layouts/header.php';
                class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_open') ?>">
               <?= feather_icon('eye', 14) ?>
             </a>
-            <?php if ($doc['status'] === 'pending_acceptance'): ?>
+            <?php if ($doc['status'] === 'pending_acceptance' && ($canProcessAcceptance || $canAcceptAcceptance)): ?>
             <a href="<?= url('modules/acceptance/view.php?id='.$doc['id']) ?>"
                class="btn btn-sm btn-primary" style="padding:4px 10px;font-size:12px"
                title="<?= __('acc_accept_btn') ?>">

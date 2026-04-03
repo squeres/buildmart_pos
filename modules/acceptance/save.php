@@ -14,7 +14,6 @@
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('acceptance');
 
 if (!is_post()) { redirect('/modules/acceptance/'); }
 if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect('/modules/acceptance/'); }
@@ -22,6 +21,9 @@ if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect('/modules/acceptance
 $id     = (int)($_POST['id'] ?? 0);
 $action = sanitize($_POST['action'] ?? 'save');
 if (!$id) { redirect('/modules/acceptance/'); }
+
+Auth::requirePerm('acceptance');
+Auth::requirePerm($action === 'accept' ? 'acceptance.accept' : 'acceptance.process');
 
 // Загружаем документ
 $doc = Database::row(

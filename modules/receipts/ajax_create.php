@@ -140,6 +140,7 @@ $normalizeUnitSignature = static function (array $units): array {
 
 try {
     if ($action === 'create_supplier') {
+        Auth::requirePerm('suppliers.manage');
         $name    = sanitize($_POST['name']    ?? '');
         $phone   = sanitize($_POST['phone']   ?? '');
         $inn     = sanitize($_POST['inn']     ?? '');
@@ -162,6 +163,7 @@ try {
     }
 
     if ($action === 'create_product' || $action === 'update_product') {
+        Auth::requirePerm($action === 'update_product' ? 'products.edit' : 'products.create');
         $productId   = (int)($_POST['product_id'] ?? 0);
         $isUpdate    = $action === 'update_product';
         $existing    = $isUpdate ? Database::row("SELECT * FROM products WHERE id=?", [$productId]) : null;

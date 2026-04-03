@@ -6,10 +6,17 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
-Auth::requirePerm('receipts');
 
 $id     = (int)($_GET['id'] ?? 0);
 $isEdit = $id > 0;
+
+Auth::requirePerm($isEdit ? 'receipts.edit' : 'receipts.create');
+
+$canPostReceipt = Auth::can('receipts.post');
+$canManageSuppliers = Auth::can('suppliers.manage');
+$canCreateProducts = Auth::can('products.create');
+$canEditProducts = Auth::can('products.edit');
+$canManageReceiptProducts = $canCreateProducts || $canEditProducts;
 
 if ($isEdit) {
     $doc = Database::row("SELECT gr.* FROM goods_receipts gr WHERE gr.id = ?", [$id]);
@@ -277,7 +284,9 @@ include __DIR__ . '/../../views/layouts/header.php';
         <div class="form-group">
           <label class="form-label">
             <?= __('gr_supplier') ?>
+            <?php if ($canManageSuppliers): ?>
             <span class="text-muted" style="font-size:11px;font-weight:400;margin-left:4px"><?= __('gr_or_create_new') ?></span>
+            <?php endif; ?>
           </label>
           <div class="qc-select-wrap">
             <select name="supplier_id" id="supplier-select" class="form-control">
@@ -288,9 +297,11 @@ include __DIR__ . '/../../views/layouts/header.php';
                 </option>
               <?php endforeach; ?>
             </select>
+            <?php if ($canManageSuppliers): ?>
             <button type="button" class="btn-qc" id="btn-new-supplier" title="<?= __('gr_quick_add_supplier') ?>">
               <?= feather_icon('plus', 15) ?>
             </button>
+            <?php endif; ?>
           </div>
         </div>
         <div class="form-group">
@@ -374,9 +385,11 @@ include __DIR__ . '/../../views/layouts/header.php';
       <button type="submit" name="action" value="save_draft" class="btn btn-secondary btn-lg">
         <?= feather_icon('save', 17) ?> <?= __('gr_save_draft') ?>
       </button>
+      <?php if ($canPostReceipt): ?>
       <button type="submit" name="action" value="save_and_post" class="btn btn-primary btn-lg" data-doc-confirm="receipt-post">
         <?= feather_icon('check-circle', 17) ?> <?= __('gr_save_and_post') ?>
       </button>
+      <?php endif; ?>
       <a href="<?= url('modules/receipts/') ?>" class="btn btn-ghost btn-lg"><?= __('btn_cancel') ?></a>
     </div>
   </div>
@@ -390,6 +403,7 @@ include __DIR__ . '/../../views/layouts/header.php';
   ?>
 </template>
 
+<?php if ($canManageSuppliers): ?>
 <div class="qc-overlay" id="modal-supplier" role="dialog" aria-modal="true">
   <div class="qc-modal">
     <div class="qc-modal-header">
@@ -431,7 +445,9 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
   </div>
 </div>
+<?php endif; ?>
 
+<?php if ($canManageReceiptProducts): ?>
 <div class="qc-overlay" id="modal-product" role="dialog" aria-modal="true">
   <div class="qc-modal" style="max-width:580px">
     <div class="qc-modal-header">
@@ -524,6 +540,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
   </div>
 </div>
+<?php endif; ?>
 
 <div class="qc-overlay" id="modal-unit-preset" role="dialog" aria-modal="true">
   <div class="qc-modal" style="max-width:420px">
@@ -857,9 +874,10 @@ function setRowActionButtonsState(tr, product = null) {
   const calcBtn = tr.querySelector('.btn-row-calc');
   const currentProduct = product || PROD_MAP[productSel?.value];
   const enabled = Boolean(productSel?.value && currentProduct);
-  if (!editBtn) return;
-  editBtn.disabled = !enabled;
-  editBtn.style.opacity = enabled ? '1' : '.45';
+  if (editBtn) {
+    editBtn.disabled = !enabled;
+    editBtn.style.opacity = enabled ? '1' : '.45';
+  }
   if (calcBtn) {
     const canCalculate = enabled && (currentProduct?.units || []).length > 1;
     calcBtn.style.display = canCalculate ? 'inline-flex' : 'none';

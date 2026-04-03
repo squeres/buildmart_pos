@@ -8,7 +8,7 @@
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('receipts');
+Auth::requirePerm('receipts.create');
 
 $srcId = (int)($_GET['id'] ?? 0);
 if (!$srcId) { redirect('/modules/receipts/'); }

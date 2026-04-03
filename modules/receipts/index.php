@@ -10,6 +10,11 @@ require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
 Auth::requirePerm('receipts');
+$canCreateReceipts = Auth::can('receipts.create');
+$canEditReceipts = Auth::can('receipts.edit');
+$canPostReceipts = Auth::can('receipts.post');
+$canCancelReceipts = Auth::can('receipts.cancel');
+$canExportReceipts = Auth::can('receipts.export');
 
 $pageTitle   = __('gr_title');
 $breadcrumbs = [[$pageTitle, null]];
@@ -110,7 +115,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     <h1 class="page-heading"><?= __('gr_title') ?></h1>
   </div>
   <div class="page-actions">
-    <?php if (Auth::can('receipts')): ?>
+    <?php if ($canCreateReceipts): ?>
     <a href="<?= url('modules/receipts/edit.php') ?>" class="btn btn-primary">
       <?= feather_icon('plus', 15) ?> <?= __('gr_new') ?>
     </a>
@@ -203,7 +208,7 @@ include __DIR__ . '/../../views/layouts/header.php';
               <a href="<?= url('modules/receipts/view.php?id='.$r['id']) ?>"
                  class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_view') ?>"><?= feather_icon('eye',14) ?></a>
               <!-- Edit (only draft) -->
-              <?php if ($r['status'] === 'draft'): ?>
+              <?php if ($r['status'] === 'draft' && $canEditReceipts): ?>
               <a href="<?= url('modules/receipts/edit.php?id='.$r['id']) ?>"
                  class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_edit') ?>"><?= feather_icon('edit-2',14) ?></a>
               <?php endif; ?>
@@ -211,13 +216,17 @@ include __DIR__ . '/../../views/layouts/header.php';
               <a href="<?= url('modules/receipts/print.php?id='.$r['id']) ?>" target="_blank"
                  class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_print') ?>"><?= feather_icon('printer',14) ?></a>
               <!-- Export Excel -->
+              <?php if ($canExportReceipts): ?>
               <a href="<?= url('modules/receipts/export_excel.php?id='.$r['id']) ?>"
                  class="btn btn-sm btn-ghost btn-icon" title="<?= __('gr_export_excel') ?>"><?= feather_icon('file-text',14) ?></a>
+              <?php endif; ?>
               <!-- Duplicate -->
+              <?php if ($canCreateReceipts): ?>
               <a href="<?= url('modules/receipts/duplicate.php?id='.$r['id']) ?>"
                  class="btn btn-sm btn-ghost btn-icon" title="<?= __('gr_duplicate') ?>"><?= feather_icon('copy',14) ?></a>
+              <?php endif; ?>
               <!-- Post (only draft) -->
-              <?php if ($r['status'] === 'draft'): ?>
+              <?php if ($r['status'] === 'draft' && $canPostReceipts): ?>
               <form method="POST" action="<?= url('modules/receipts/post.php') ?>" style="display:inline">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
@@ -228,7 +237,7 @@ include __DIR__ . '/../../views/layouts/header.php';
               </form>
               <?php endif; ?>
               <!-- Cancel (draft or posted) -->
-              <?php if (in_array($r['status'], ['draft','pending_acceptance','accepted'], true)): ?>
+              <?php if ($canCancelReceipts && in_array($r['status'], ['draft','pending_acceptance','accepted'], true)): ?>
               <form method="POST" action="<?= url('modules/receipts/cancel.php') ?>" style="display:inline">
                 <?= csrf_field() ?>
                 <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
