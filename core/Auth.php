@@ -85,6 +85,7 @@ class Auth
             return false;
         }
 
+        $user = self::syncLoginLanguagePreference($user);
         self::syncUserSession($user, true);
         return true;
     }
@@ -96,6 +97,7 @@ class Auth
         if (!$user) {
             return false;
         }
+        $user = self::syncLoginLanguagePreference($user);
         self::syncUserSession($user, true);
         return true;
     }
@@ -175,6 +177,39 @@ class Auth
                 Database::exec('UPDATE users SET last_login = NOW() WHERE id = ?', [$user['id']]);
             }
         }
+    }
+
+    private static function syncLoginLanguagePreference(array $user): array
+    {
+        $selectedLanguage = Lang::normalizeCode($_SESSION['lang'] ?? null);
+        if ($selectedLanguage === null || empty($user['id'])) {
+            return $user;
+        }
+
+        $hasLanguageSetAt = function_exists('shift_schema_has_column') && shift_schema_has_column('users', 'language_set_at');
+        $currentLanguage = Lang::normalizeCode($user['language'] ?? null) ?? DEFAULT_LANG;
+        $hasExplicitLanguage = !$hasLanguageSetAt || !empty($user['language_set_at']);
+
+        if ($currentLanguage === $selectedLanguage && $hasExplicitLanguage) {
+            return $user;
+        }
+
+        if ($hasLanguageSetAt) {
+            Database::exec(
+                'UPDATE users SET language = ?, language_set_at = NOW(), updated_at = NOW() WHERE id = ?',
+                [$selectedLanguage, (int)$user['id']]
+            );
+            $user['language_set_at'] = date('Y-m-d H:i:s');
+        } else {
+            Database::exec(
+                'UPDATE users SET language = ?, updated_at = NOW() WHERE id = ?',
+                [$selectedLanguage, (int)$user['id']]
+            );
+        }
+
+        $user['language'] = $selectedLanguage;
+
+        return $user;
     }
 
     public static function clearMustChangePassword(): void
