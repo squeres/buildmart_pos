@@ -16,7 +16,7 @@ $u = Auth::user();
 echo "User: " . ($u['name'] ?? '???') . "\n";
 echo "Role: " . ($u['role_slug'] ?? '???') . "\n";
 echo "Permissions: " . json_encode($u['permissions'] ?? []) . "\n";
-echo "Can inventory: " . (Auth::can('inventory') ? 'YES' : 'NO') . "\n\n";
+echo "Can receipts: " . (Auth::can('receipts') ? 'YES' : 'NO') . "\n\n";
 
 // 2. Проверка таблиц
 $tables = ['warehouses','suppliers','goods_receipts','goods_receipt_items'];

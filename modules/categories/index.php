@@ -3,6 +3,7 @@ require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
 Auth::requirePerm('categories');
+$canManageCategories = Auth::can('categories.manage');
 
 $pageTitle   = __('nav_categories');
 $breadcrumbs = [[$pageTitle, null]];
@@ -11,6 +12,11 @@ $editCat     = null;
 
 // Handle POST (add or edit)
 if (is_post()) {
+    if (!$canManageCategories) {
+        http_response_code(403);
+        include ROOT_PATH . '/views/partials/403.php';
+        exit;
+    }
     if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
 
     $editId  = (int)($_POST['edit_id'] ?? 0);
@@ -43,10 +49,20 @@ if (is_post()) {
 
 // Load for edit
 $editId = (int)($_GET['edit'] ?? 0);
+if ($editId && !$canManageCategories) {
+    http_response_code(403);
+    include ROOT_PATH . '/views/partials/403.php';
+    exit;
+}
 if ($editId) $editCat = Database::row("SELECT * FROM categories WHERE id=?", [$editId]);
 
 // Delete
 if (isset($_GET['delete'])) {
+    if (!$canManageCategories) {
+        http_response_code(403);
+        include ROOT_PATH . '/views/partials/403.php';
+        exit;
+    }
     $delId   = (int)$_GET['delete'];
     $prodCnt = Database::value("SELECT COUNT(*) FROM products WHERE category_id=?", [$delId]);
     if ($prodCnt) {
@@ -103,10 +119,12 @@ include __DIR__ . '/../../views/layouts/header.php';
             <td class="col-num"><?= $c['product_count'] ?></td>
             <td><?= $c['is_active'] ? '<span class="badge badge-success">'.__('lbl_active').'</span>' : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?></td>
             <td class="col-actions">
-              <a href="?edit=<?= $c['id'] ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_edit') ?>"><?= feather_icon('edit-2',14) ?></a>
-              <?php if ($c['product_count'] == 0): ?>
-              <a href="?delete=<?= $c['id'] ?>" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
-                 data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></a>
+              <?php if ($canManageCategories): ?>
+                <a href="?edit=<?= $c['id'] ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_edit') ?>"><?= feather_icon('edit-2',14) ?></a>
+                <?php if ($c['product_count'] == 0): ?>
+                <a href="?delete=<?= $c['id'] ?>" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
+                   data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></a>
+                <?php endif; ?>
               <?php endif; ?>
             </td>
           </tr>
@@ -117,59 +135,61 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
 
   <!-- Add/Edit form -->
-  <div class="card">
-    <div class="card-header">
-      <span class="card-title"><?= $editCat ? __('btn_edit') : __('btn_add') ?> <?= __('nav_categories') ?></span>
-      <?php if ($editCat): ?>
-        <a href="<?= url('modules/categories/') ?>" class="btn btn-sm btn-ghost"><?= __('btn_cancel') ?></a>
-      <?php endif; ?>
-    </div>
-    <div class="card-body">
-      <form method="POST">
-        <?= csrf_field() ?>
+  <?php if ($canManageCategories): ?>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title"><?= $editCat ? __('btn_edit') : __('btn_add') ?> <?= __('nav_categories') ?></span>
         <?php if ($editCat): ?>
-          <input type="hidden" name="edit_id" value="<?= $editCat['id'] ?>">
+          <a href="<?= url('modules/categories/') ?>" class="btn btn-sm btn-ghost"><?= __('btn_cancel') ?></a>
         <?php endif; ?>
+      </div>
+      <div class="card-body">
+        <form method="POST">
+          <?= csrf_field() ?>
+          <?php if ($editCat): ?>
+            <input type="hidden" name="edit_id" value="<?= $editCat['id'] ?>">
+          <?php endif; ?>
 
-        <div class="form-group">
-          <label class="form-label"><?= __('cat_name_en') ?> <span class="req">*</span></label>
-          <input type="text" name="name_en" class="form-control" value="<?= e($editCat['name_en'] ?? '') ?>" required>
-          <?php if (isset($errors['name_en'])): ?><div class="form-error"><?= e($errors['name_en']) ?></div><?php endif; ?>
-        </div>
-        <div class="form-group">
-          <label class="form-label"><?= __('cat_name_ru') ?></label>
-          <input type="text" name="name_ru" class="form-control" value="<?= e($editCat['name_ru'] ?? '') ?>">
-        </div>
-        <div class="form-row form-row-2">
           <div class="form-group">
-            <label class="form-label"><?= __('cat_icon') ?></label>
-            <select name="icon" class="form-control">
-              <?php foreach ($featherIcons as $ico): ?>
-                <option value="<?= $ico ?>" <?= ($editCat['icon']??'box')===$ico?'selected':'' ?>><?= $ico ?></option>
-              <?php endforeach; ?>
-            </select>
+            <label class="form-label"><?= __('cat_name_en') ?> <span class="req">*</span></label>
+            <input type="text" name="name_en" class="form-control" value="<?= e($editCat['name_en'] ?? '') ?>" required>
+            <?php if (isset($errors['name_en'])): ?><div class="form-error"><?= e($errors['name_en']) ?></div><?php endif; ?>
           </div>
           <div class="form-group">
-            <label class="form-label"><?= __('cat_color') ?></label>
-            <input type="color" name="color" class="form-control" value="<?= e($editCat['color'] ?? '#607D8B') ?>" style="height:38px;padding:4px">
+            <label class="form-label"><?= __('cat_name_ru') ?></label>
+            <input type="text" name="name_ru" class="form-control" value="<?= e($editCat['name_ru'] ?? '') ?>">
           </div>
-        </div>
-        <div class="form-row form-row-2">
-          <div class="form-group">
-            <label class="form-label"><?= __('cat_sort_order') ?></label>
-            <input type="number" name="sort_order" class="form-control" value="<?= e($editCat['sort_order'] ?? 0) ?>" min="0">
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label class="form-label"><?= __('cat_icon') ?></label>
+              <select name="icon" class="form-control">
+                <?php foreach ($featherIcons as $ico): ?>
+                  <option value="<?= $ico ?>" <?= ($editCat['icon']??'box')===$ico?'selected':'' ?>><?= $ico ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label"><?= __('cat_color') ?></label>
+              <input type="color" name="color" class="form-control" value="<?= e($editCat['color'] ?? '#607D8B') ?>" style="height:38px;padding:4px">
+            </div>
           </div>
-          <div class="form-group" style="display:flex;align-items:flex-end">
-            <label class="form-check">
-              <input type="checkbox" name="is_active" value="1" <?= ($editCat['is_active'] ?? 1) ? 'checked' : '' ?>>
-              <span class="form-check-label"><?= __('lbl_active') ?></span>
-            </label>
+          <div class="form-row form-row-2">
+            <div class="form-group">
+              <label class="form-label"><?= __('cat_sort_order') ?></label>
+              <input type="number" name="sort_order" class="form-control" value="<?= e($editCat['sort_order'] ?? 0) ?>" min="0">
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end">
+              <label class="form-check">
+                <input type="checkbox" name="is_active" value="1" <?= ($editCat['is_active'] ?? 1) ? 'checked' : '' ?>>
+                <span class="form-check-label"><?= __('lbl_active') ?></span>
+              </label>
+            </div>
           </div>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block"><?= feather_icon('save',15) ?> <?= __('btn_save') ?></button>
-      </form>
+          <button type="submit" class="btn btn-primary btn-block"><?= feather_icon('save',15) ?> <?= __('btn_save') ?></button>
+        </form>
+      </div>
     </div>
-  </div>
+  <?php endif; ?>
 
 </div>
 

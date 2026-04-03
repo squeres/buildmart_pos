@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
-Auth::requirePerm('inventory');
+Auth::requirePerm('inventory.receive');
 
 $pageTitle   = __('inv_receive');
 $breadcrumbs = [[__('inv_title'), url('modules/inventory/')], [$pageTitle, null]];

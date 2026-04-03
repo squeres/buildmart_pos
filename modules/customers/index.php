@@ -34,11 +34,13 @@ include __DIR__ . '/../../views/layouts/header.php';
 
 <div class="page-header">
   <h1 class="page-heading"><?= __('cust_title') ?></h1>
-  <div class="page-actions">
-    <a href="<?= url('modules/customers/add.php') ?>" class="btn btn-primary">
-      <?= feather_icon('user-plus', 15) ?> <?= __('cust_add') ?>
-    </a>
-  </div>
+  <?php if (Auth::can('customers.create')): ?>
+    <div class="page-actions">
+      <a href="<?= url('modules/customers/add.php') ?>" class="btn btn-primary">
+        <?= feather_icon('user-plus', 15) ?> <?= __('cust_add') ?>
+      </a>
+    </div>
+  <?php endif; ?>
 </div>
 
 <form method="GET" class="filter-bar mb-2">
@@ -102,16 +104,20 @@ include __DIR__ . '/../../views/layouts/header.php';
                 <a href="<?= url('modules/customers/view.php?id=' . $customer['id']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_view')) ?>">
                   <?= feather_icon('eye', 14) ?>
                 </a>
-                <a href="<?= url('modules/customers/edit.php?id=' . $customer['id']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_edit')) ?>">
-                  <?= feather_icon('edit-2', 14) ?>
-                </a>
-                <form method="POST" action="<?= url('modules/customers/delete.php') ?>" style="display:inline">
-                  <?= csrf_field() ?>
-                  <input type="hidden" name="id" value="<?= (int)$customer['id'] ?>">
-                  <button type="submit" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)" data-confirm="<?= e(__('confirm_delete')) ?>" title="<?= e(__('btn_delete')) ?>">
-                    <?= feather_icon('trash-2', 14) ?>
-                  </button>
-                </form>
+                <?php if (Auth::can('customers.edit')): ?>
+                  <a href="<?= url('modules/customers/edit.php?id=' . $customer['id']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_edit')) ?>">
+                    <?= feather_icon('edit-2', 14) ?>
+                  </a>
+                <?php endif; ?>
+                <?php if (Auth::can('customers.delete')): ?>
+                  <form method="POST" action="<?= url('modules/customers/delete.php') ?>" style="display:inline">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="id" value="<?= (int)$customer['id'] ?>">
+                    <button type="submit" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)" data-confirm="<?= e(__('confirm_delete')) ?>" title="<?= e(__('btn_delete')) ?>">
+                      <?= feather_icon('trash-2', 14) ?>
+                    </button>
+                  </form>
+                <?php endif; ?>
               </td>
             </tr>
           <?php endforeach; ?>

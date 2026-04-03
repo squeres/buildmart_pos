@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
-Auth::requirePerm('shifts');
+Auth::requirePerm('shifts.open');
 
 $pageTitle   = __('shift_open');
 $breadcrumbs = [[__('shift_title'), url('modules/shifts/')], [$pageTitle, null]];

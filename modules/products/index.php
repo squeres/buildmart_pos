@@ -181,20 +181,24 @@ include __DIR__ . '/../../views/layouts/header.php';
 <div class="page-header">
   <h1 class="page-heading"><?= __('prod_title') ?></h1>
   <div class="page-actions">
-    <?php if (in_array(Auth::role(), ['admin', 'manager'])): ?>
+    <?php if (Auth::can('products.import')): ?>
       <a href="<?= url('modules/products/import.php') ?>" class="btn btn-ghost">
         <?= feather_icon('upload', 14) ?> <?= __('prod_import') ?>
-      </a>
-      <a href="<?= url('modules/products/export.php') ?>" class="btn btn-ghost">
-        <?= feather_icon('download', 14) ?> <?= __('btn_export') ?>
       </a>
       <a href="<?= url('modules/products/template.php') ?>" class="btn btn-ghost">
         <?= feather_icon('file-text', 14) ?> <?= __('prod_template') ?>
       </a>
     <?php endif; ?>
-    <a href="<?= url('modules/products/add.php') ?>" class="btn btn-primary">
-      <?= feather_icon('plus', 15) ?> <?= __('prod_add') ?>
-    </a>
+    <?php if (Auth::can('products.export')): ?>
+      <a href="<?= url('modules/products/export.php') ?>" class="btn btn-ghost">
+        <?= feather_icon('download', 14) ?> <?= __('btn_export') ?>
+      </a>
+    <?php endif; ?>
+    <?php if (Auth::can('products.create')): ?>
+      <a href="<?= url('modules/products/add.php') ?>" class="btn btn-primary">
+        <?= feather_icon('plus', 15) ?> <?= __('prod_add') ?>
+      </a>
+    <?php endif; ?>
     <button type="button" class="btn btn-ghost" id="productsViewConfigBtn">
       <?= feather_icon('sliders', 15) ?> <?= __('ui_configure_view') ?>
     </button>
@@ -318,38 +322,42 @@ include __DIR__ . '/../../views/layouts/header.php';
                 <td class="col-num fw-600"><?= $priceValue > 0 ? money($priceValue) : '-' ?></td>
               <?php elseif ($column === 'actions'): ?>
                 <td class="col-actions">
-                  <a href="<?= url('modules/products/edit.php?id='.$p['id']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_edit') ?>">
-                    <?= feather_icon('edit-2', 14) ?>
-                  </a>
+                  <?php if (Auth::can('products.edit')): ?>
+                    <a href="<?= url('modules/products/edit.php?id='.$p['id']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_edit') ?>">
+                      <?= feather_icon('edit-2', 14) ?>
+                    </a>
+                  <?php endif; ?>
                   <a href="<?= url('modules/inventory/history.php?product_id='.$p['id']) ?>"
                      class="btn btn-sm btn-ghost"
                      title="<?= __('inv_history') ?>">
                     <?= feather_icon('clock', 14) ?>
                   </a>
-                  <form method="POST" action="<?= url('modules/products/toggle_active.php') ?>" style="display:inline">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
-                    <input type="hidden" name="active" value="<?= $p['is_active'] ? 0 : 1 ?>">
-                    <input type="hidden" name="return_to" value="<?= e($currentListUrl) ?>">
-                    <button type="submit"
-                            class="btn btn-sm btn-ghost btn-icon"
-                            title="<?= $p['is_active'] ? __('prod_deactivate') : __('prod_restore') ?>"
-                            data-confirm="<?= $p['is_active'] ? __('prod_confirm_deactivate') : __('prod_confirm_restore') ?>">
-                      <?= $p['is_active'] ? feather_icon('archive', 14) : feather_icon('rotate-ccw', 14) ?>
-                    </button>
-                  </form>
-                  <?php if (!(int)$p['has_moves']): ?>
-                  <form method="POST" action="<?= url('modules/products/delete.php') ?>" style="display:inline">
-                    <?= csrf_field() ?>
-                    <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
-                    <input type="hidden" name="return_to" value="<?= e($currentListUrl) ?>">
-                    <button type="submit"
-                            class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
-                            title="<?= __('btn_delete') ?>"
-                            data-confirm="<?= __('confirm_delete') ?>">
-                      <?= feather_icon('trash-2', 14) ?>
-                    </button>
-                  </form>
+                  <?php if (Auth::can('products.edit')): ?>
+                    <form method="POST" action="<?= url('modules/products/toggle_active.php') ?>" style="display:inline">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                      <input type="hidden" name="active" value="<?= $p['is_active'] ? 0 : 1 ?>">
+                      <input type="hidden" name="return_to" value="<?= e($currentListUrl) ?>">
+                      <button type="submit"
+                              class="btn btn-sm btn-ghost btn-icon"
+                              title="<?= $p['is_active'] ? __('prod_deactivate') : __('prod_restore') ?>"
+                              data-confirm="<?= $p['is_active'] ? __('prod_confirm_deactivate') : __('prod_confirm_restore') ?>">
+                        <?= $p['is_active'] ? feather_icon('archive', 14) : feather_icon('rotate-ccw', 14) ?>
+                      </button>
+                    </form>
+                  <?php endif; ?>
+                  <?php if (Auth::can('products.delete') && !(int)$p['has_moves']): ?>
+                    <form method="POST" action="<?= url('modules/products/delete.php') ?>" style="display:inline">
+                      <?= csrf_field() ?>
+                      <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                      <input type="hidden" name="return_to" value="<?= e($currentListUrl) ?>">
+                      <button type="submit"
+                              class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
+                              title="<?= __('btn_delete') ?>"
+                              data-confirm="<?= __('confirm_delete') ?>">
+                        <?= feather_icon('trash-2', 14) ?>
+                      </button>
+                    </form>
                   <?php endif; ?>
                 </td>
               <?php endif; ?>

@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../core/bootstrap.php';
 
 Auth::requireLogin();
-Auth::requirePerm('products');
+Auth::requirePerm('products.delete');
 
 if (!is_post() || !csrf_verify()) {
     flash_error(__('err_csrf'));

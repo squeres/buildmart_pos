@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('sales');
+Auth::requirePerm('sales.invoice');
 
 if (!is_post() || !csrf_verify()) {
     flash_error(_r('err_csrf'));

@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 
 Auth::requireLogin();
-Auth::requirePerm('shifts');
+Auth::requirePerm('shifts.extend');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['success' => false, 'message' => 'Bad request'], 405);

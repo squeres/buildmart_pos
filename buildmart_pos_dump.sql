@@ -1066,6 +1066,33 @@ LOCK TABLES `warehouse_ui_settings` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `user_permission_overrides`
+--
+
+DROP TABLE IF EXISTS `user_permission_overrides`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `user_permission_overrides` (
+  `user_id` int unsigned NOT NULL,
+  `permission_key` varchar(80) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `mode` enum('allow','deny') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'allow',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`,`permission_key`),
+  CONSTRAINT `fk_user_permission_overrides_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `user_permission_overrides`
+--
+
+LOCK TABLES `user_permission_overrides` WRITE;
+/*!40000 ALTER TABLE `user_permission_overrides` DISABLE KEYS */;
+/*!40000 ALTER TABLE `user_permission_overrides` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `warehouse_user_access`
 --
 

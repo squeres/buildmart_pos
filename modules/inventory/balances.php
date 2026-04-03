@@ -84,9 +84,11 @@ include __DIR__ . '/../../views/layouts/header.php';
 <div class="page-header">
   <h1 class="page-heading"><?= __('wh_balances') ?></h1>
   <div class="page-actions">
+    <?php if (Auth::can('transfers.create')): ?>
     <a href="<?= url('modules/transfers/create.php') ?>" class="btn btn-secondary">
       <?= feather_icon('shuffle', 14) ?> <?= __('tr_create') ?>
     </a>
+    <?php endif; ?>
   </div>
 </div>
 

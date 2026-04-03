@@ -6,7 +6,7 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
-Auth::requirePerm('inventory');
+Auth::requirePerm('suppliers');
 
 $pageTitle   = __('sup_title');
 $breadcrumbs = [[$pageTitle, null]];

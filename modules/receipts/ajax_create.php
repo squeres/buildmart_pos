@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('inventory');
+Auth::requirePerm('receipts');
 
 header('Content-Type: application/json; charset=utf-8');
 

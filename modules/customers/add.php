@@ -2,10 +2,10 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
-Auth::requirePerm('customers');
 
 $id = (int)($_GET['id'] ?? 0);
 $isEdit = $id > 0;
+Auth::requirePerm($isEdit ? 'customers.edit' : 'customers.create');
 $cust = $isEdit ? Database::row("SELECT * FROM customers WHERE id=? AND id!=1", [$id]) : null;
 
 if ($isEdit && !$cust) {

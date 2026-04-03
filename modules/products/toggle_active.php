@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../core/bootstrap.php';
 
 Auth::requireLogin();
-Auth::requirePerm('products');
+Auth::requirePerm('products.edit');
 
 $returnTo = (string)($_POST['return_to'] ?? '/modules/products/');
 if (!str_starts_with($returnTo, '/modules/products/')) {

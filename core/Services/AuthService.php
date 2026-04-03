@@ -14,7 +14,7 @@ final class AuthService
 
     public static function getUserForSession(int $userId): ?array
     {
-        return Database::row(
+        $user = Database::row(
             'SELECT u.*, r.slug AS role_slug, r.name AS role_name, r.permissions
              FROM users u
              JOIN roles r ON r.id = u.role_id
@@ -22,6 +22,12 @@ final class AuthService
              LIMIT 1',
             [$userId]
         );
+
+        if ($user) {
+            $user['permission_overrides'] = self::permissionOverrideMapForUser((int)$user['id']);
+        }
+
+        return $user;
     }
 
     /**
@@ -111,6 +117,88 @@ final class AuthService
     public static function hasPinHashColumn(): bool
     {
         return function_exists('shift_schema_has_column') && shift_schema_has_column('users', 'pin_hash');
+    }
+
+    public static function permissionOverridesTableReady(): bool
+    {
+        return function_exists('shift_schema_has_table') && shift_schema_has_table('user_permission_overrides');
+    }
+
+    public static function permissionOverrideModesForUser(int $userId): array
+    {
+        if ($userId <= 0 || !self::permissionOverridesTableReady()) {
+            return [];
+        }
+
+        $rows = Database::all(
+            'SELECT permission_key, mode
+             FROM user_permission_overrides
+             WHERE user_id = ?
+             ORDER BY permission_key',
+            [$userId]
+        );
+
+        $modes = [];
+        foreach ($rows as $row) {
+            $permissionKey = (string)($row['permission_key'] ?? '');
+            if (!permission_is_known($permissionKey)) {
+                continue;
+            }
+            $mode = permission_normalize_mode($row['mode'] ?? '');
+            if ($mode === 'inherit') {
+                continue;
+            }
+            $modes[$permissionKey] = $mode;
+        }
+
+        return $modes;
+    }
+
+    public static function permissionOverrideMapForUser(int $userId): array
+    {
+        $map = [];
+        foreach (self::permissionOverrideModesForUser($userId) as $permissionKey => $mode) {
+            $resolved = permission_mode_to_bool($mode);
+            if ($resolved === null) {
+                continue;
+            }
+            $map[$permissionKey] = $resolved;
+        }
+
+        return $map;
+    }
+
+    public static function savePermissionOverrideModes(int $userId, array $modes): void
+    {
+        if ($userId <= 0 || !self::permissionOverridesTableReady()) {
+            return;
+        }
+
+        $normalizedModes = [];
+        foreach ($modes as $permissionKey => $mode) {
+            $permissionKey = trim((string)$permissionKey);
+            if (!permission_is_known($permissionKey)) {
+                continue;
+            }
+
+            $normalizedMode = permission_normalize_mode($mode);
+            if ($normalizedMode === 'inherit') {
+                continue;
+            }
+
+            $normalizedModes[$permissionKey] = $normalizedMode;
+        }
+
+        Database::transaction(static function () use ($userId, $normalizedModes): void {
+            Database::exec('DELETE FROM user_permission_overrides WHERE user_id = ?', [$userId]);
+
+            foreach ($normalizedModes as $permissionKey => $mode) {
+                Database::insert(
+                    'INSERT INTO user_permission_overrides (user_id, permission_key, mode) VALUES (?, ?, ?)',
+                    [$userId, $permissionKey, $mode]
+                );
+            }
+        });
     }
 
     public static function assertPinAvailable(?string $pin, int $excludeUserId = 0): void

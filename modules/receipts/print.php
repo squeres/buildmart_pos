@@ -8,7 +8,7 @@
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('inventory');
+Auth::requirePerm('receipts');
 
 $id = (int)($_GET['id'] ?? 0);
 if (!$id) {

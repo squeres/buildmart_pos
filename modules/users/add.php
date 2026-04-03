@@ -9,6 +9,12 @@ $id = (int)($_GET['id'] ?? 0);
 $isEdit = $id > 0;
 $user = $isEdit ? Database::row('SELECT * FROM users WHERE id=?', [$id]) : null;
 $hasLanguageSetAt = shift_schema_has_column('users', 'language_set_at');
+$permissionStorageReady = AuthService::permissionOverridesTableReady();
+$roles = Database::all('SELECT id, slug, name, permissions FROM roles ORDER BY id');
+$rolesById = [];
+foreach ($roles as $roleRow) {
+    $rolesById[(int)$roleRow['id']] = $roleRow;
+}
 
 if ($isEdit && !$user) {
     flash_error(_r('err_not_found'));
@@ -35,6 +41,11 @@ $f['pin'] = '';
 $f['language_preference'] = $isEdit
     ? (($hasLanguageSetAt && empty($user['language_set_at'])) ? '' : (Lang::normalizeCode($user['language'] ?? null) ?? $defaultLanguage))
     : '';
+$permissionModes = $isEdit && $permissionStorageReady
+    ? AuthService::permissionOverrideModesForUser($id)
+    : [];
+$selectedRole = $rolesById[(int)$f['role_id']] ?? null;
+$canCustomizePermissions = $selectedRole && permission_role_supports_custom_overrides($selectedRole);
 
 if (is_post()) {
     if (!csrf_verify()) {
@@ -65,8 +76,22 @@ if (is_post()) {
         'pin' => sanitize($_POST['pin'] ?? ''),
         'default_warehouse_id' => (int)($_POST['default_warehouse_id'] ?? $defaultWarehouseId),
     ];
+    $permissionModes = [];
+    foreach ((array)($_POST['permission_mode'] ?? []) as $permissionKey => $mode) {
+        $permissionKey = trim((string)$permissionKey);
+        if (!permission_is_known($permissionKey)) {
+            continue;
+        }
+
+        $normalizedMode = permission_normalize_mode($mode);
+        if ($normalizedMode !== 'inherit') {
+            $permissionModes[$permissionKey] = $normalizedMode;
+        }
+    }
     $pass = $_POST['password'] ?? '';
     $pass2 = $_POST['password_confirm'] ?? '';
+    $selectedRole = $rolesById[$f['role_id']] ?? null;
+    $canCustomizePermissions = $selectedRole && permission_role_supports_custom_overrides($selectedRole);
 
     if ($f['name'] === '') {
         $errors['name'] = _r('lbl_required');
@@ -89,6 +114,18 @@ if (is_post()) {
     $emailExists = Database::value('SELECT id FROM users WHERE email=? AND id!=?', [$f['email'], $id]);
     if ($emailExists) {
         $errors['email'] = _r('auth_email_in_use');
+    }
+
+    if (!isset($rolesById[$f['role_id']])) {
+        $errors['role_id'] = _r('lbl_required');
+    }
+
+    if (!$permissionStorageReady && $permissionModes) {
+        $errors['permissions'] = _r('usr_permissions_storage_missing');
+    }
+
+    if (!$canCustomizePermissions && $permissionModes) {
+        $errors['permissions'] = _r('usr_permissions_admin_locked');
     }
 
     if (!$errors) {
@@ -190,6 +227,8 @@ if (is_post()) {
             );
         }
 
+        AuthService::savePermissionOverrideModes($userId, $canCustomizePermissions ? $permissionModes : []);
+
         if ($isEdit && $id === Auth::id()) {
             Auth::refreshCurrentUser();
         }
@@ -199,11 +238,12 @@ if (is_post()) {
     }
 }
 
-$roles = Database::all('SELECT id, name FROM roles ORDER BY id');
 $warehouses = Database::all('SELECT id, name FROM warehouses WHERE is_active=1 ORDER BY name');
 $userWhIds = $isEdit
     ? array_column(Database::all('SELECT warehouse_id FROM warehouse_user_access WHERE user_id=?', [$id]), 'warehouse_id')
     : array_column($warehouses, 'id');
+$permissionGroups = permission_groups();
+$permissionModeOptions = permission_override_modes();
 
 include __DIR__ . '/../../views/layouts/header.php';
 ?>
@@ -212,7 +252,7 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= $isEdit ? __('usr_edit') : __('usr_add') ?></h1>
 </div>
 
-<div style="max-width:760px">
+<div style="max-width:980px">
   <form method="POST">
     <?= csrf_field() ?>
 
@@ -262,13 +302,18 @@ include __DIR__ . '/../../views/layouts/header.php';
         <div class="form-row form-row-3">
           <div class="form-group">
             <label class="form-label"><?= __('lbl_role') ?></label>
-            <select name="role_id" class="form-control">
+            <select name="role_id" class="form-control" id="roleIdSelect">
               <?php foreach ($roles as $role): ?>
-                <option value="<?= (int)$role['id'] ?>" <?= (int)$f['role_id'] === (int)$role['id'] ? 'selected' : '' ?>>
+                <option
+                  value="<?= (int)$role['id'] ?>"
+                  data-customizable="<?= permission_role_supports_custom_overrides($role) ? '1' : '0' ?>"
+                  <?= (int)$f['role_id'] === (int)$role['id'] ? 'selected' : '' ?>
+                >
                   <?= e($role['name']) ?>
                 </option>
               <?php endforeach; ?>
             </select>
+            <?php if (isset($errors['role_id'])): ?><div class="form-error"><?= e($errors['role_id']) ?></div><?php endif; ?>
           </div>
 
           <div class="form-group">
@@ -299,6 +344,66 @@ include __DIR__ . '/../../views/layouts/header.php';
           <input type="checkbox" name="is_active" value="1" <?= $f['is_active'] ? 'checked' : '' ?>>
           <span class="form-check-label"><?= __('lbl_active') ?></span>
         </label>
+      </div>
+    </div>
+
+    <div class="card mt-2" id="permissionOverridesCard">
+      <div class="card-header">
+        <span class="card-title"><?= __('usr_permissions_heading') ?></span>
+      </div>
+      <div class="card-body">
+        <p class="form-hint" style="margin-top:0;margin-bottom:14px"><?= __('usr_permissions_hint') ?></p>
+
+        <?php if (isset($errors['permissions'])): ?>
+          <div class="flash flash-error" style="margin:0 0 14px">
+            <?= feather_icon('alert-circle', 15) ?>
+            <span><?= e($errors['permissions']) ?></span>
+          </div>
+        <?php endif; ?>
+
+        <?php if (!$permissionStorageReady): ?>
+          <div class="flash flash-warning" style="margin:0">
+            <?= feather_icon('alert-triangle', 15) ?>
+            <span><?= __('usr_permissions_storage_missing') ?></span>
+          </div>
+        <?php else: ?>
+          <div id="permissionOverridesLocked" style="<?= $canCustomizePermissions ? 'display:none' : '' ?>">
+            <div class="flash flash-info" style="margin:0">
+              <?= feather_icon('shield', 15) ?>
+              <span><?= __('usr_permissions_admin_locked') ?></span>
+            </div>
+          </div>
+
+          <div id="permissionOverridesEditor" style="<?= $canCustomizePermissions ? '' : 'display:none' ?>">
+            <div class="permission-matrix">
+              <?php foreach ($permissionGroups as $group): ?>
+                <section class="permission-group-card">
+                  <div class="permission-group-heading"><?= __($group['group_key']) ?></div>
+                  <div class="permission-group-table">
+                    <?php foreach ($group['items'] as $item): ?>
+                      <?php
+                        $permissionKey = (string)$item['key'];
+                        $selectedMode = $permissionModes[$permissionKey] ?? 'inherit';
+                      ?>
+                      <div class="permission-row">
+                        <div class="permission-row-label"><?= e(permission_label($permissionKey)) ?></div>
+                        <div class="permission-row-control">
+                          <select name="permission_mode[<?= e($permissionKey) ?>]" class="form-control">
+                            <?php foreach ($permissionModeOptions as $modeValue => $modeLabel): ?>
+                              <option value="<?= e($modeValue) ?>" <?= $selectedMode === $modeValue ? 'selected' : '' ?>>
+                                <?= e($modeLabel) ?>
+                              </option>
+                            <?php endforeach; ?>
+                          </select>
+                        </div>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
+                </section>
+              <?php endforeach; ?>
+            </div>
+          </div>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -339,3 +444,26 @@ include __DIR__ . '/../../views/layouts/header.php';
 </div>
 
 <?php include __DIR__ . '/../../views/layouts/footer.php'; ?>
+<script>
+  (function () {
+    const roleSelect = document.getElementById('roleIdSelect');
+    const locked = document.getElementById('permissionOverridesLocked');
+    const editor = document.getElementById('permissionOverridesEditor');
+
+    function syncPermissionEditor() {
+      if (!roleSelect || !locked || !editor) {
+        return;
+      }
+
+      const selected = roleSelect.options[roleSelect.selectedIndex];
+      const customizable = selected && selected.dataset.customizable === '1';
+      locked.style.display = customizable ? 'none' : '';
+      editor.style.display = customizable ? '' : 'none';
+    }
+
+    if (roleSelect) {
+      roleSelect.addEventListener('change', syncPermissionEditor);
+      syncPermissionEditor();
+    }
+  })();
+</script>

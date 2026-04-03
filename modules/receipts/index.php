@@ -4,12 +4,12 @@
  * modules/receipts/index.php
  *
  * Shows all incoming goods receipt documents with search/filter.
- * Users with 'inventory' permission may access this page.
+ * Users with 'receipts' permission may access this page.
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
-Auth::requirePerm('inventory');
+Auth::requirePerm('receipts');
 
 $pageTitle   = __('gr_title');
 $breadcrumbs = [[$pageTitle, null]];
@@ -110,7 +110,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     <h1 class="page-heading"><?= __('gr_title') ?></h1>
   </div>
   <div class="page-actions">
-    <?php if (Auth::can('inventory')): ?>
+    <?php if (Auth::can('receipts')): ?>
     <a href="<?= url('modules/receipts/edit.php') ?>" class="btn btn-primary">
       <?= feather_icon('plus', 15) ?> <?= __('gr_new') ?>
     </a>

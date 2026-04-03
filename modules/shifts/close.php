@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
-Auth::requirePerm('shifts');
+Auth::requirePerm('shifts.close');
 
 $id    = (int)($_GET['id'] ?? 0);
 $shift = Database::row("SELECT s.*,u.name AS cashier FROM shifts s JOIN users u ON u.id=s.user_id WHERE s.id=? AND s.status='open'", [$id]);

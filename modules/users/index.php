@@ -7,6 +7,7 @@ Auth::requirePerm('all');  // Admin only
 $pageTitle   = __('usr_title');
 $breadcrumbs = [[$pageTitle, null]];
 $hasLanguageSetAt = shift_schema_has_column('users', 'language_set_at');
+$permissionStorageReady = AuthService::permissionOverridesTableReady();
 
 $users = Database::all(
     "SELECT u.*,
@@ -19,6 +20,13 @@ $users = Database::all(
      LEFT JOIN shifts s ON s.user_id = u.id AND s.status = 'open'
      ORDER BY u.name"
 );
+
+$userPermissionOverrideCounts = [];
+if ($permissionStorageReady) {
+    foreach (Database::all('SELECT user_id, COUNT(*) AS cnt FROM user_permission_overrides GROUP BY user_id') as $row) {
+        $userPermissionOverrideCounts[(int)$row['user_id']] = (int)$row['cnt'];
+    }
+}
 
 include __DIR__ . '/../../views/layouts/header.php';
 ?>
@@ -60,6 +68,11 @@ include __DIR__ . '/../../views/layouts/header.php';
             <span class="badge badge-<?= $user['role_slug'] === 'admin' ? 'danger' : ($user['role_slug'] === 'manager' ? 'warning' : 'info') ?>">
               <?= e($user['role_name']) ?>
             </span>
+            <?php if (($userPermissionOverrideCounts[(int)$user['id']] ?? 0) > 0): ?>
+              <div style="margin-top:6px">
+                <span class="badge badge-secondary"><?= __('usr_custom_access_badge') ?></span>
+              </div>
+            <?php endif; ?>
           </td>
           <td>
             <?php if ($hasLanguageSetAt && empty($user['language_set_at'])): ?>

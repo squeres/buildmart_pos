@@ -2,10 +2,10 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
-Auth::requirePerm('products');
 
 $id     = (int)($_GET['id'] ?? 0);
 $isEdit = $id > 0;
+Auth::requirePerm($isEdit ? 'products.edit' : 'products.create');
 $prod   = $isEdit ? Database::row("SELECT * FROM products WHERE id=?", [$id]) : null;
 if ($prod) {
     $prod['stock_qty'] = InventoryService::getTotalStock($id);

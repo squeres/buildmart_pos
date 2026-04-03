@@ -12,6 +12,7 @@ require_once __DIR__ . '/Services/InventoryService.php';
 require_once __DIR__ . '/Services/ShiftService.php';
 require_once __DIR__ . '/Services/SaleService.php';
 require_once __DIR__ . '/Lang.php';
+require_once __DIR__ . '/Permissions.php';
 require_once __DIR__ . '/Auth.php';
 require_once __DIR__ . '/helpers.php';
 require_once __DIR__ . '/shift_helpers.php';

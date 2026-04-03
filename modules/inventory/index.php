@@ -121,9 +121,15 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= __('inv_title') ?></h1>
   <div class="page-actions">
     <a href="<?= url('modules/inventory/needs.php') ?>" class="btn btn-ghost"><?= feather_icon('alert-triangle',15) ?> <?= __('repl_needs_title') ?></a>
-    <a href="<?= url('modules/inventory/receive.php') ?>"  class="btn btn-primary"><?= feather_icon('plus',15) ?> <?= __('inv_receive') ?></a>
-    <a href="<?= url('modules/inventory/adjust.php') ?>"   class="btn btn-secondary"><?= feather_icon('sliders',15) ?> <?= __('inv_adjust') ?></a>
-    <a href="<?= url('modules/inventory/writeoff.php') ?>" class="btn btn-secondary"><?= feather_icon('trash-2',15) ?> <?= __('inv_writeoff') ?></a>
+    <?php if (Auth::can('inventory.receive')): ?>
+      <a href="<?= url('modules/inventory/receive.php') ?>"  class="btn btn-primary"><?= feather_icon('plus',15) ?> <?= __('inv_receive') ?></a>
+    <?php endif; ?>
+    <?php if (Auth::can('inventory.adjust')): ?>
+      <a href="<?= url('modules/inventory/adjust.php') ?>"   class="btn btn-secondary"><?= feather_icon('sliders',15) ?> <?= __('inv_adjust') ?></a>
+    <?php endif; ?>
+    <?php if (Auth::can('inventory.writeoff')): ?>
+      <a href="<?= url('modules/inventory/writeoff.php') ?>" class="btn btn-secondary"><?= feather_icon('trash-2',15) ?> <?= __('inv_writeoff') ?></a>
+    <?php endif; ?>
     <a href="<?= url('modules/inventory/history.php') ?>"  class="btn btn-ghost"><?= feather_icon('clock',15) ?> <?= __('inv_history') ?></a>
   </div>
 </div>
@@ -240,7 +246,7 @@ include __DIR__ . '/../../views/layouts/header.php';
               <?php endif; ?>
             </td>
             <td class="col-actions">
-              <?php if (Auth::can('inventory')): ?>
+              <?php if (Auth::can('inventory.adjust')): ?>
                 <button
                   type="button"
                   class="btn btn-sm btn-secondary js-edit-stock"
@@ -265,8 +271,12 @@ include __DIR__ . '/../../views/layouts/header.php';
                 </button>
               <?php endif; ?>
 
-              <a href="<?= url('modules/inventory/receive.php?product_id='.$p['id']) ?>" class="btn btn-sm btn-ghost" title="<?= __('inv_receive') ?>"><?= feather_icon('plus-circle',14) ?></a>
-              <a href="<?= url('modules/inventory/adjust.php?product_id='.$p['id']) ?>" class="btn btn-sm btn-ghost" title="<?= __('inv_adjust') ?>"><?= feather_icon('sliders',14) ?></a>
+              <?php if (Auth::can('inventory.receive')): ?>
+                <a href="<?= url('modules/inventory/receive.php?product_id='.$p['id']) ?>" class="btn btn-sm btn-ghost" title="<?= __('inv_receive') ?>"><?= feather_icon('plus-circle',14) ?></a>
+              <?php endif; ?>
+              <?php if (Auth::can('inventory.adjust')): ?>
+                <a href="<?= url('modules/inventory/adjust.php?product_id='.$p['id']) ?>" class="btn btn-sm btn-ghost" title="<?= __('inv_adjust') ?>"><?= feather_icon('sliders',14) ?></a>
+              <?php endif; ?>
               <a href="<?= url('modules/inventory/history.php?product_id='.$p['id']) ?>" class="btn btn-sm btn-ghost" title="<?= __('inv_history') ?>"><?= feather_icon('clock',14) ?></a>
             </td>
           </tr>

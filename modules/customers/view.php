@@ -38,9 +38,11 @@ include __DIR__ . '/../../views/layouts/header.php';
       </span>
     </div>
   </div>
-  <a href="<?= url('modules/customers/edit.php?id=' . $id) ?>" class="btn btn-secondary">
-    <?= feather_icon('edit-2', 15) ?> <?= __('btn_edit') ?>
-  </a>
+  <?php if (Auth::can('customers.edit')): ?>
+    <a href="<?= url('modules/customers/edit.php?id=' . $id) ?>" class="btn btn-secondary">
+      <?= feather_icon('edit-2', 15) ?> <?= __('btn_edit') ?>
+    </a>
+  <?php endif; ?>
 </div>
 
 <div style="display:grid;grid-template-columns:340px 1fr;gap:16px;align-items:start">

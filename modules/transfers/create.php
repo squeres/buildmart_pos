@@ -6,7 +6,7 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 require_once __DIR__ . '/../../views/partials/icons.php';
 Auth::requireLogin();
-Auth::requirePerm('transfers');
+Auth::requirePerm('transfers.create');
 
 $pageTitle   = __('tr_create');
 $breadcrumbs = [[__('tr_title'), url('modules/transfers/')], [$pageTitle, null]];

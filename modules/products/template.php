@@ -5,13 +5,7 @@
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('products');
-
-if (!in_array(Auth::role(), ['admin', 'manager'])) {
-    http_response_code(403);
-    include ROOT_PATH . '/views/partials/403.php';
-    exit;
-}
+Auth::requirePerm('products.import');
 
 $autoload = ROOT_PATH . '/vendor/autoload.php';
 if (!file_exists($autoload)) {

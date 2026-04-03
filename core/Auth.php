@@ -37,7 +37,8 @@ class Auth
     public static function can(string $perm): bool
     {
         $perms = $_SESSION['user']['permissions'] ?? [];
-        return !empty($perms['all']) || !empty($perms[$perm]);
+        $overrides = $_SESSION['user']['permission_overrides'] ?? [];
+        return permission_resolve_for_map($perms, $overrides, $perm);
     }
 
     /** Check whether current user is manager or admin. */
@@ -160,6 +161,7 @@ class Auth
             'role_slug'            => $user['role_slug'],
             'role_name'            => $user['role_name'],
             'permissions'          => $perms,
+            'permission_overrides' => is_array($user['permission_overrides'] ?? null) ? $user['permission_overrides'] : [],
             'language'             => $profileLanguage,
             'language_set_at'      => $user['language_set_at'] ?? null,
             'default_warehouse_id' => (int)($user['default_warehouse_id'] ?? 1),

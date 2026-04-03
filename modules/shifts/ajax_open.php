@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 
 Auth::requireLogin();
-Auth::requirePerm('shifts');
+Auth::requirePerm('shifts.open');
 
 if (!is_ajax() || $_SERVER['REQUEST_METHOD'] !== 'POST') {
     json_response(['success' => false, 'message' => 'Bad request'], 400);

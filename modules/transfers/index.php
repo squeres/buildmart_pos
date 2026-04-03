@@ -55,11 +55,13 @@ include __DIR__ . '/../../views/layouts/header.php';
 
 <div class="page-header">
   <h1 class="page-heading"><?= __('tr_title') ?></h1>
-  <div class="page-actions">
-    <a href="<?= url('modules/transfers/create.php') ?>" class="btn btn-primary">
-      <?= feather_icon('plus', 15) ?> <?= __('tr_create') ?>
-    </a>
-  </div>
+  <?php if (Auth::can('transfers.create')): ?>
+    <div class="page-actions">
+      <a href="<?= url('modules/transfers/create.php') ?>" class="btn btn-primary">
+        <?= feather_icon('plus', 15) ?> <?= __('tr_create') ?>
+      </a>
+    </div>
+  <?php endif; ?>
 </div>
 
 <form method="GET" class="filter-bar mb-2">

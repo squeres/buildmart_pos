@@ -10,7 +10,7 @@
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('inventory');
+Auth::requirePerm('receipts');
 
 if (!is_post()) { redirect('/modules/receipts/'); }
 if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect('/modules/receipts/'); }

@@ -38,6 +38,8 @@ $customerSnapshot = sale_customer_snapshot($sale, [
 ]);
 $saleInvoice = sale_invoice_for_sale($id);
 $invoiceUrls = $saleInvoice ? sale_invoice_urls((int)$saleInvoice['id']) : null;
+$canVoidSale = Auth::can('sales.void');
+$canCreateInvoice = Auth::can('sales.invoice');
 $saleStatusKey = 'sales_status_' . $sale['status'];
 $saleStatusLabel = __($saleStatusKey);
 if ($saleStatusLabel === $saleStatusKey) {
@@ -87,7 +89,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       <a href="<?= e($invoiceUrls['excel_url']) ?>" class="btn btn-ghost">
         <?= feather_icon('download', 15) ?> Excel
       </a>
-    <?php elseif ($sale['status'] === 'completed'): ?>
+    <?php elseif ($sale['status'] === 'completed' && $canCreateInvoice): ?>
       <button type="button"
               class="btn btn-secondary"
               data-open-sale-invoice-modal
@@ -102,7 +104,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </button>
     <?php endif; ?>
 
-    <?php if ($sale['status'] === 'completed'): ?>
+    <?php if ($sale['status'] === 'completed' && $canVoidSale): ?>
       <form method="POST" action="<?= url('modules/sales/void.php') ?>" style="display:inline">
         <?= csrf_field() ?>
         <input type="hidden" name="id" value="<?= (int)$id ?>">

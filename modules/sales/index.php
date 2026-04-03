@@ -51,6 +51,8 @@ $statusClasses = [
     'refunded' => 'warning',
     'partial_refund' => 'warning',
 ];
+$canVoidSales = Auth::can('sales.void');
+$canCreateInvoices = Auth::can('sales.invoice');
 
 $baseWhere = [];
 $baseParams = [];
@@ -346,7 +348,7 @@ $contextWarehouseName = $selectedWarehouse
                     <a href="<?= e($invoiceUrls['view_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('sales_open_invoice')) ?>"><?= feather_icon('file-text', 14) ?></a>
                     <a href="<?= e($invoiceUrls['print_url']) ?>" target="_blank" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_print')) ?> <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('printer', 14) ?></a>
                     <a href="<?= e($invoiceUrls['excel_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_export')) ?> <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('download', 14) ?></a>
-                  <?php elseif ($sale['status'] === 'completed'): ?>
+                  <?php elseif ($sale['status'] === 'completed' && $canCreateInvoices): ?>
                     <button type="button"
                             class="btn btn-sm btn-ghost btn-icon"
                             title="<?= e(__('sales_create_invoice')) ?>"
@@ -359,7 +361,7 @@ $contextWarehouseName = $selectedWarehouse
                             data-invoice-date="<?= e(substr((string)$sale['created_at'], 0, 10)) ?>"
                     ><?= feather_icon('file-plus', 14) ?></button>
                   <?php endif; ?>
-                  <?php if ($sale['status'] === 'completed'): ?>
+                  <?php if ($sale['status'] === 'completed' && $canVoidSales): ?>
                     <form method="POST" action="<?= url('modules/sales/void.php') ?>" style="display:inline">
                       <?= csrf_field() ?>
                       <input type="hidden" name="id" value="<?= (int)$sale['id'] ?>">
@@ -424,7 +426,7 @@ $contextWarehouseName = $selectedWarehouse
                     <a href="<?= e($invoiceUrls['view_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('sales_open_invoice')) ?>"><?= feather_icon('file-text', 14) ?></a>
                     <a href="<?= e($invoiceUrls['print_url']) ?>" target="_blank" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_print')) ?> <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('printer', 14) ?></a>
                     <a href="<?= e($invoiceUrls['excel_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_export')) ?> <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('download', 14) ?></a>
-                  <?php elseif ($sale['status'] === 'completed'): ?>
+                  <?php elseif ($sale['status'] === 'completed' && $canCreateInvoices): ?>
                     <button type="button"
                             class="btn btn-sm btn-ghost btn-icon"
                             title="<?= e(__('sales_create_invoice')) ?>"
@@ -437,7 +439,7 @@ $contextWarehouseName = $selectedWarehouse
                             data-invoice-date="<?= e(substr((string)$sale['created_at'], 0, 10)) ?>"
                     ><?= feather_icon('file-plus', 14) ?></button>
                   <?php endif; ?>
-                  <?php if ($sale['status'] === 'completed'): ?>
+                  <?php if ($sale['status'] === 'completed' && $canVoidSales): ?>
                     <form method="POST" action="<?= url('modules/sales/void.php') ?>" style="display:inline">
                       <?= csrf_field() ?>
                       <input type="hidden" name="id" value="<?= (int)$sale['id'] ?>">

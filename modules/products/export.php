@@ -6,14 +6,7 @@
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('products');
-
-// Только admin / manager
-if (!in_array(Auth::role(), ['admin', 'manager'])) {
-    http_response_code(403);
-    include ROOT_PATH . '/views/partials/403.php';
-    exit;
-}
+Auth::requirePerm('products.export');
 
 // Подключаем PhpSpreadsheet через Composer
 $autoload = ROOT_PATH . '/vendor/autoload.php';

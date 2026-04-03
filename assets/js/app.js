@@ -1164,7 +1164,7 @@
         dom.totalAmt.textContent = fmtMoney(totals.total);
       }
       if (dom.checkoutBtn) {
-        dom.checkoutBtn.disabled = cart.length === 0 || totals.total <= 0;
+        dom.checkoutBtn.disabled = window.POS_CAN_SELL === false || cart.length === 0 || totals.total <= 0;
       }
     }
 
@@ -1433,6 +1433,10 @@
     }
 
     function openCheckout() {
+      if (window.POS_CAN_SELL === false) {
+        showToast(lang('auth_no_permission', 'Access denied'), 'warning');
+        return;
+      }
       if (!cart.length) {
         showToast(lang('pos_cart_empty', 'Cart is empty'), 'warning');
         return;
@@ -1541,6 +1545,10 @@
     }
 
     async function processPayment() {
+      if (window.POS_CAN_SELL === false) {
+        showToast(lang('auth_no_permission', 'Access denied'), 'warning');
+        return;
+      }
       maybeResolveReceiptConflict(flattenCartLines());
       const totals = calculateTotals();
       if (!totals.lines.length || totals.total <= 0) {

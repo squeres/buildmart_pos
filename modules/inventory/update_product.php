@@ -4,7 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../core/bootstrap.php';
 
 Auth::requireLogin();
-Auth::requirePerm('inventory');
+Auth::requirePerm('inventory.adjust');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect('/modules/inventory/');

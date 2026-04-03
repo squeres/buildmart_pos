@@ -16,7 +16,19 @@ $requireShift = setting('shifts_required', '1') === '1';
 $openShift = ShiftService::getOpenShiftForUser(Auth::id());
 $openShiftSaleState = $openShift ? shift_can_sell_now($openShift) : ['ok' => true];
 $openShiftExtensionState = $openShift ? shift_can_request_extension($openShift) : ['ok' => false];
-$canOpenShift = Auth::can('shifts');
+$canOpenShift = Auth::can('shifts.open');
+$canCloseShift = Auth::can('shifts.close');
+$canRequestShiftExtension = Auth::can('shifts.extend');
+$canSell = Auth::can('pos.sell');
+
+if (!$canRequestShiftExtension) {
+    $openShiftExtensionState = [
+        'ok' => false,
+        'message' => _r('auth_no_permission'),
+        'request_options' => [],
+        'remaining_minutes' => 0,
+    ];
+}
 
 // Load categories for tabs
 $categories = Database::all(
@@ -57,7 +69,7 @@ $currencySymbol = currency_symbol();
 $taxRate        = (float)setting('default_tax_rate', 20);
 $initialShiftExtensionOptions = json_encode(array_values($openShiftExtensionState['request_options'] ?? []), JSON_UNESCAPED_UNICODE);
 $initialShiftExtensionRemaining = (int)($openShiftExtensionState['remaining_minutes'] ?? 0);
-$shiftCloseUrl = $openShift ? url('modules/shifts/close.php?id=' . (int)$openShift['id']) : '';
+$shiftCloseUrl = ($openShift && $canCloseShift) ? url('modules/shifts/close.php?id=' . (int)$openShift['id']) : '';
 $shiftExtensionUrl = 'modules/shifts/extension_request.php';
 
 $extraJs = '
@@ -75,7 +87,8 @@ window.POS_SHIFT_EXTENSION_URL = "' . addslashes($shiftExtensionUrl) . '";
 window.POS_SHIFT_CLOSE_URL = "' . addslashes($shiftCloseUrl) . '";
 window.POS_SHIFT_EXTENSION_OPTIONS = ' . $initialShiftExtensionOptions . ';
 window.POS_SHIFT_EXTENSION_REMAINING = ' . $initialShiftExtensionRemaining . ';
-window.POS_CAN_REQUEST_SHIFT_EXTENSION = ' . (!empty($openShiftExtensionState['ok']) ? 'true' : 'false') . ';
+window.POS_CAN_REQUEST_SHIFT_EXTENSION = ' . ($canRequestShiftExtension && !empty($openShiftExtensionState['ok']) ? 'true' : 'false') . ';
+window.POS_CAN_SELL = ' . ($canSell ? 'true' : 'false') . ';
 window.LANG = {
   cart_empty:           "' . _r('pos_cart_empty') . '",
   out_of_stock:         "' . _r('out_of_stock') . '",
@@ -106,6 +119,7 @@ window.LANG = {
   pos_unit_duplicate:   "' . addslashes(_r('pos_unit_duplicate')) . '",
   pos_all_units_added:  "' . addslashes(_r('pos_all_units_added')) . '",
   pos_no_shift:         "' . addslashes(_r('pos_no_shift')) . '",
+  auth_no_permission:   "' . addslashes(_r('auth_no_permission')) . '",
   pos_legal_docs_ready: "' . addslashes(_r('pos_legal_docs_ready')) . '",
   pos_customer_legal:   "' . addslashes(_r('pos_customer_legal')) . '",
   shift_opened:         "' . addslashes(_r('shift_opened')) . '",
@@ -284,10 +298,13 @@ include __DIR__ . '/../../views/layouts/header.php';
 
       <!-- Checkout button -->
       <button id="checkoutBtn" class="btn btn-primary btn-block btn-xl"
-              onclick="POS.openCheckout()" disabled>
+              onclick="POS.openCheckout()" <?= $canSell ? 'disabled' : 'disabled title="' . e(__('auth_no_permission')) . '"' ?>>
         <?= feather_icon('credit-card', 19) ?>
         <?= __('pos_checkout') ?>
       </button>
+      <?php if (!$canSell): ?>
+        <div class="form-hint" style="margin-top:10px;text-align:center"><?= __('auth_no_permission') ?></div>
+      <?php endif; ?>
     </div>
   </div>
 </div>
@@ -350,7 +367,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('paymentModal')"><?= __('btn_cancel') ?></button>
-      <button id="processPayBtn" class="btn btn-success btn-lg" onclick="POS.processPayment()">
+      <button id="processPayBtn" class="btn btn-success btn-lg" onclick="POS.processPayment()" <?= $canSell ? '' : 'disabled' ?>>
         <?= feather_icon('check-circle') ?>
         <?= __('pos_process_payment') ?>
       </button>

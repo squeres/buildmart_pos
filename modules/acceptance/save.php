@@ -14,7 +14,7 @@
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
-Auth::requirePerm('inventory');
+Auth::requirePerm('acceptance');
 
 if (!is_post()) { redirect('/modules/acceptance/'); }
 if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect('/modules/acceptance/'); }

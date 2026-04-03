@@ -22,6 +22,9 @@ $openShift = Database::row(
 );
 
 $canManageExtensions = Auth::isManagerOrAdmin() && shift_extension_schema_ready();
+$canOpenOwnShift = Auth::can('shifts.open');
+$canCloseOwnShift = Auth::can('shifts.close');
+$canRequestShiftExtension = Auth::can('shifts.extend');
 $pendingExtensionCount = $canManageExtensions
     ? (int)Database::value("SELECT COUNT(*) FROM shift_extension_requests WHERE status = 'pending'")
     : 0;
@@ -51,11 +54,11 @@ include __DIR__ . '/../../views/layouts/header.php';
         <?php endif; ?>
       </a>
     <?php endif; ?>
-    <?php if (!$openShift): ?>
+    <?php if (!$openShift && $canOpenOwnShift): ?>
       <a href="<?= url('modules/shifts/open.php') ?>" class="btn btn-primary">
         <?= feather_icon('play', 15) ?> <?= __('shift_open') ?>
       </a>
-    <?php else: ?>
+    <?php elseif ($openShift && $canCloseOwnShift): ?>
       <a href="<?= url('modules/shifts/close.php?id=' . $openShift['id']) ?>" class="btn btn-danger">
         <?= feather_icon('square', 15) ?> <?= __('shift_close') ?>
       </a>
