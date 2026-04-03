@@ -53,8 +53,8 @@ define('SESSION_LIFETIME', 28800); // 8 h
 define('ITEMS_PER_PAGE',   30);
 
 // ── Languages ───────────────────────────────────────────────────
-define('SUPPORTED_LANGS', ['en' => 'English', 'ru' => 'Русский']);
-define('DEFAULT_LANG',    'en');
+define('SUPPORTED_LANGS', ['ru' => 'Русский', 'en' => 'English']);
+define('DEFAULT_LANG',    'ru');
 
 // ── Timezone ────────────────────────────────────────────────────
 date_default_timezone_set(getenv('TZ') ?: 'Asia/Almaty');

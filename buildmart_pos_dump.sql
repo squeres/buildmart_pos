@@ -1011,7 +1011,8 @@ CREATE TABLE `users` (
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `pin` varchar(10) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Quick PIN for shift login',
   `phone` varchar(25) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `language` char(2) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'en',
+  `language` char(2) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ru',
+  `language_set_at` datetime DEFAULT NULL,
   `default_warehouse_id` smallint unsigned DEFAULT '1',
   `is_active` tinyint(1) NOT NULL DEFAULT '1',
   `must_change_password` tinyint(1) NOT NULL DEFAULT '0',
@@ -1032,7 +1033,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (5,1,'Primary Admin','admin@buildmart.local','$2y$12$W1KKWl7FdovYIdqQIxbN2utuDsTTETnN6X/lMk89.ZNVEQe2cRZfy','',NULL,'ru',1,1,0,'2026-03-19 02:48:01','2026-03-16 16:34:29','2026-03-18 21:48:01');
+INSERT INTO `users` VALUES (5,1,'Primary Admin','admin@buildmart.local','$2y$12$W1KKWl7FdovYIdqQIxbN2utuDsTTETnN6X/lMk89.ZNVEQe2cRZfy','',NULL,'ru',NULL,1,1,0,'2026-03-19 02:48:01','2026-03-16 16:34:29','2026-03-18 21:48:01');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 

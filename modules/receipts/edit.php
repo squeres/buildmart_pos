@@ -445,11 +445,11 @@ include __DIR__ . '/../../views/layouts/header.php';
       <div class="form-row form-row-2">
         <div class="form-group">
           <label class="form-label"><?= __('lbl_name') ?> (RU) <span class="req">*</span></label>
-          <input type="text" id="prod-name-ru" class="form-control" placeholder="Цемент М500 50кг" maxlength="200">
+          <input type="text" id="prod-name-ru" class="form-control" placeholder="<?= __('prod_name_ru_placeholder') ?>" maxlength="200">
         </div>
         <div class="form-group">
           <label class="form-label"><?= __('lbl_name') ?> (EN)</label>
-          <input type="text" id="prod-name-en" class="form-control" placeholder="Cement M500 50kg" maxlength="200">
+          <input type="text" id="prod-name-en" class="form-control" placeholder="<?= __('prod_name_en_placeholder') ?>" maxlength="200">
         </div>
       </div>
       <div class="form-row form-row-2">
@@ -481,7 +481,7 @@ include __DIR__ . '/../../views/layouts/header.php';
                 <option value="<?= e($preset['unit_label']) ?>" data-storage-code="<?= e(unit_storage_code_from_label((string)$preset['unit_label'])) ?>"><?= e($preset['unit_label']) ?></option>
               <?php endforeach; ?>
             </select>
-            <button type="button" class="btn-qc" id="btn-new-unit-preset-modal" title="Добавить единицу">
+            <button type="button" class="btn-qc" id="btn-new-unit-preset-modal" title="<?= __('pos_add_unit_line') ?>">
               <?= feather_icon('plus', 15) ?>
             </button>
           </div>
@@ -537,7 +537,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       <div class="qc-error" id="unit-preset-error"></div>
       <div class="form-group mb-0">
         <label class="form-label">Название единицы</label>
-        <input type="text" id="unit-preset-name" class="form-control" placeholder="Например: Пачка">
+        <input type="text" id="unit-preset-name" class="form-control" placeholder="<?= __('unit_preset_placeholder') ?>">
       </div>
     </div>
     <div class="qc-modal-footer">

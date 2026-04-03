@@ -86,7 +86,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </div>
       <div class="form-group">
         <label class="form-label"><?= __('lbl_notes') ?></label>
-        <textarea name="notes" class="form-control" rows="2" placeholder="Handover notes…"></textarea>
+        <textarea name="notes" class="form-control" rows="2" placeholder="<?= __('shift_handover_notes_ph') ?>"></textarea>
       </div>
       <button type="submit" class="btn btn-danger btn-block btn-lg"
               data-confirm="<?= __('confirm_close_shift') ?>">

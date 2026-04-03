@@ -345,7 +345,7 @@ $contextWarehouseName = $selectedWarehouse
                   <?php if ($invoiceUrls): ?>
                     <a href="<?= e($invoiceUrls['view_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('sales_open_invoice')) ?>"><?= feather_icon('file-text', 14) ?></a>
                     <a href="<?= e($invoiceUrls['print_url']) ?>" target="_blank" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_print')) ?> <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('printer', 14) ?></a>
-                    <a href="<?= e($invoiceUrls['excel_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="Excel <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('download', 14) ?></a>
+                    <a href="<?= e($invoiceUrls['excel_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_export')) ?> <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('download', 14) ?></a>
                   <?php elseif ($sale['status'] === 'completed'): ?>
                     <button type="button"
                             class="btn btn-sm btn-ghost btn-icon"
@@ -423,7 +423,7 @@ $contextWarehouseName = $selectedWarehouse
                   <?php if ($invoiceUrls): ?>
                     <a href="<?= e($invoiceUrls['view_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('sales_open_invoice')) ?>"><?= feather_icon('file-text', 14) ?></a>
                     <a href="<?= e($invoiceUrls['print_url']) ?>" target="_blank" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_print')) ?> <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('printer', 14) ?></a>
-                    <a href="<?= e($invoiceUrls['excel_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="Excel <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('download', 14) ?></a>
+                    <a href="<?= e($invoiceUrls['excel_url']) ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= e(__('btn_export')) ?> <?= e(__('doc_delivery_note')) ?>"><?= feather_icon('download', 14) ?></a>
                   <?php elseif ($sale['status'] === 'completed'): ?>
                     <button type="button"
                             class="btn btn-sm btn-ghost btn-icon"

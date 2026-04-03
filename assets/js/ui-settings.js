@@ -176,12 +176,12 @@ class MenuConfigurator {
         this.close();
         window.location.reload();
       } else {
-        alert(d.error || 'Error saving menu settings');
+        alert(d.error || window._uiStrings?.errorSavingMenu || '');
       }
     });
   }
   reset() {
-    if (!confirm(window._uiStrings?.confirmReset || 'Restore default menu?')) return;
+    if (!confirm(window._uiStrings?.confirmReset || '')) return;
     UISettings.resetPrefs('sidebar').then(d => {
       if (d.ok) {
         this.close();
@@ -251,7 +251,9 @@ class ViewConfigurator {
         const cur = sortDirBtn.dataset.dir || 'asc';
         const next = cur === 'asc' ? 'desc' : 'asc';
         sortDirBtn.dataset.dir = next;
-        sortDirBtn.textContent = next === 'asc' ? '↑ ASC' : '↓ DESC';
+        sortDirBtn.textContent = next === 'asc'
+          ? `↑ ${window._uiStrings?.sortAsc || 'ASC'}`
+          : `↓ ${window._uiStrings?.sortDesc || 'DESC'}`;
       });
     }
 
@@ -268,7 +270,7 @@ class ViewConfigurator {
       const row = e.target.closest('.preset-row');
       if (!row) return;
       if (e.target.closest('.preset-action-btn.delete')) {
-        if (!confirm(window._uiStrings?.confirmDeletePreset || 'Delete preset?')) return;
+        if (!confirm(window._uiStrings?.confirmDeletePreset || '')) return;
         const id = parseInt(row.dataset.id);
         const d = await UISettings.deletePreset(id);
         if (d.ok) row.remove();
@@ -361,7 +363,9 @@ class ViewConfigurator {
         <div class="sort-controls">
           <select id="vcSortBy" class="sort-select">${sortRows}</select>
           <button id="vcSortDir" class="sort-dir-btn" data-dir="${c.sort_dir || 'asc'}" type="button">
-            ${c.sort_dir === 'desc' ? '↓ DESC' : '↑ ASC'}
+            ${c.sort_dir === 'desc'
+              ? `↓ ${s.sortDesc || 'DESC'}`
+              : `↑ ${s.sortAsc || 'ASC'}`}
           </button>
         </div>
         ${this.opts.showPerPage !== false ? `
@@ -464,13 +468,13 @@ class ViewConfigurator {
       this.close();
       this.opts.onApply?.(settings);
     } else {
-      alert(d.error || 'Error saving settings');
+      alert(d.error || window._uiStrings?.errorSavingSettings || '');
     }
   }
 
   async reset() {
     const s = window._uiStrings;
-    if (!confirm(s?.confirmReset || 'Restore defaults?')) return;
+    if (!confirm(s?.confirmReset || '')) return;
     const d = await UISettings.resetPrefs(this.module);
     if (d.ok) {
       this.current = d.defaults || {};
@@ -504,7 +508,7 @@ class ViewConfigurator {
         <span class="preset-scope-badge preset-scope-${p.scope_type}">${p.scope_type}</span>
         <span class="preset-name">${p.name}</span>
         ${p.creator_name ? `<span class="preset-creator">${p.creator_name}</span>` : ''}
-        ${p.scope_type === 'user' ? `<div class="preset-actions"><button class="preset-action-btn delete" title="Delete">${_featherSvg('trash-2',12)}</button></div>` : ''}
+        ${p.scope_type === 'user' ? `<div class="preset-actions"><button class="preset-action-btn delete" title="${window._uiStrings?.deleteLabel || ''}">${_featherSvg('trash-2',12)}</button></div>` : ''}
       </div>
     `).join('') || `<p style="font-size:12px;color:#888;text-align:center;padding:12px 0">${window._uiStrings?.noPresets || 'No presets saved'}</p>`;
   }

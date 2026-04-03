@@ -8,6 +8,7 @@
 window._uiSettingsApiUrl = '<?= url('modules/ui/settings_api.php') ?>';
 window._uiStrings = {
   configureView:       '<?= addslashes(__('ui_configure_view')) ?>',
+  configureMenu:       '<?= addslashes(__('ui_configure_menu')) ?>',
   tabColumns:          '<?= addslashes(__('ui_tab_columns')) ?>',
   tabFilters:          '<?= addslashes(__('ui_tab_filters')) ?>',
   tabSort:             '<?= addslashes(__('ui_tab_sort')) ?>',
@@ -25,6 +26,11 @@ window._uiStrings = {
   noPresets:           '<?= addslashes(__('ui_no_presets')) ?>',
   confirmReset:        '<?= addslashes(__('ui_confirm_reset')) ?>',
   confirmDeletePreset: '<?= addslashes(__('ui_confirm_delete_preset')) ?>',
+  deleteLabel:         '<?= addslashes(__('btn_delete')) ?>',
+  sortAsc:             '<?= addslashes(__('ui_sort_asc')) ?>',
+  sortDesc:            '<?= addslashes(__('ui_sort_desc')) ?>',
+  errorSavingMenu:     '<?= addslashes(__('ui_error_saving_menu')) ?>',
+  errorSavingSettings: '<?= addslashes(__('ui_error_saving_settings')) ?>',
 };
 </script>
 <script src="<?= url('assets/js/ui-settings.js') ?>"></script>

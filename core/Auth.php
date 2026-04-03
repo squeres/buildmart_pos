@@ -85,7 +85,7 @@ class Auth
             return false;
         }
 
-        self::_startSession($user);
+        self::syncUserSession($user, true);
         return true;
     }
 
@@ -96,13 +96,28 @@ class Auth
         if (!$user) {
             return false;
         }
-        self::_startSession($user);
+        self::syncUserSession($user, true);
         return true;
+    }
+
+    public static function refreshCurrentUser(): void
+    {
+        if (!self::check()) {
+            return;
+        }
+
+        $user = AuthService::getUserForSession(self::id());
+        if ($user) {
+            self::syncUserSession($user, false);
+        }
     }
 
     /** Destroy session and log out. */
     public static function logout(): void
     {
+        $flash = $_SESSION['flash'] ?? [];
+        $lang = Lang::normalizeCode($_SESSION['lang'] ?? null) ?? DEFAULT_LANG;
+
         $_SESSION = [];
         if (ini_get('session.use_cookies')) {
             $p = session_get_cookie_params();
@@ -110,38 +125,55 @@ class Auth
                 $p['path'], $p['domain'], $p['secure'], $p['httponly']);
         }
         session_destroy();
+
+        session_start();
+        session_regenerate_id(true);
+
+        if ($flash) {
+            $_SESSION['flash'] = $flash;
+        }
+        $_SESSION['lang'] = $lang;
+
         redirect('/modules/auth/login.php');
     }
 
     // ── Internal ──────────────────────────────────────────────────
 
-    private static function _startSession(array $user): void
+    private static function syncUserSession(array $user, bool $regenerateSessionId = false): void
     {
-        session_regenerate_id(true);
+        if ($regenerateSessionId) {
+            session_regenerate_id(true);
+        }
 
         $perms = json_decode($user['permissions'] ?? '{}', true) ?? [];
+        $profileLanguage = Lang::normalizeCode($user['language'] ?? null) ?? DEFAULT_LANG;
+        $effectiveLanguage = Lang::resolvePreferredCode($user, $_SESSION['lang'] ?? null);
 
         $_SESSION['user'] = [
             'id'                   => (int)$user['id'],
             'name'                 => $user['name'],
             'email'                => $user['email'],
+            'phone'                => $user['phone'] ?? null,
             'role_id'              => (int)$user['role_id'],
             'role_slug'            => $user['role_slug'],
             'role_name'            => $user['role_name'],
             'permissions'          => $perms,
-            'language'             => $user['language'] ?? DEFAULT_LANG,
+            'language'             => $profileLanguage,
+            'language_set_at'      => $user['language_set_at'] ?? null,
             'default_warehouse_id' => (int)($user['default_warehouse_id'] ?? 1),
             'must_change_password' => !empty($user['must_change_password']),
         ];
 
         // Sync session lang
-        $_SESSION['lang'] = $user['language'] ?? DEFAULT_LANG;
+        $_SESSION['lang'] = $effectiveLanguage;
 
-        // Update last login and presence when the presence schema is available.
-        if (function_exists('shift_schema_has_column') && shift_schema_has_column('users', 'last_seen_at')) {
-            Database::exec('UPDATE users SET last_login = NOW(), last_seen_at = NOW() WHERE id = ?', [$user['id']]);
-        } else {
-            Database::exec('UPDATE users SET last_login = NOW() WHERE id = ?', [$user['id']]);
+        if ($regenerateSessionId) {
+            // Update login audit only on actual sign-in.
+            if (function_exists('shift_schema_has_column') && shift_schema_has_column('users', 'last_seen_at')) {
+                Database::exec('UPDATE users SET last_login = NOW(), last_seen_at = NOW() WHERE id = ?', [$user['id']]);
+            } else {
+                Database::exec('UPDATE users SET last_login = NOW() WHERE id = ?', [$user['id']]);
+            }
         }
     }
 

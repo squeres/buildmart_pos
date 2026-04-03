@@ -18,7 +18,7 @@ if (!in_array(Auth::role(), ['admin', 'manager'])) {
 // Подключаем PhpSpreadsheet через Composer
 $autoload = ROOT_PATH . '/vendor/autoload.php';
 if (!file_exists($autoload)) {
-    flash_error('PhpSpreadsheet не установлен. Выполните: composer install');
+    flash_error(_r('prod_excel_library_missing'));
     redirect('/modules/products/');
 }
 require_once $autoload;

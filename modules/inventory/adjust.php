@@ -80,7 +80,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 
       <div class="form-group">
         <label class="form-label"><?= __('lbl_notes') ?> <span class="req">*</span></label>
-        <input type="text" name="notes" class="form-control" required placeholder="Reason for adjustment…">
+        <input type="text" name="notes" class="form-control" required placeholder="<?= __('inv_adjust_reason_ph') ?>">
       </div>
 
       <div style="display:flex;gap:8px">

@@ -6,6 +6,7 @@ Auth::requirePerm('all');  // Admin only
 
 $pageTitle   = __('usr_title');
 $breadcrumbs = [[$pageTitle, null]];
+$hasLanguageSetAt = shift_schema_has_column('users', 'language_set_at');
 
 $users = Database::all(
     "SELECT u.*,
@@ -60,7 +61,13 @@ include __DIR__ . '/../../views/layouts/header.php';
               <?= e($user['role_name']) ?>
             </span>
           </td>
-          <td><?= strtoupper($user['language']) ?></td>
+          <td>
+            <?php if ($hasLanguageSetAt && empty($user['language_set_at'])): ?>
+              <?= __('usr_language_default_option', ['language' => language_label(DEFAULT_LANG)]) ?>
+            <?php else: ?>
+              <?= e(language_label($user['language'] ?? null)) ?>
+            <?php endif; ?>
+          </td>
           <td>
             <div style="display:flex;flex-direction:column;gap:4px">
               <span class="badge badge-<?= $isOnline ? 'success' : 'secondary' ?>" style="width:max-content">
@@ -87,9 +94,9 @@ include __DIR__ . '/../../views/layouts/header.php';
               <input type="hidden" name="id" value="<?= (int)$user['id'] ?>">
               <button type="submit"
                  class="btn btn-sm btn-ghost btn-icon"
-                 title="<?= $user['is_active'] ? 'Deactivate' : 'Activate' ?>"
+                 title="<?= $user['is_active'] ? __('usr_deactivate') : __('usr_activate') ?>"
                  style="<?= $user['is_active'] ? 'color:var(--warning)' : '' ?>"
-                 data-confirm="<?= $user['is_active'] ? 'Deactivate this user?' : 'Activate this user?' ?>">
+                 data-confirm="<?= $user['is_active'] ? __('usr_confirm_deactivate') : __('usr_confirm_activate') ?>">
                 <?= feather_icon($user['is_active'] ? 'user-x' : 'user-check', 14) ?>
               </button>
             </form>

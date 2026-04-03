@@ -39,6 +39,14 @@ $menuDefs = [
 $orderedKeys = array_unique(array_merge($menuOrder, array_keys($menuDefs)));
 $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $acceptanceBadge = (function() { try { return gr_pending_count(); } catch(\Throwable $e) { return 0; } })();
+$u = Auth::user();
+$userInitial = (string)($u['name'] ?? '?');
+$userInitial = function_exists('mb_substr')
+  ? mb_substr($userInitial, 0, 1, 'UTF-8')
+  : substr($userInitial, 0, 1);
+$userInitial = function_exists('mb_strtoupper')
+  ? mb_strtoupper($userInitial, 'UTF-8')
+  : strtoupper($userInitial);
 ?>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
@@ -77,19 +85,21 @@ $acceptanceBadge = (function() { try { return gr_pending_count(); } catch(\Throw
     </button>
   </nav>
   <div class="sidebar-footer">
-    <div class="lang-switcher">
-      <?php foreach (SUPPORTED_LANGS as $code => $label): ?>
-        <a href="?lang=<?= $code ?>" class="lang-btn <?= Lang::current() === $code ? 'active' : '' ?>" title="<?= e($label) ?>"><?= strtoupper($code) ?></a>
-      <?php endforeach; ?>
-    </div>
-    <?php $u = Auth::user(); ?>
     <div class="sidebar-user">
-      <div class="user-avatar"><?= strtoupper(substr($u['name'], 0, 1)) ?></div>
+      <div class="user-avatar"><?= e($userInitial) ?></div>
       <div class="user-info">
         <div class="user-name"><?= e($u['name']) ?></div>
         <div class="user-role"><?= e($u['role_name']) ?></div>
+        <div class="user-meta"><?= e($u['email'] ?? '') ?></div>
       </div>
-      <a href="<?= url('modules/auth/logout.php') ?>" class="user-logout" title="<?= __('nav_logout') ?>"><?= feather_icon('log-out', 16) ?></a>
+    </div>
+    <div class="sidebar-user-actions">
+      <a href="<?= url('modules/profile/') ?>" class="btn btn-secondary btn-sm user-action-link">
+        <?= feather_icon('user', 14) ?> <?= __('nav_profile') ?>
+      </a>
+      <a href="<?= url('modules/auth/logout.php') ?>" class="btn btn-ghost btn-sm user-action-link user-action-logout">
+        <?= feather_icon('log-out', 14) ?> <?= __('nav_logout') ?>
+      </a>
     </div>
   </div>
 </aside>
@@ -136,9 +146,9 @@ $acceptanceBadge = (function() { try { return gr_pending_count(); } catch(\Throw
 
 <div class="main-wrap">
   <header class="topbar">
-    <button class="topbar-menu-btn" id="sidebarToggle" aria-label="Toggle menu"><?= feather_icon('menu', 20) ?></button>
+    <button class="topbar-menu-btn" id="sidebarToggle" aria-label="<?= __('ui_toggle_menu') ?>"><?= feather_icon('menu', 20) ?></button>
     <?php if (!empty($breadcrumbs)): ?>
-    <nav class="breadcrumb" aria-label="Breadcrumb">
+    <nav class="breadcrumb" aria-label="<?= __('ui_breadcrumbs') ?>">
       <?php foreach ($breadcrumbs as $i => [$label, $href]): ?>
         <?php if ($i > 0): ?><span class="bc-sep">/</span><?php endif; ?>
         <?php if ($href && $i < count($breadcrumbs)-1): ?>
@@ -205,7 +215,7 @@ $acceptanceBadge = (function() { try { return gr_pending_count(); } catch(\Throw
   <div class="flash flash-<?= e($fl['type']) ?>" role="alert">
     <span class="flash-icon"><?php $icons=['success'=>'check-circle','error'=>'x-circle','warning'=>'alert-triangle','info'=>'info'];echo feather_icon($icons[$fl['type']]??'info',16); ?></span>
     <span><?= e($fl['message']) ?></span>
-    <button class="flash-close" onclick="this.closest('.flash').remove()" aria-label="Close">×</button>
+    <button class="flash-close" onclick="this.closest('.flash').remove()" aria-label="<?= __('btn_close') ?>">×</button>
   </div>
   <?php endforeach; ?>
   <main class="page-content" id="pageContent">

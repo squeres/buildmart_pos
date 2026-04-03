@@ -50,6 +50,8 @@ if (is_post()) {
             $value = $selectedCurrency;
         } elseif ($key === 'timezone') {
             $value = $selectedTimezone;
+        } elseif ($key === 'default_language') {
+            $value = DEFAULT_LANG;
         } elseif (in_array($key, ['store_open_time', 'store_close_time'], true)) {
             $value = shift_normalize_time_value($_POST[$key] ?? '', $key === 'store_open_time' ? '08:30' : '21:00');
         } elseif ($key === 'shift_extension_default_options') {
@@ -72,6 +74,9 @@ if (is_post()) {
 $settings = Database::all("SELECT * FROM settings ORDER BY `group`,`id`");
 $grouped  = [];
 foreach ($settings as $setting) {
+    if (($setting['key'] ?? '') === 'default_language') {
+        continue;
+    }
     $grouped[$setting['group']][] = $setting;
 }
 
@@ -97,12 +102,6 @@ include __DIR__ . '/../../views/layouts/header.php';
           </label>
         <?php elseif ($setting['type'] === 'textarea'): ?>
           <textarea id="<?= e($setting['key']) ?>" name="<?= e($setting['key']) ?>" class="form-control" rows="3"><?= e($setting['value'] ?? '') ?></textarea>
-        <?php elseif ($setting['type'] === 'select' && $setting['key'] === 'default_language'): ?>
-          <select id="<?= e($setting['key']) ?>" name="<?= e($setting['key']) ?>" class="form-control" style="max-width:200px">
-            <?php foreach (SUPPORTED_LANGS as $code => $label): ?>
-              <option value="<?= $code ?>" <?= $setting['value'] === $code ? 'selected' : '' ?>><?= e($label) ?></option>
-            <?php endforeach; ?>
-          </select>
         <?php elseif ($setting['type'] === 'select' && $setting['key'] === 'currency_code'): ?>
           <select id="<?= e($setting['key']) ?>" name="<?= e($setting['key']) ?>" class="form-control" style="max-width:280px">
             <?php foreach (currency_options() as $code => $label): ?>

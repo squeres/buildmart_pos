@@ -82,8 +82,8 @@ include __DIR__ . '/../../views/layouts/header.php';
         <thead>
           <tr>
             <th><?= __('lbl_name') ?></th>
-            <th><?= __('lbl_name') ?> (RU)</th>
-            <th>Icon</th>
+            <th><?= __('cat_name_ru') ?></th>
+            <th><?= __('cat_icon') ?></th>
             <th class="col-num"><?= __('nav_products') ?></th>
             <th><?= __('lbl_status') ?></th>
             <th class="col-actions"><?= __('lbl_actions') ?></th>
@@ -132,17 +132,17 @@ include __DIR__ . '/../../views/layouts/header.php';
         <?php endif; ?>
 
         <div class="form-group">
-          <label class="form-label">Name (EN) <span class="req">*</span></label>
+          <label class="form-label"><?= __('cat_name_en') ?> <span class="req">*</span></label>
           <input type="text" name="name_en" class="form-control" value="<?= e($editCat['name_en'] ?? '') ?>" required>
           <?php if (isset($errors['name_en'])): ?><div class="form-error"><?= e($errors['name_en']) ?></div><?php endif; ?>
         </div>
         <div class="form-group">
-          <label class="form-label">Название (RU)</label>
+          <label class="form-label"><?= __('cat_name_ru') ?></label>
           <input type="text" name="name_ru" class="form-control" value="<?= e($editCat['name_ru'] ?? '') ?>">
         </div>
         <div class="form-row form-row-2">
           <div class="form-group">
-            <label class="form-label">Icon</label>
+            <label class="form-label"><?= __('cat_icon') ?></label>
             <select name="icon" class="form-control">
               <?php foreach ($featherIcons as $ico): ?>
                 <option value="<?= $ico ?>" <?= ($editCat['icon']??'box')===$ico?'selected':'' ?>><?= $ico ?></option>
@@ -150,13 +150,13 @@ include __DIR__ . '/../../views/layouts/header.php';
             </select>
           </div>
           <div class="form-group">
-            <label class="form-label">Color</label>
+            <label class="form-label"><?= __('cat_color') ?></label>
             <input type="color" name="color" class="form-control" value="<?= e($editCat['color'] ?? '#607D8B') ?>" style="height:38px;padding:4px">
           </div>
         </div>
         <div class="form-row form-row-2">
           <div class="form-group">
-            <label class="form-label">Sort Order</label>
+            <label class="form-label"><?= __('cat_sort_order') ?></label>
             <input type="number" name="sort_order" class="form-control" value="<?= e($editCat['sort_order'] ?? 0) ?>" min="0">
           </div>
           <div class="form-group" style="display:flex;align-items:flex-end">

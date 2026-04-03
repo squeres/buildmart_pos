@@ -58,7 +58,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     <?php endforeach; ?>
   </select>
   <select name="type" class="form-control" style="max-width:150px">
-    <option value=""><?= __('lbl_all') ?> types</option>
+    <option value=""><?= __('lbl_all') ?> <?= __('lbl_type') ?></option>
     <?php foreach ($types as $t): ?>
       <option value="<?= $t ?>" <?= $type===$t?'selected':'' ?>><?= movement_label($t) ?></option>
     <?php endforeach; ?>
@@ -78,12 +78,12 @@ include __DIR__ . '/../../views/layouts/header.php';
           <th><?= __('nav_products') ?></th>
           <th><?= __('lbl_sku') ?></th>
           <th><?= __('wh_title') ?></th>
-          <th>Type</th>
+          <th><?= __('lbl_type') ?></th>
           <th class="col-num"><?= __('inv_qty_before') ?></th>
           <th class="col-num"><?= __('inv_qty_change') ?></th>
           <th class="col-num"><?= __('inv_qty_after') ?></th>
           <th><?= __('inv_unit_cost') ?></th>
-          <th>User</th>
+          <th><?= __('nav_users') ?></th>
           <th><?= __('lbl_notes') ?></th>
         </tr>
       </thead>

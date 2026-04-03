@@ -18,7 +18,7 @@ if (!csrf_verify()) {
 $id = (int)($_POST['id'] ?? 0);
 
 if ($id <= 0) {
-    flash_error('Invalid product.');
+    flash_error(_r('prod_not_found'));
     redirect('/modules/inventory/');
 }
 

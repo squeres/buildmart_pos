@@ -75,7 +75,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </div>
       <div class="form-group">
         <label class="form-label">Reason <span class="req">*</span></label>
-        <input type="text" name="notes" class="form-control" required placeholder="Damaged, expired, theft…">
+        <input type="text" name="notes" class="form-control" required placeholder="<?= __('inv_writeoff_reason_ph') ?>">
         <?php if (isset($errors['notes'])): ?><div class="form-error"><?= e($errors['notes']) ?></div><?php endif; ?>
       </div>
       <div style="display:flex;gap:8px">

@@ -314,7 +314,7 @@ if (is_post() && $hasLibrary) {
         $importResult = compact('created', 'updated', 'skipped', 'errors', 'highestRow');
 
     } catch (\Throwable $e) {
-        flash_error('Ошибка чтения файла: ' . e($e->getMessage()));
+        flash_error(_r('prod_import_read_error', ['error' => $e->getMessage()]));
         redirect($_SERVER['REQUEST_URI']);
     }
 }

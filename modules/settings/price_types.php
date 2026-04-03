@@ -7,7 +7,7 @@ $breadcrumbs = [[__('nav_settings'), url('modules/settings/')], [__('pt_title'),
 
 // Handle POST actions
 if (is_post()) {
-    if (!csrf_verify()) { flash_error('CSRF error'); redirect('/modules/settings/price_types.php'); }
+    if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect('/modules/settings/price_types.php'); }
 
     $action = $_POST['action'] ?? '';
 
@@ -25,7 +25,7 @@ if (is_post()) {
         $color    = sanitize($_POST['color_hex'] ?? '');
 
         if (!$code || !$nameEn || !$nameRu) {
-            flash_error('Code and names are required');
+            flash_error(_r('pt_validation_required'));
             redirect('/modules/settings/price_types.php');
         }
 
@@ -55,11 +55,11 @@ if (is_post()) {
     if ($action === 'delete') {
         $id = (int)($_POST['id'] ?? 0);
         $pt = Database::row('SELECT * FROM price_types WHERE id = ?', [$id]);
-        if (!$pt) { flash_error('Not found'); redirect('/modules/settings/price_types.php'); }
+        if (!$pt) { flash_error(_r('err_not_found')); redirect('/modules/settings/price_types.php'); }
         if ($pt['is_default']) { flash_error(__('pt_cannot_delete_default')); redirect('/modules/settings/price_types.php'); }
         // Check if used
         $used = (int)Database::value('SELECT COUNT(*) FROM product_prices WHERE price_type_id = ?', [$id]);
-        if ($used > 0) { flash_error("Cannot delete: used in {$used} product prices"); redirect('/modules/settings/price_types.php'); }
+        if ($used > 0) { flash_error(_r('pt_cannot_delete_used', ['count' => (string)$used])); redirect('/modules/settings/price_types.php'); }
         Database::exec('DELETE FROM price_types WHERE id = ?', [$id]);
         flash_success(__('pt_deleted'));
         redirect('/modules/settings/price_types.php');
@@ -151,7 +151,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
           <td>
             <a href="?edit=<?= $pt['id'] ?>" class="btn btn-secondary btn-xs"><?= __('btn_edit') ?></a>
             <?php if (!$pt['is_default']): ?>
-            <form method="post" style="display:inline" onsubmit="return confirm('<?= __('pt_deleted') ?>?')">
+            <form method="post" style="display:inline" onsubmit="return confirm('<?= __('pt_confirm_delete') ?>')">
               <?= csrf_field() ?>
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="id" value="<?= $pt['id'] ?>">
@@ -229,7 +229,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
   <div class="card" style="width:480px;max-width:95vw;max-height:90vh;overflow-y:auto">
     <div class="card-header" style="display:flex;align-items:center;justify-content:space-between">
       <h3 class="card-title"><?= $e ? __('pt_edit') : __('pt_add') ?></h3>
-      <button type="button" onclick="document.getElementById('addPtModal').style.display='none'" style="background:none;border:none;color:#888;cursor:pointer;font-size:20px">×</button>
+      <button type="button" onclick="document.getElementById('addPtModal').style.display='none'" style="background:none;border:none;color:#888;cursor:pointer;font-size:20px" aria-label="<?= __('btn_close') ?>">×</button>
     </div>
     <div class="card-body">
       <form method="post">
@@ -242,9 +242,9 @@ require_once ROOT_PATH . '/views/layouts/header.php';
             <label class="form-label"><?= __('pt_code') ?> *</label>
             <input type="text" name="code" class="form-control" required
                    value="<?= e($e['code'] ?? '') ?>"
-                   placeholder="e.g. wholesale4"
-                   pattern="[a-z0-9_]+" title="lowercase letters, digits, underscore">
-            <div class="form-hint">Lowercase, no spaces</div>
+                   placeholder="<?= __('pt_code_placeholder') ?>"
+                   pattern="[a-z0-9_]+" title="<?= __('pt_code_pattern_hint') ?>">
+            <div class="form-hint"><?= __('pt_code_hint') ?></div>
           </div>
           <div class="form-group">
             <label class="form-label"><?= __('pt_sort_order') ?></label>

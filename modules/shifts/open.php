@@ -50,7 +50,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </div>
       <div class="form-group">
         <label class="form-label"><?= __('lbl_notes') ?></label>
-        <input type="text" name="notes" class="form-control" placeholder="Optional notes…">
+        <input type="text" name="notes" class="form-control" placeholder="<?= __('shift_optional_notes_ph') ?>">
       </div>
       <div style="display:flex;gap:8px">
         <button type="submit" class="btn btn-primary btn-lg btn-block">

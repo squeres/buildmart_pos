@@ -497,7 +497,7 @@ include __DIR__ . '/../../views/layouts/header.php';
                   <option value="<?= e($baseUnitLabel) ?>" data-storage-code="<?= e($f['unit']) ?>" selected><?= e($baseUnitLabel) ?></option>
                 <?php endif; ?>
               </select>
-              <button type="button" class="btn-qc" id="btn-new-unit-preset" title="Добавить единицу"><?= feather_icon('plus', 15) ?></button>
+              <button type="button" class="btn-qc" id="btn-new-unit-preset" title="<?= __('pos_add_unit_line') ?>"><?= feather_icon('plus', 15) ?></button>
             </div>
             <?php if (isset($errors['unit'])): ?><div class="form-error"><?= e($errors['unit']) ?></div><?php endif; ?>
             <div class="form-hint">Единица выбирается из общего справочника, а старый технический код хранится только внутри системы.</div>
@@ -786,7 +786,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       <div class="qc-error" id="unit-preset-error"></div>
       <div class="form-group mb-0">
         <label class="form-label">Название единицы</label>
-        <input type="text" id="unit-preset-name" class="form-control" placeholder="Например: Пачка">
+        <input type="text" id="unit-preset-name" class="form-control" placeholder="<?= __('unit_preset_placeholder') ?>">
       </div>
     </div>
     <div class="qc-modal-footer">

@@ -191,7 +191,7 @@ function unit_label(string $unit): string
         'box'  => __('unit_box'),
         'pair' => __('unit_pair'),
         'set'  => __('unit_set'),
-        'pallet' => 'Pallet',
+        'pallet' => __('unit_pallet'),
     ];
     return $map[$unit] ?? e($unit);
 }
@@ -214,8 +214,14 @@ function unit_options(): array
         'box'  => _r('unit_box'),
         'pair' => _r('unit_pair'),
         'set'  => _r('unit_set'),
-        'pallet' => 'Pallet',
+        'pallet' => _r('unit_pallet'),
     ];
+}
+
+function language_label(?string $code): string
+{
+    $code = Lang::normalizeCode($code) ?? DEFAULT_LANG;
+    return SUPPORTED_LANGS[$code] ?? strtoupper($code);
 }
 
 function unit_preset_fallback_rows(): array

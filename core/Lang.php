@@ -15,30 +15,25 @@
  *   __('key', ['n'=>5])    — Simple :placeholder substitution.
  *
  * LANGUAGE RESOLUTION ORDER
- *   1. ?lang=xx  query param  →  persists to session + user DB row
- *   2. $_SESSION['lang']
- *   3. logged-in user's DB preference
- *   4. DEFAULT_LANG constant
+ *   1. logged-in user's explicit profile preference
+ *   2. $_SESSION['lang'] (guest/login-page selection)
+ *   3. DEFAULT_LANG constant
  */
 class Lang
 {
     private static string $current = DEFAULT_LANG;
     private static array  $strings = [];
+    private static array  $fallbackStrings = [];
+    private static array  $missingKeys = [];
 
     /** Resolve and load language, handle switch request. */
     public static function init(): void
     {
-        // Handle explicit switch
-        if (!empty($_GET['lang']) && array_key_exists($_GET['lang'], SUPPORTED_LANGS)) {
-            $lang = $_GET['lang'];
-            $_SESSION['lang'] = $lang;
+        $requestedLang = self::normalizeCode($_GET['lang'] ?? null);
 
-            // Save to DB for logged-in users
-            if (!empty($_SESSION['user']['id'])) {
-                Database::exec('UPDATE users SET language=? WHERE id=?',
-                    [$lang, $_SESSION['user']['id']]);
-                $_SESSION['user']['language'] = $lang;
-            }
+        if ($requestedLang !== null) {
+            $lang = $requestedLang;
+            $_SESSION['lang'] = $lang;
 
             // Redirect to clean URL
             $clean = strtok($_SERVER['REQUEST_URI'], '?');
@@ -48,32 +43,37 @@ class Lang
             exit;
         }
 
-        // Resolve priority
-        $lang = $_SESSION['lang']
-            ?? $_SESSION['user']['language']
-            ?? DEFAULT_LANG;
-
-        self::set(array_key_exists($lang, SUPPORTED_LANGS) ? $lang : DEFAULT_LANG);
+        $user = is_array($_SESSION['user'] ?? null) ? $_SESSION['user'] : null;
+        self::set(self::resolvePreferredCode($user, $_SESSION['lang'] ?? null));
     }
 
     public static function set(string $lang): void
     {
-        self::$current = $lang;
-        $file = ROOT_PATH . '/lang/' . $lang . '.php';
-        self::$strings = file_exists($file) ? require $file : [];
+        self::$current = self::normalizeCode($lang) ?? DEFAULT_LANG;
+        self::$missingKeys = [];
 
-        // Merge fallback (English) for missing keys
-        if ($lang !== 'en') {
-            $fb = ROOT_PATH . '/lang/en.php';
-            if (file_exists($fb)) {
-                self::$strings = array_merge(require $fb, self::$strings);
-            }
+        self::$fallbackStrings = [];
+        $fallbackFile = ROOT_PATH . '/lang/en.php';
+        if (file_exists($fallbackFile)) {
+            self::$fallbackStrings = require $fallbackFile;
         }
+
+        $file = ROOT_PATH . '/lang/' . self::$current . '.php';
+        self::$strings = file_exists($file) ? require $file : [];
     }
 
     public static function get(string $key, array $replace = []): string
     {
-        $str = self::$strings[$key] ?? $key;
+        if (array_key_exists($key, self::$strings)) {
+            $str = self::$strings[$key];
+        } elseif (self::$current !== 'en' && array_key_exists($key, self::$fallbackStrings)) {
+            self::$missingKeys[$key] = true;
+            $str = self::$fallbackStrings[$key];
+        } else {
+            self::$missingKeys[$key] = true;
+            $str = $key;
+        }
+
         foreach ($replace as $k => $v) {
             $str = str_replace(':' . $k, $v, $str);
         }
@@ -82,13 +82,46 @@ class Lang
 
     public static function has(string $key): bool
     {
-        return array_key_exists($key, self::$strings);
+        return array_key_exists($key, self::$strings) || array_key_exists($key, self::$fallbackStrings);
     }
 
     public static function current(): string { return self::$current; }
     public static function isRu(): bool       { return self::$current === 'ru'; }
 
     public static function all(): array { return SUPPORTED_LANGS; }
+
+    public static function normalizeCode(?string $lang): ?string
+    {
+        $lang = strtolower(trim((string)$lang));
+        return $lang !== '' && array_key_exists($lang, SUPPORTED_LANGS) ? $lang : null;
+    }
+
+    public static function hasExplicitUserPreference(?array $user): bool
+    {
+        if (!is_array($user) || self::normalizeCode($user['language'] ?? null) === null) {
+            return false;
+        }
+
+        if (!array_key_exists('language_set_at', $user)) {
+            return true;
+        }
+
+        return !empty($user['language_set_at']);
+    }
+
+    public static function resolvePreferredCode(?array $user = null, ?string $sessionLang = null): string
+    {
+        if (self::hasExplicitUserPreference($user)) {
+            return self::normalizeCode($user['language'] ?? null) ?? DEFAULT_LANG;
+        }
+
+        return self::normalizeCode($sessionLang) ?? DEFAULT_LANG;
+    }
+
+    public static function missingKeys(): array
+    {
+        return array_keys(self::$missingKeys);
+    }
 }
 
 /** HTML-escaped translation */
