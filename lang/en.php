@@ -1121,4 +1121,10 @@ return [
     'prod_name_ru_placeholder'  => 'Cement M500 50 kg',
     'prod_name_en_placeholder'  => 'Cement M500 50 kg',
     'unit_preset_placeholder'   => 'Example: Pack',
+    'auth_mode_password'       => 'Email & Password',
+    'auth_mode_pin'            => 'PIN Code',
+    'auth_pin_placeholder'     => '4-6 digits',
+    'auth_pin_hint_login'      => 'Use the PIN assigned to your account.',
+    'auth_pin_locked'          => 'Too many PIN attempts. Try again in :seconds sec.',
+    'auth_pin_taken'           => 'This PIN is already assigned to another user.',
 ];

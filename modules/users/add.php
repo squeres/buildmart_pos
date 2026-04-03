@@ -94,6 +94,7 @@ if (is_post()) {
     if (!$errors) {
         try {
             $pinStorage = AuthService::preparePinStorage($f['pin']);
+            AuthService::assertPinAvailable($f['pin'], $isEdit ? $id : 0);
         } catch (AppServiceException $e) {
             $errors['pin'] = $e->getMessage();
         }

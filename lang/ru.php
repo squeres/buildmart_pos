@@ -902,4 +902,10 @@ return [
     'unit_preset_placeholder'   => 'Например: Пачка',
     'auth_login_sub_brand'      => 'Войдите в :app',
     'auth_login_sub'            => 'Войдите в :app',
+    'auth_mode_password'       => 'Почта и пароль',
+    'auth_mode_pin'            => 'PIN-код',
+    'auth_pin_placeholder'     => '4–6 цифр',
+    'auth_pin_hint_login'      => 'Используйте PIN, назначенный вашему пользователю.',
+    'auth_pin_locked'          => 'Слишком много попыток входа по PIN. Повторите через :seconds сек.',
+    'auth_pin_taken'           => 'Этот PIN уже назначен другому пользователю.',
 ];

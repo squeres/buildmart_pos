@@ -7,6 +7,10 @@ declare(strict_types=1);
 final class AuthService
 {
     public const PASSWORD_MIN_LENGTH = 8;
+    public const PIN_MIN_LENGTH = 4;
+    public const PIN_MAX_LENGTH = 6;
+    public const PIN_LOGIN_MAX_ATTEMPTS = 5;
+    public const PIN_LOGIN_LOCK_SECONDS = 60;
 
     public static function getUserForSession(int $userId): ?array
     {
@@ -59,39 +63,21 @@ final class AuthService
             return null;
         }
 
-        $hasPinHash = self::hasPinHashColumn();
-        $users = Database::all(
-            'SELECT u.id, u.pin, u.pin_hash
-             FROM users u
-             WHERE u.is_active = 1
-               AND ((u.pin IS NOT NULL AND u.pin <> \'\')' . ($hasPinHash ? ' OR (u.pin_hash IS NOT NULL AND u.pin_hash <> \'\')' : '') . ')
-             ORDER BY u.id ASC'
-        );
+        foreach (self::usersWithPins(0, true) as $user) {
+            if (!self::pinMatchesUser($pin, $user)) {
+                continue;
+            }
 
-        foreach ($users as $user) {
             $plainPin = trim((string)($user['pin'] ?? ''));
-            $pinHash = (string)($user['pin_hash'] ?? '');
-
-            if ($pinHash !== '' && password_verify($pin, $pinHash)) {
-                if ($plainPin !== '') {
-                    Database::exec('UPDATE users SET pin = NULL, updated_at = NOW() WHERE id = ?', [(int)$user['id']]);
-                    $user['pin'] = null;
-                }
-                return self::getUserForSession((int)$user['id']);
+            if ($plainPin !== '' && self::hasPinHashColumn()) {
+                $newHash = password_hash($pin, PASSWORD_DEFAULT);
+                Database::exec(
+                    'UPDATE users SET pin_hash = ?, pin = NULL, updated_at = NOW() WHERE id = ?',
+                    [$newHash, (int)$user['id']]
+                );
             }
 
-            if ($plainPin !== '' && hash_equals($plainPin, $pin)) {
-                if ($hasPinHash) {
-                    $newHash = password_hash($pin, PASSWORD_DEFAULT);
-                    Database::exec(
-                        'UPDATE users SET pin_hash = ?, pin = NULL, updated_at = NOW() WHERE id = ?',
-                        [$newHash, (int)$user['id']]
-                    );
-                    $user['pin_hash'] = $newHash;
-                    $user['pin'] = null;
-                }
-                return self::getUserForSession((int)$user['id']);
-            }
+            return self::getUserForSession((int)$user['id']);
         }
 
         return null;
@@ -125,6 +111,20 @@ final class AuthService
     public static function hasPinHashColumn(): bool
     {
         return function_exists('shift_schema_has_column') && shift_schema_has_column('users', 'pin_hash');
+    }
+
+    public static function assertPinAvailable(?string $pin, int $excludeUserId = 0): void
+    {
+        $normalized = self::normalizePinForStorage($pin);
+        if ($normalized === null) {
+            return;
+        }
+
+        foreach (self::usersWithPins($excludeUserId, false) as $user) {
+            if (self::pinMatchesUser($normalized, $user)) {
+                throw new AppServiceException(_r('auth_pin_taken'), 'pin_taken');
+            }
+        }
     }
 
     public static function hashPassword(string $password): string
@@ -173,7 +173,7 @@ final class AuthService
     private static function normalizePinForComparison(string $pin): ?string
     {
         $pin = preg_replace('/\D+/', '', trim($pin)) ?? '';
-        if ($pin === '' || strlen($pin) < 4 || strlen($pin) > 6) {
+        if ($pin === '' || strlen($pin) < self::PIN_MIN_LENGTH || strlen($pin) > self::PIN_MAX_LENGTH) {
             return null;
         }
 
@@ -187,10 +187,52 @@ final class AuthService
             return null;
         }
 
-        if (strlen($pin) < 4 || strlen($pin) > 6) {
+        if (strlen($pin) < self::PIN_MIN_LENGTH || strlen($pin) > self::PIN_MAX_LENGTH) {
             throw new AppServiceException(_r('auth_pin_invalid'), 'invalid_pin');
         }
 
         return $pin;
+    }
+
+    /**
+     * @return list<array{id:int,pin:?string,pin_hash:?string}>
+     */
+    private static function usersWithPins(int $excludeUserId = 0, bool $onlyActive = false): array
+    {
+        $hasPinHash = self::hasPinHashColumn();
+        $conditions = [
+            '((u.pin IS NOT NULL AND u.pin <> \'\')' . ($hasPinHash ? ' OR (u.pin_hash IS NOT NULL AND u.pin_hash <> \'\')' : '') . ')',
+        ];
+        $params = [];
+        $selectPinHash = $hasPinHash ? 'u.pin_hash' : 'NULL AS pin_hash';
+
+        if ($onlyActive) {
+            $conditions[] = 'u.is_active = 1';
+        }
+
+        if ($excludeUserId > 0) {
+            $conditions[] = 'u.id <> ?';
+            $params[] = $excludeUserId;
+        }
+
+        return Database::all(
+            'SELECT u.id, u.pin, ' . $selectPinHash . '
+             FROM users u
+             WHERE ' . implode(' AND ', $conditions) . '
+             ORDER BY u.id ASC',
+            $params
+        );
+    }
+
+    private static function pinMatchesUser(string $pin, array $user): bool
+    {
+        $plainPin = trim((string)($user['pin'] ?? ''));
+        $pinHash = (string)($user['pin_hash'] ?? '');
+
+        if ($pinHash !== '' && password_verify($pin, $pinHash)) {
+            return true;
+        }
+
+        return $plainPin !== '' && hash_equals($plainPin, $pin);
     }
 }
