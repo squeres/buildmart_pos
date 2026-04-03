@@ -170,6 +170,55 @@ final class AuthService
         );
     }
 
+    public static function changePin(
+        int $userId,
+        string $currentPassword,
+        string $newPin,
+        string $confirmPin,
+        bool $requireCurrentPassword = true
+    ): void {
+        $selectPinHash = self::hasPinHashColumn() ? ', pin_hash' : ', NULL AS pin_hash';
+        $user = Database::row(
+            'SELECT id, password, pin' . $selectPinHash . ' FROM users WHERE id=? LIMIT 1',
+            [$userId]
+        );
+
+        if (!$user) {
+            throw new AppServiceException(_r('err_not_found'), 'user_not_found');
+        }
+
+        if ($requireCurrentPassword && !password_verify($currentPassword, (string)$user['password'])) {
+            throw new AppServiceException(_r('auth_current_password_invalid'), 'current_password_invalid');
+        }
+
+        $normalizedPin = self::normalizePinForStorage($newPin);
+        $normalizedConfirmPin = self::normalizePinForStorage($confirmPin);
+
+        if ($normalizedPin !== $normalizedConfirmPin) {
+            throw new AppServiceException(_r('profile_pin_mismatch'), 'pin_mismatch');
+        }
+
+        if (self::pinMatchesUser($normalizedPin, $user)) {
+            throw new AppServiceException(_r('profile_pin_same'), 'pin_same');
+        }
+
+        self::assertPinAvailable($normalizedPin, $userId);
+        $storage = self::preparePinStorage($normalizedPin);
+
+        if (self::hasPinHashColumn()) {
+            Database::exec(
+                'UPDATE users SET pin=?, pin_hash=?, updated_at=NOW() WHERE id=?',
+                [$storage['pin'], $storage['pin_hash'], $userId]
+            );
+            return;
+        }
+
+        Database::exec(
+            'UPDATE users SET pin=?, updated_at=NOW() WHERE id=?',
+            [$storage['pin'], $userId]
+        );
+    }
+
     private static function normalizePinForComparison(string $pin): ?string
     {
         $pin = preg_replace('/\D+/', '', trim($pin)) ?? '';

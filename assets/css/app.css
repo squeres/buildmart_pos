@@ -1363,6 +1363,14 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   text-align: right;
   color: var(--text-primary);
 }
+.profile-security-stack {
+  display: grid;
+  gap: 18px;
+}
+.profile-security-section + .profile-security-section {
+  padding-top: 18px;
+  border-top: 1px solid var(--border-dim);
+}
 
 /* Filter bar */
 .filter-bar {

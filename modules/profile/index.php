@@ -26,6 +26,7 @@ $pageTitle = __('nav_profile');
 $breadcrumbs = [[$pageTitle, null]];
 $profileErrors = [];
 $passwordErrors = [];
+$pinErrors = [];
 
 $profileForm = [
     'name' => (string)$profile['name'],
@@ -106,6 +107,21 @@ if (is_post()) {
             redirect('/modules/profile/');
         } catch (AppServiceException $e) {
             $passwordErrors[] = $e->getMessage();
+        }
+    }
+
+    if ($action === 'change_pin') {
+        try {
+            AuthService::changePin(
+                Auth::id(),
+                $_POST['pin_current_password'] ?? '',
+                $_POST['new_pin'] ?? '',
+                $_POST['new_pin_confirm'] ?? ''
+            );
+            flash_success(_r('profile_pin_updated'));
+            redirect('/modules/profile/');
+        } catch (AppServiceException $e) {
+            $pinErrors[] = $e->getMessage();
         }
     }
 }
@@ -228,38 +244,77 @@ include __DIR__ . '/../../views/layouts/header.php';
         <span class="card-title"><?= __('profile_security_heading') ?></span>
       </div>
       <div class="card-body">
-        <p class="page-subtitle" style="margin-top:0;margin-bottom:16px"><?= __('profile_security_hint', ['min' => (string)AuthService::PASSWORD_MIN_LENGTH]) ?></p>
+        <div class="profile-security-stack">
+          <section class="profile-security-section">
+            <p class="page-subtitle" style="margin-top:0;margin-bottom:16px"><?= __('profile_security_hint', ['min' => (string)AuthService::PASSWORD_MIN_LENGTH]) ?></p>
 
-        <?php if ($passwordErrors): ?>
-          <div class="flash flash-error" style="margin:0 0 16px">
-            <?= feather_icon('alert-circle', 15) ?>
-            <span><?= e(implode(' ', $passwordErrors)) ?></span>
-          </div>
-        <?php endif; ?>
+            <?php if ($passwordErrors): ?>
+              <div class="flash flash-error" style="margin:0 0 16px">
+                <?= feather_icon('alert-circle', 15) ?>
+                <span><?= e(implode(' ', $passwordErrors)) ?></span>
+              </div>
+            <?php endif; ?>
 
-        <form method="POST">
-          <?= csrf_field() ?>
-          <input type="hidden" name="action" value="change_password">
+            <form method="POST">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="change_password">
 
-          <div class="form-group">
-            <label class="form-label"><?= __('profile_current_password') ?></label>
-            <input type="password" name="current_password" class="form-control" autocomplete="current-password" required>
-          </div>
+              <div class="form-group">
+                <label class="form-label"><?= __('profile_current_password') ?></label>
+                <input type="password" name="current_password" class="form-control" autocomplete="current-password" required>
+              </div>
 
-          <div class="form-group">
-            <label class="form-label"><?= __('usr_new_password') ?></label>
-            <input type="password" name="new_password" class="form-control" autocomplete="new-password" required>
-          </div>
+              <div class="form-group">
+                <label class="form-label"><?= __('usr_new_password') ?></label>
+                <input type="password" name="new_password" class="form-control" autocomplete="new-password" required>
+              </div>
 
-          <div class="form-group">
-            <label class="form-label"><?= __('usr_confirm_pass') ?></label>
-            <input type="password" name="new_password_confirm" class="form-control" autocomplete="new-password" required>
-          </div>
+              <div class="form-group">
+                <label class="form-label"><?= __('usr_confirm_pass') ?></label>
+                <input type="password" name="new_password_confirm" class="form-control" autocomplete="new-password" required>
+              </div>
 
-          <button type="submit" class="btn btn-primary">
-            <?= feather_icon('shield', 16) ?> <?= __('profile_change_password') ?>
-          </button>
-        </form>
+              <button type="submit" class="btn btn-primary">
+                <?= feather_icon('shield', 16) ?> <?= __('profile_change_password') ?>
+              </button>
+            </form>
+          </section>
+
+          <section class="profile-security-section">
+            <p class="page-subtitle" style="margin-top:0;margin-bottom:16px"><?= __('profile_pin_hint', ['min' => (string)AuthService::PIN_MIN_LENGTH, 'max' => (string)AuthService::PIN_MAX_LENGTH]) ?></p>
+
+            <?php if ($pinErrors): ?>
+              <div class="flash flash-error" style="margin:0 0 16px">
+                <?= feather_icon('alert-circle', 15) ?>
+                <span><?= e(implode(' ', $pinErrors)) ?></span>
+              </div>
+            <?php endif; ?>
+
+            <form method="POST" autocomplete="off">
+              <?= csrf_field() ?>
+              <input type="hidden" name="action" value="change_pin">
+
+              <div class="form-group">
+                <label class="form-label"><?= __('profile_current_password') ?></label>
+                <input type="password" name="pin_current_password" class="form-control" autocomplete="current-password" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label"><?= __('profile_new_pin') ?></label>
+                <input type="password" name="new_pin" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="<?= (int)AuthService::PIN_MAX_LENGTH ?>" placeholder="<?= e(__('auth_pin_placeholder')) ?>" autocomplete="new-password" required>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label"><?= __('profile_confirm_pin') ?></label>
+                <input type="password" name="new_pin_confirm" class="form-control" inputmode="numeric" pattern="[0-9]*" maxlength="<?= (int)AuthService::PIN_MAX_LENGTH ?>" placeholder="<?= e(__('auth_pin_placeholder')) ?>" autocomplete="new-password" required>
+              </div>
+
+              <button type="submit" class="btn btn-primary">
+                <?= feather_icon('key', 16) ?> <?= __('profile_change_pin') ?>
+              </button>
+            </form>
+          </section>
+        </div>
       </div>
     </div>
   </div>
