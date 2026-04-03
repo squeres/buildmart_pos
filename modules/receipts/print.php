@@ -37,7 +37,7 @@ $items = Database::all(
     [$id]
 );
 
-$orgName      = setting('gr_org_name', setting('store_name', 'BuildMart'));
+$orgName      = setting('gr_org_name', setting('store_name', APP_NAME));
 $orgInn       = setting('gr_org_inn', setting('store_inn', ''));
 $orgAddress   = setting('gr_org_address', setting('store_address', ''));
 $docTitle     = setting('gr_doc_title', _r('gr_doc_title_default'));
@@ -59,6 +59,7 @@ function amount_in_words(float $amount): string
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= e($docTitle) ?> <?= e($doc['doc_no']) ?></title>
+<?= app_favicon_links() ?>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 

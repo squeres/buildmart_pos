@@ -47,10 +47,12 @@ define('BASE_URL', getenv('BASE_URL') ?: 'https://buildmart.local');
 define('UPLOAD_URL', BASE_URL . '/uploads/products/');
 
 // ── App settings ────────────────────────────────────────────────
-define('APP_NAME',         'BuildMart POS');
+define('APP_NAME',         'StroyKassa');
 define('APP_VERSION',      '1.0.0');
 define('SESSION_LIFETIME', 28800); // 8 h
 define('ITEMS_PER_PAGE',   30);
+define('APP_LOGO_URL',     BASE_URL . '/assets/img/brand/logo.png');
+define('APP_ICON_URL',     BASE_URL . '/assets/img/brand/icon.png');
 
 // ── Languages ───────────────────────────────────────────────────
 define('SUPPORTED_LANGS', ['ru' => 'Русский', 'en' => 'English']);

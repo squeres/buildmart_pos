@@ -33,6 +33,7 @@ if (is_post()) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= __('auth_login') ?> &mdash; <?= __('app_name') ?></title>
+<?= app_favicon_links() ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= url('assets/css/app.css') ?>">
@@ -40,21 +41,18 @@ if (is_post()) {
 <body class="app-body">
   <div class="auth-shell">
     <div class="auth-card auth-card-wide">
-      <div class="auth-brand">
-        <div class="auth-brand-icon" aria-hidden="true">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
-        </div>
-        <div>
-          <div class="brand-name"><?= __('app_name') ?></div>
-          <div class="brand-sub"><?= __('app_tagline') ?></div>
+      <div class="auth-brand" aria-label="<?= __('app_name') ?>">
+        <span class="auth-brand-mark" aria-hidden="true">
+          <img src="<?= e(APP_ICON_URL) ?>" alt="" class="brand-mark-image">
+        </span>
+        <div class="auth-brand-copy">
+          <div class="auth-brand-name"><?= __('app_name') ?></div>
+          <div class="auth-brand-sub"><?= __('app_tagline') ?></div>
         </div>
       </div>
 
       <h1 class="auth-heading"><?= __('auth_login_heading') ?></h1>
-      <p class="auth-subtitle"><?= __('auth_login_sub') ?></p>
+      <p class="auth-subtitle"><?= __('auth_login_sub_brand', ['app' => _r('app_name')]) ?></p>
 
       <?php foreach ($errors as $err): ?>
         <div class="flash flash-error mb-2" style="margin:0 0 12px">

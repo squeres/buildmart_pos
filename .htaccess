@@ -27,6 +27,10 @@ AddDefaultCharset UTF-8
     RewriteEngine On
     RewriteBase /
 
+    # Canonical brand icons
+    RewriteRule ^favicon\.ico$ assets/img/brand/icon.png [L]
+    RewriteRule ^apple-touch-icon(?:-precomposed)?\.png$ assets/img/brand/icon.png [L]
+
     # Block direct access to core/ and config/ directories
     RewriteRule ^(core|lang)/.*\.php$ - [F,L]
 

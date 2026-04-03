@@ -41,7 +41,7 @@ if ($items) {
     }
 }
 
-$storeName    = setting('store_name',    'BuildMart');
+$storeName    = setting('store_name',    APP_NAME);
 $storeAddress = setting('store_address', '');
 $storePhone   = setting('store_phone',   '');
 $storeInn     = setting('store_inn',     '');
@@ -63,6 +63,7 @@ $customerSnapshot = sale_customer_snapshot($sale, [
 <head>
 <meta charset="UTF-8">
 <title><?= __('pos_receipt_no') ?><?= e($sale['receipt_no']) ?></title>
+<?= app_favicon_links() ?>
 <style>
   * { margin:0;padding:0;box-sizing:border-box; }
   body { font-family:'Courier New',Courier,monospace; font-size:12px; color:#000; background:#fff; width:300px; margin:0 auto; padding:8px; }

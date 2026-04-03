@@ -34,7 +34,7 @@ $items = Database::all(
     [$id]
 );
 
-$orgName    = setting('gr_org_name',  setting('store_name', 'BuildMart'));
+$orgName    = setting('gr_org_name',  setting('store_name', APP_NAME));
 $docTitle   = setting('gr_doc_title', _r('gr_doc_title_default'));
 $safeNo     = preg_replace('/[^A-Za-z0-9_\-]/', '_', $doc['doc_no']);
 $filename   = 'GR_' . $safeNo . '_' . date('Ymd');
@@ -165,6 +165,7 @@ function exportHtmlXls(array $doc, array $items, string $orgName, string $docTit
       xmlns:x="urn:schemas-microsoft-com:office:excel"
       xmlns="http://www.w3.org/TR/REC-html40">
 <head><meta charset="UTF-8">
+<?= app_favicon_links() ?>
 <style>
   body { font-family: Arial, sans-serif; font-size: 10pt; }
   table { border-collapse: collapse; width: 100%; }

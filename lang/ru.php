@@ -5,7 +5,7 @@
  */
 return [
     // ── App ───────────────────────────────────────────────────────
-    'app_name'          => 'BuildMart POS',
+    'app_name'          => APP_NAME,
     'app_tagline'       => 'Строительный магазин',
     'version'           => 'Версия',
 
@@ -900,4 +900,6 @@ return [
     'prod_name_ru_placeholder'  => 'Цемент М500 50 кг',
     'prod_name_en_placeholder'  => 'Cement M500 50 kg',
     'unit_preset_placeholder'   => 'Например: Пачка',
+    'auth_login_sub_brand'      => 'Войдите в :app',
+    'auth_login_sub'            => 'Войдите в :app',
 ];

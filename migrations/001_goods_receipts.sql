@@ -144,3 +144,8 @@ SET @sql = IF(@col_exists = 0,
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+UPDATE `settings`
+SET `value` = 'ТОО «StroyKassa»'
+WHERE `key` = 'gr_org_name'
+  AND `value` LIKE '%BuildMart%';

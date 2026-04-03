@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= e($pageTitle ?? __('app_name')) ?> &mdash; <?= __('app_name') ?></title>
+<?= app_favicon_links() ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -50,13 +51,15 @@ $userInitial = function_exists('mb_strtoupper')
 ?>
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-brand">
-    <div class="brand-icon">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    </div>
-    <div>
-      <div class="brand-name"><?= __('app_name') ?></div>
-      <div class="brand-sub"><?= __('app_tagline') ?></div>
-    </div>
+    <a href="<?= url() ?>" class="sidebar-brand-link" aria-label="<?= __('app_name') ?>">
+      <span class="sidebar-brand-mark" aria-hidden="true">
+        <img src="<?= e(APP_ICON_URL) ?>" alt="" class="brand-mark-image">
+      </span>
+      <span class="sidebar-brand-copy">
+        <span class="sidebar-brand-name"><?= __('app_name') ?></span>
+        <span class="sidebar-brand-sub"><?= __('app_tagline') ?></span>
+      </span>
+    </a>
   </div>
   <nav class="sidebar-nav" id="sidebarNav">
     <?php foreach ($orderedKeys as $menuKey):

@@ -36,6 +36,7 @@ if (is_post()) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= __('usr_new_password') ?> &mdash; <?= __('app_name') ?></title>
+<?= app_favicon_links() ?>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="<?= url('assets/css/app.css') ?>">
@@ -43,18 +44,13 @@ if (is_post()) {
 <body class="app-body">
   <div class="auth-shell">
     <div class="auth-card">
-      <div class="auth-brand">
-        <div class="auth-brand-icon" aria-hidden="true">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 1v6"></path>
-            <path d="M9 7h6"></path>
-            <path d="M5 11V9a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"></path>
-            <rect x="4" y="11" width="16" height="10" rx="2"></rect>
-          </svg>
-        </div>
-        <div>
-          <div class="brand-name"><?= __('app_name') ?></div>
-          <div class="brand-sub"><?= __('auth_password_change_required') ?></div>
+      <div class="auth-brand" aria-label="<?= __('app_name') ?>">
+        <span class="auth-brand-mark" aria-hidden="true">
+          <img src="<?= e(APP_ICON_URL) ?>" alt="" class="brand-mark-image">
+        </span>
+        <div class="auth-brand-copy">
+          <div class="auth-brand-name"><?= __('app_name') ?></div>
+          <div class="auth-brand-sub"><?= __('app_tagline') ?></div>
         </div>
       </div>
 

@@ -50,6 +50,36 @@ function url(string $path = ''): string
     return BASE_URL . '/' . ltrim($path, '/');
 }
 
+function app_icon_path(): string
+{
+    return ROOT_PATH . '/assets/img/brand/icon.png';
+}
+
+function app_icon_url(): string
+{
+    static $url = null;
+    if ($url !== null) {
+        return $url;
+    }
+
+    $version = is_file(app_icon_path()) ? (string)filemtime(app_icon_path()) : APP_VERSION;
+    $url = APP_ICON_URL . '?v=' . rawurlencode($version);
+
+    return $url;
+}
+
+function app_favicon_links(): string
+{
+    $icon = e(app_icon_url());
+
+    return implode("\n", [
+        '<link rel="icon" type="image/png" sizes="32x32" href="' . $icon . '">',
+        '<link rel="icon" type="image/png" sizes="192x192" href="' . $icon . '">',
+        '<link rel="shortcut icon" type="image/png" href="' . $icon . '">',
+        '<link rel="apple-touch-icon" sizes="180x180" href="' . $icon . '">',
+    ]);
+}
+
 function current_url(): string
 {
     return (isset($_SERVER['HTTPS']) ? 'https' : 'http')

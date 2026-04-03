@@ -5,8 +5,8 @@
  */
 return [
     // -- App -------------------------------------------------------
-    'app_name'          => 'BuildMart POS',
-    'app_tagline'       => 'Construction Materials Store',
+    'app_name'          => APP_NAME,
+    'app_tagline'       => 'Construction Materials Checkout',
     'version'           => 'Version',
 
     // -- Navigation ------------------------------------------------
@@ -88,7 +88,8 @@ return [
     // -- Auth ------------------------------------------------------
     'auth_login'            => 'Sign In',
     'auth_login_heading'    => 'Welcome back',
-    'auth_login_sub'        => 'Sign in to your BuildMart account',
+    'auth_login_sub_brand'  => 'Sign in to :app',
+    'auth_login_sub'        => 'Sign in to :app',
     'auth_email'            => 'Email address',
     'auth_password'         => 'Password',
     'auth_pin_login'        => 'PIN Login',
