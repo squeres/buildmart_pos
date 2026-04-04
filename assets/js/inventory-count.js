@@ -70,6 +70,48 @@
     }).format(Number(value) || 0);
   }
 
+  function normalizeUnits(rawUnits, fallbackCode, fallbackLabel = '') {
+    const result = [];
+    const seen = new Set();
+    const units = Array.isArray(rawUnits) ? rawUnits : [];
+
+    units.forEach((rawUnit) => {
+      const unitCode = String(rawUnit?.unit_code || '').trim();
+      if (!unitCode || seen.has(unitCode)) {
+        return;
+      }
+
+      seen.add(unitCode);
+      result.push({
+        unit_code: unitCode,
+        unit_label: String(rawUnit?.unit_label || fallbackLabel || unitCode),
+        ratio_to_base: Math.max(0.000001, parseNumber(rawUnit?.ratio_to_base) || 1),
+        is_default: !!rawUnit?.is_default,
+      });
+    });
+
+    const safeFallbackCode = String(fallbackCode || '').trim();
+    if (safeFallbackCode && !seen.has(safeFallbackCode)) {
+      result.unshift({
+        unit_code: safeFallbackCode,
+        unit_label: String(fallbackLabel || safeFallbackCode),
+        ratio_to_base: 1,
+        is_default: result.length === 0,
+      });
+    }
+
+    if (!result.length) {
+      result.push({
+        unit_code: safeFallbackCode || 'pcs',
+        unit_label: String(fallbackLabel || safeFallbackCode || 'pcs'),
+        ratio_to_base: 1,
+        is_default: true,
+      });
+    }
+
+    return result;
+  }
+
   function toast(message, type = 'info') {
     if (typeof window.showToast === 'function') {
       window.showToast(message, type);
@@ -108,6 +150,56 @@
     setNotFoundVisible(false);
   }
 
+  function getItemUnit(item, unitCode = null) {
+    const code = String(unitCode || item?.unit_code || '').trim();
+    const units = Array.isArray(item?.units) ? item.units : [];
+    return (
+      units.find((unit) => unit.unit_code === code)
+      || units.find((unit) => unit.is_default)
+      || units[0]
+      || {
+        unit_code: String(item?.unit || 'pcs'),
+        unit_label: String(item?.unit_label || item?.unit || 'pcs'),
+        ratio_to_base: 1,
+        is_default: true,
+      }
+    );
+  }
+
+  function qtyFromBase(baseQty, item, unitCode = null) {
+    const unit = getItemUnit(item, unitCode);
+    return parseNumber(baseQty) * Math.max(0.000001, parseNumber(unit?.ratio_to_base) || 1);
+  }
+
+  function qtyToBase(qty, item, unitCode = null) {
+    const unit = getItemUnit(item, unitCode);
+    return parseNumber(qty) / Math.max(0.000001, parseNumber(unit?.ratio_to_base) || 1);
+  }
+
+  function formatQtyInUnit(baseQty, item, unitCode = null) {
+    const unit = getItemUnit(item, unitCode);
+    return `${formatQty(qtyFromBase(baseQty, item, unit.unit_code))} ${String(unit?.unit_label || '').trim()}`.trim();
+  }
+
+  function diffBaseQty(item) {
+    return qtyToBase(item.actual_qty, item, item.unit_code) - parseNumber(item.stock_qty);
+  }
+
+  function formatDiffInUnit(item) {
+    const unit = getItemUnit(item, item.unit_code);
+    const diffQty = qtyFromBase(diffBaseQty(item), item, unit.unit_code);
+    return `${diffQty > 0 ? '+' : ''}${formatQty(diffQty)} ${String(unit?.unit_label || '').trim()}`.trim();
+  }
+
+  function buildUnitOptions(item) {
+    const selectedCode = getItemUnit(item, item.unit_code).unit_code;
+    return (Array.isArray(item.units) ? item.units : []).map((unit) => `
+      <option value="${escHtml(unit.unit_code)}" ${unit.unit_code === selectedCode ? 'selected' : ''}>
+        ${escHtml(unit.unit_label)}
+      </option>
+    `).join('');
+  }
+
   function resultBadge(product) {
     if (parseNumber(product.stock_qty) < 0) {
       return `<span class="badge badge-warning">${escHtml(t('negativeStock', 'Negative stock'))}</span>`;
@@ -137,8 +229,8 @@
             ${resultBadge(product)}
           </div>
           <div class="inventory-count-result-meta">
-            <span>${escHtml(t('sku', 'SKU'))}: ${escHtml(product.sku || '—')}</span>
-            <span>${escHtml(t('barcode', 'Barcode'))}: ${escHtml(product.barcode || '—')}</span>
+            <span>${escHtml(t('sku', 'SKU'))}: ${escHtml(product.sku || '-')}</span>
+            <span>${escHtml(t('barcode', 'Barcode'))}: ${escHtml(product.barcode || '-')}</span>
             <span>${escHtml(t('warehouseStock', 'Current stock'))}: ${escHtml(product.stock_display || '')}</span>
           </div>
           ${product.aliases
@@ -156,28 +248,39 @@
     dom.queueTable.classList.toggle('hidden', items.length === 0);
 
     dom.queueBody.innerHTML = items.map((item) => {
-      const diff = parseNumber(item.actual_qty) - parseNumber(item.stock_qty);
-      const diffClass = diff > 0 ? 'inventory-count-diff positive' : (diff < 0 ? 'inventory-count-diff negative' : 'inventory-count-diff');
+      const diff = diffBaseQty(item);
+      const diffClass = diff > 0
+        ? 'inventory-count-diff positive'
+        : (diff < 0 ? 'inventory-count-diff negative' : 'inventory-count-diff');
 
       return `
         <tr data-product-id="${item.id}">
           <td>
             <div class="inventory-count-row-product">${escHtml(item.name)}</div>
-            <div class="inventory-count-row-meta">${escHtml(item.sku || '—')} · ${escHtml(item.barcode || '—')}</div>
+            <div class="inventory-count-row-meta">${escHtml(item.sku || '-')} &middot; ${escHtml(item.barcode || '-')}</div>
           </td>
-          <td class="col-num inventory-count-row-current">${escHtml(item.stock_display || formatQty(item.stock_qty))}</td>
+          <td class="col-num inventory-count-row-current">${escHtml(formatQtyInUnit(item.stock_qty, item, item.unit_code))}</td>
           <td class="col-num">
-            <input
-              type="number"
-              class="form-control mono inventory-count-qty-input"
-              data-action="actual"
-              data-product-id="${item.id}"
-              min="0"
-              step="0.001"
-              value="${escHtml(item.actual_qty)}"
-            >
+            <div class="inventory-count-qty-editor">
+              <input
+                type="number"
+                class="form-control mono inventory-count-qty-input"
+                data-action="actual"
+                data-product-id="${item.id}"
+                min="0"
+                step="0.001"
+                value="${escHtml(item.actual_qty)}"
+              >
+              <select
+                class="form-control inventory-count-unit-select"
+                data-action="unit"
+                data-product-id="${item.id}"
+              >
+                ${buildUnitOptions(item)}
+              </select>
+            </div>
           </td>
-          <td class="col-num ${diffClass}" data-role="diff">${diff > 0 ? '+' : ''}${escHtml(formatQty(diff))}</td>
+          <td class="col-num ${diffClass}" data-role="diff">${escHtml(formatDiffInUnit(item))}</td>
           <td>
             <input
               type="text"
@@ -198,11 +301,40 @@
     }).join('');
   }
 
+  function buildQueueItem(product) {
+    const units = normalizeUnits(product.units, product.unit, product.unit_label || product.unit || '');
+    const defaultUnit = getItemUnit({
+      units,
+      unit: String(product.unit || ''),
+      unit_label: String(product.unit_label || product.unit || ''),
+      unit_code: String(product.default_unit_code || product.unit || ''),
+    }, String(product.default_unit_code || product.unit || ''));
+
+    return {
+      id: Number(product.id),
+      name: String(product.name || ''),
+      sku: String(product.sku || ''),
+      barcode: String(product.barcode || ''),
+      unit: String(product.unit || ''),
+      unit_label: String(product.unit_label || product.unit || ''),
+      units,
+      unit_code: defaultUnit.unit_code,
+      stock_qty: parseNumber(product.stock_qty),
+      stock_display: String(product.stock_display || ''),
+      actual_qty: normalizeInputQty(qtyFromBase(product.stock_qty, { units, unit_code: defaultUnit.unit_code }, defaultUnit.unit_code)),
+      notes: '',
+    };
+  }
+
   function upsertQueueItem(product) {
     const existing = state.items.get(Number(product.id));
     if (existing) {
       existing.stock_qty = parseNumber(product.stock_qty);
       existing.stock_display = String(product.stock_display || '');
+      existing.units = normalizeUnits(product.units, product.unit, product.unit_label || product.unit || '');
+      existing.unit = String(product.unit || existing.unit || '');
+      existing.unit_label = String(product.unit_label || product.unit || existing.unit_label || existing.unit || '');
+      existing.unit_code = getItemUnit(existing, existing.unit_code).unit_code;
       renderQueue();
       const input = dom.queueBody.querySelector(`input[data-action="actual"][data-product-id="${product.id}"]`);
       if (input) {
@@ -212,17 +344,7 @@
       return;
     }
 
-    state.items.set(Number(product.id), {
-      id: Number(product.id),
-      name: String(product.name || ''),
-      sku: String(product.sku || ''),
-      barcode: String(product.barcode || ''),
-      unit: String(product.unit || ''),
-      stock_qty: parseNumber(product.stock_qty),
-      stock_display: String(product.stock_display || ''),
-      actual_qty: normalizeInputQty(product.stock_qty),
-      notes: '',
-    });
+    state.items.set(Number(product.id), buildQueueItem(product));
 
     renderQueue();
     const input = dom.queueBody.querySelector(`input[data-action="actual"][data-product-id="${product.id}"]`);
@@ -267,6 +389,7 @@
     return queueItems().map((item) => ({
       product_id: item.id,
       actual_qty: parseNumber(item.actual_qty),
+      unit_code: String(getItemUnit(item, item.unit_code).unit_code || ''),
       notes: String(item.notes || '').trim(),
     }));
   }
@@ -401,13 +524,43 @@
       item.actual_qty = event.target.value;
       const row = event.target.closest('tr');
       const diffCell = row?.querySelector('[data-role="diff"]');
+      const currentCell = row?.querySelector('.inventory-count-row-current');
       if (diffCell) {
-        const diff = parseNumber(item.actual_qty) - parseNumber(item.stock_qty);
+        const diff = diffBaseQty(item);
         diffCell.className = `col-num inventory-count-diff${diff > 0 ? ' positive' : (diff < 0 ? ' negative' : '')}`;
-        diffCell.textContent = `${diff > 0 ? '+' : ''}${formatQty(diff)}`;
+        diffCell.textContent = formatDiffInUnit(item);
+      }
+      if (currentCell) {
+        currentCell.textContent = formatQtyInUnit(item.stock_qty, item, item.unit_code);
       }
     } else if (action === 'notes') {
       item.notes = event.target.value;
+    }
+  });
+
+  dom.queueBody.addEventListener('change', (event) => {
+    const productId = Number(event.target.getAttribute('data-product-id'));
+    const action = event.target.getAttribute('data-action');
+    if (action !== 'unit') {
+      return;
+    }
+
+    const item = state.items.get(productId);
+    if (!item) {
+      return;
+    }
+
+    const previousUnitCode = getItemUnit(item, item.unit_code).unit_code;
+    const actualQtyBase = qtyToBase(item.actual_qty, item, previousUnitCode);
+    item.unit_code = String(event.target.value || previousUnitCode);
+    item.unit_code = getItemUnit(item, item.unit_code).unit_code;
+    item.actual_qty = normalizeInputQty(qtyFromBase(actualQtyBase, item, item.unit_code));
+
+    renderQueue();
+    const input = dom.queueBody.querySelector(`input[data-action="actual"][data-product-id="${productId}"]`);
+    if (input) {
+      input.focus();
+      input.select();
     }
   });
 

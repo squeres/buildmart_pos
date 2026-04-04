@@ -345,6 +345,8 @@ if (is_post()) {
                 'SELECT id, name_en, name_ru, sku, barcode, unit FROM products WHERE id = ? LIMIT 1',
                 [$newId]
             );
+            $createdUnits = product_units($newId, (string)($createdProduct['unit'] ?? $f['unit']));
+            $createdDefaultUnit = product_default_unit($newId, (string)($createdProduct['unit'] ?? $f['unit']));
             $payload = [
                 'type' => 'inventory-product-created',
                 'product' => [
@@ -353,6 +355,18 @@ if (is_post()) {
                     'sku' => (string)($createdProduct['sku'] ?? $f['sku']),
                     'barcode' => (string)($createdProduct['barcode'] ?? $f['barcode']),
                     'unit' => (string)($createdProduct['unit'] ?? $f['unit']),
+                    'unit_label' => unit_label((string)($createdProduct['unit'] ?? $f['unit'])),
+                    'default_unit_code' => (string)($createdDefaultUnit['unit_code'] ?? ($createdProduct['unit'] ?? $f['unit'])),
+                    'default_unit_label' => product_unit_label_text($createdDefaultUnit),
+                    'units' => array_map(
+                        static fn (array $unitRow): array => [
+                            'unit_code' => (string)($unitRow['unit_code'] ?? ''),
+                            'unit_label' => product_unit_label_text($unitRow),
+                            'ratio_to_base' => (float)($unitRow['ratio_to_base'] ?? 1),
+                            'is_default' => !empty($unitRow['is_default']),
+                        ],
+                        $createdUnits
+                    ),
                     'stock_qty' => 0,
                     'stock_display' => qty_display(0, (string)($createdProduct['unit'] ?? $f['unit'])),
                 ],

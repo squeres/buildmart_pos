@@ -90,6 +90,7 @@ if ($productId <= 0) {
 $rows = Database::all($sql, $params);
 $products = array_map(static function (array $row): array {
     $units = product_units((int)$row['id'], (string)$row['unit']);
+    $defaultUnit = product_default_unit((int)$row['id'], (string)$row['unit']);
     $stockQty = (float)$row['stock_qty'];
 
     return [
@@ -104,6 +105,17 @@ $products = array_map(static function (array $row): array {
         'stock_display' => product_stock_breakdown($stockQty, $units, (string)$row['unit']),
         'stock_low' => (float)$row['min_stock_qty'] > 0 && $stockQty <= (float)$row['min_stock_qty'],
         'aliases' => (string)($row['aliases'] ?? ''),
+        'default_unit_code' => (string)($defaultUnit['unit_code'] ?? $row['unit']),
+        'default_unit_label' => product_unit_label_text($defaultUnit),
+        'units' => array_map(
+            static fn (array $unit): array => [
+                'unit_code' => (string)($unit['unit_code'] ?? ''),
+                'unit_label' => product_unit_label_text($unit),
+                'ratio_to_base' => (float)($unit['ratio_to_base'] ?? 1),
+                'is_default' => !empty($unit['is_default']),
+            ],
+            $units
+        ),
     ];
 }, $rows);
 

@@ -35,6 +35,7 @@ foreach ($items as $rawItem) {
 
     $productId = (int)($rawItem['product_id'] ?? 0);
     $actualQty = sanitize_float($rawItem['actual_qty'] ?? 0);
+    $unitCode = sanitize((string)($rawItem['unit_code'] ?? ''));
     $notes = sanitize($rawItem['notes'] ?? '');
 
     if ($productId <= 0) {
@@ -47,6 +48,7 @@ foreach ($items as $rawItem) {
     $preparedItems[$productId] = [
         'product_id' => $productId,
         'actual_qty' => $actualQty,
+        'unit_code' => $unitCode,
         'notes' => $notes,
     ];
 }
@@ -70,10 +72,23 @@ try {
                 throw new AppServiceException(_r('prod_not_found'), 'product_not_found');
             }
 
+            $units = product_units((int)$item['product_id'], (string)$product['unit']);
+            $unitMap = product_unit_map((int)$item['product_id'], (string)$product['unit']);
+            $unitCode = (string)($item['unit_code'] ?? '');
+            if ($unitCode !== '' && !isset($unitMap[$unitCode])) {
+                throw new AppServiceException(__('err_validation'), 'validation_error');
+            }
+            $actualQtyBase = product_qty_to_base_unit(
+                (float)$item['actual_qty'],
+                $units,
+                (string)$product['unit'],
+                $unitCode !== '' ? $unitCode : null
+            );
+
             [$qtyBefore, $qtyAfter] = InventoryService::setStock(
                 (int)$item['product_id'],
                 $warehouseId,
-                (float)$item['actual_qty']
+                $actualQtyBase
             );
 
             $qtyChange = stock_qty_round($qtyAfter - $qtyBefore);
