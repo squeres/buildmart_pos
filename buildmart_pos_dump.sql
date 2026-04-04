@@ -196,7 +196,7 @@ CREATE TABLE `inventory_movements` (
   `product_id` int unsigned NOT NULL,
   `warehouse_id` smallint unsigned DEFAULT NULL,
   `user_id` int unsigned NOT NULL,
-  `type` enum('receipt','sale','return','adjustment','writeoff','transfer') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` enum('receipt','sale','return','adjustment','inventory','writeoff','transfer') COLLATE utf8mb4_unicode_ci NOT NULL,
   `qty_change` decimal(14,6) NOT NULL,
   `qty_before` decimal(14,6) NOT NULL,
   `qty_after` decimal(14,6) NOT NULL,
@@ -713,6 +713,7 @@ CREATE TABLE `settings` (
 LOCK TABLES `settings` WRITE;
 /*!40000 ALTER TABLE `settings` DISABLE KEYS */;
 INSERT INTO `settings` VALUES (1,'store_name','MAXСтрой Сыганак','Store Name','store','text'),(2,'store_address','г. Астана, Сыганак 16/1','Store Address','store','textarea'),(3,'store_phone','+7 (708) 168-82-85','Phone','store','text'),(4,'store_email','info@buildmart.local','Email','store','text'),(5,'store_inn','7700000000','IIN/BIN','store','text'),(6,'currency_symbol','?','Currency Symbol','general','text'),(7,'currency_code','KZT','Currency Code','general','select'),(8,'default_tax_rate','20','Default VAT Rate (%)','general','number'),(9,'default_language','ru','Default Language','general','select'),(10,'receipt_header','Спасибо за покупку!','Receipt Header Text','receipt','text'),(11,'receipt_footer','Товар надлежащего качества обмену и возврату не подлежит в течение 14 дней','Receipt Footer','receipt','textarea'),(12,'receipt_show_logo','0','Show Logo on Receipt','receipt','boolean'),(13,'low_stock_email','squere@susanoo.ru','Low Stock Alert Email','alerts','text'),(14,'shifts_required','1','Require Shift to Make Sales','pos','boolean'),(15,'gr_org_name','ИП \"БЕН ТРЕЙД\"','Organization Name','gr_template','text'),(16,'gr_org_inn','-','IIN / BIN / Tax Number','gr_template','text'),(17,'gr_org_address','г. Астана, ул. Сыганак 16/1','Organization Address','gr_template','textarea'),(18,'gr_doc_title','ТОВАРНАЯ НАКЛАДНАЯ','Document Title','gr_template','text'),(19,'gr_header_note','','Header Note','gr_template','textarea'),(20,'gr_footer_note','Товар получен в полном объёме, претензий нет.','Footer Note','gr_template','textarea'),(21,'gr_label_warehouse','Склад','Warehouse Label','gr_template','text'),(22,'gr_label_supplier','Поставщик','Supplier Label','gr_template','text'),(23,'gr_label_accepted_by','Принял','Accepted By Label','gr_template','text'),(24,'gr_label_delivered_by','Сдал','Delivered By Label','gr_template','text'),(35,'timezone','Asia/Almaty','Timezone','general','select');
+INSERT INTO `settings` (`key`,`value`,`label`,`group`,`type`) VALUES ('allow_negative_stock','1','Allow Negative Stock','pos','boolean');
 /*!40000 ALTER TABLE `settings` ENABLE KEYS */;
 UNLOCK TABLES;
 

@@ -47,6 +47,7 @@ final class SaleService
         $roundMoney = static fn($value): float => round((float)$value, 2);
         $clampPercent = static fn($value): float => min(100.0, max(0.0, (float)$value));
         $posPriceType = UISettings::defaultPriceType('pos');
+        $allowNegativeStock = allow_negative_stock();
 
         try {
             return Database::transaction(function () use (
@@ -57,11 +58,12 @@ final class SaleService
                 $cardAmount,
                 $notes,
                 $warehouseId,
-                $receiptDiscountType,
-                $receiptDiscountValue,
+            $receiptDiscountType,
+            $receiptDiscountValue,
             $applyReceiptToDiscounted,
             $openShift,
             $userId,
+            $allowNegativeStock,
                 $roundMoney,
             $clampPercent,
             $posPriceType
@@ -171,7 +173,7 @@ final class SaleService
                 foreach ($productIds as $productId) {
                     $requiredQty = (float)$requiredByProduct[$productId];
                     $availableQty = InventoryService::getAvailableStock($productId, $warehouseId, true);
-                    if ($availableQty + 0.000001 < $requiredQty) {
+                    if (!$allowNegativeStock && $availableQty + 0.000001 < $requiredQty) {
                         $meta = $productMetaById[$productId] ?? ['name' => '', 'unit' => ''];
                         throw new AppServiceException(
                             _r('pos_insufficient_stock', [
@@ -301,7 +303,8 @@ final class SaleService
                     [$qtyBefore, $qtyAfter] = InventoryService::deductStock(
                         (int)$line['product_id'],
                         $warehouseId,
-                        (float)$line['qty_base']
+                        (float)$line['qty_base'],
+                        $allowNegativeStock
                     );
 
                     Database::insert(

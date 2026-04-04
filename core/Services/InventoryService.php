@@ -77,7 +77,7 @@ final class InventoryService
      *
      * @return array{0:float,1:float}
      */
-    public static function deductStock(int $productId, int $warehouseId, float $qty): array
+    public static function deductStock(int $productId, int $warehouseId, float $qty, bool $allowNegative = false): array
     {
         $qty = stock_qty_round(max(0.0, $qty));
         $qtyBefore = self::getAvailableStock($productId, $warehouseId, true);
@@ -86,14 +86,14 @@ final class InventoryService
         }
 
         $qtyAfter = stock_qty_round($qtyBefore - $qty);
-        if ($qtyAfter < -0.000001) {
+        if (!$allowNegative && $qtyAfter < -0.000001) {
             throw new AppServiceException(__('err_validation'), 'insufficient_stock');
         }
 
-        self::persistWarehouseBalance($productId, $warehouseId, max(0.0, $qtyAfter));
+        self::persistWarehouseBalance($productId, $warehouseId, $qtyAfter);
         self::syncLegacyProductStockQty($productId);
 
-        return [$qtyBefore, max(0.0, $qtyAfter)];
+        return [$qtyBefore, $qtyAfter];
     }
 
     /**
@@ -121,7 +121,7 @@ final class InventoryService
     public static function setStock(int $productId, int $warehouseId, float $qty): array
     {
         $qtyBefore = self::getAvailableStock($productId, $warehouseId, true);
-        $qtyAfter = stock_qty_round(max(0.0, $qty));
+        $qtyAfter = stock_qty_round($qty);
 
         self::persistWarehouseBalance($productId, $warehouseId, $qtyAfter);
         self::syncLegacyProductStockQty($productId);

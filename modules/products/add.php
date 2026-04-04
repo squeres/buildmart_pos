@@ -5,7 +5,18 @@ Auth::requireLogin();
 
 $id     = (int)($_GET['id'] ?? 0);
 $isEdit = $id > 0;
-Auth::requirePerm($isEdit ? 'products.edit' : 'products.create');
+$inventoryPopupMode = !$isEdit && !empty($_GET['inventory_popup']);
+$inventorySeedQuery = sanitize($_GET['inventory_query'] ?? '');
+$inventoryWarehouseId = (int)($_GET['warehouse_id'] ?? 0);
+
+if ($isEdit) {
+    Auth::requirePerm('products.edit');
+} elseif ($inventoryPopupMode && !Auth::can('products.create')) {
+    Auth::requirePerm('inventory.create_product');
+} else {
+    Auth::requirePerm('products.create');
+}
+
 $prod   = $isEdit ? Database::row("SELECT * FROM products WHERE id=?", [$id]) : null;
 if ($prod) {
     $prod['stock_qty'] = InventoryService::getTotalStock($id);
@@ -34,6 +45,20 @@ $emptyProduct = [
     'is_weighable'=>0,'is_active'=>1,'image'=>null,
 ];
 $f = $prod ? array_merge($emptyProduct, $prod) : $emptyProduct;
+if ($inventoryPopupMode && !$isEdit && $inventorySeedQuery !== '') {
+    if (preg_match('/^\d[\d\s-]{4,}$/', $inventorySeedQuery)) {
+        if ($f['barcode'] === '') {
+            $f['barcode'] = preg_replace('/\s+/', '', $inventorySeedQuery) ?? $inventorySeedQuery;
+        }
+    } else {
+        if ($f['name_ru'] === '') {
+            $f['name_ru'] = $inventorySeedQuery;
+        }
+        if ($f['name_en'] === '') {
+            $f['name_en'] = $inventorySeedQuery;
+        }
+    }
+}
 $defaultSaleUnitCode = $f['unit'];
 $productUnits = $isEdit ? product_units($id, $f['unit']) : [[
     'unit_code' => $f['unit'],
@@ -88,7 +113,7 @@ $errors = [];
 if (is_post()) {
     if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
 
-    $enteredStockQty = sanitize_float($_POST['stock_qty'] ?? 0);
+    $enteredStockQty = $inventoryPopupMode ? 0.0 : sanitize_float($_POST['stock_qty'] ?? 0);
     $enteredMinStockQty = sanitize_float($_POST['min_stock_qty'] ?? 0);
     $enteredTargetStockQty = sanitize_float($_POST['target_stock_qty'] ?? 0);
     $f = [
@@ -147,7 +172,7 @@ if (is_post()) {
             break;
         }
     }
-    $stockQtyBase = $isEdit ? (float)$prod['stock_qty'] : ($enteredStockQty / max(1.0, $defaultDisplayRatio));
+    $stockQtyBase = $isEdit ? (float)$prod['stock_qty'] : ($inventoryPopupMode ? 0.0 : ($enteredStockQty / max(1.0, $defaultDisplayRatio)));
     $resolvedMinStockUnit = product_resolve_unit(
         $allUnitsForPrices,
         $f['unit'],
@@ -315,6 +340,46 @@ if (is_post()) {
                 );
             }
         }
+        if ($inventoryPopupMode && !$isEdit) {
+            $createdProduct = Database::row(
+                'SELECT id, name_en, name_ru, sku, barcode, unit FROM products WHERE id = ? LIMIT 1',
+                [$newId]
+            );
+            $payload = [
+                'type' => 'inventory-product-created',
+                'product' => [
+                    'id' => (int)($createdProduct['id'] ?? $newId),
+                    'name' => product_name($createdProduct ?: ['name_en' => $f['name_en'], 'name_ru' => $f['name_ru']]),
+                    'sku' => (string)($createdProduct['sku'] ?? $f['sku']),
+                    'barcode' => (string)($createdProduct['barcode'] ?? $f['barcode']),
+                    'unit' => (string)($createdProduct['unit'] ?? $f['unit']),
+                    'stock_qty' => 0,
+                    'stock_display' => qty_display(0, (string)($createdProduct['unit'] ?? $f['unit'])),
+                ],
+            ];
+            ?>
+            <!DOCTYPE html>
+            <html lang="<?= Lang::current() ?>">
+            <head>
+              <meta charset="UTF-8">
+              <title><?= __('prod_saved') ?></title>
+            </head>
+            <body>
+            <script>
+            (function(){
+              const payload = <?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+              if (window.opener && !window.opener.closed) {
+                window.opener.postMessage(payload, window.location.origin);
+              }
+              window.close();
+            })();
+            </script>
+            </body>
+            </html>
+            <?php
+            exit;
+        }
+
         flash_success(_r('prod_saved'));
         redirect('/modules/products/');
     }
@@ -323,11 +388,29 @@ if (is_post()) {
 $categories = Database::all("SELECT id,name_en,name_ru FROM categories WHERE is_active=1 ORDER BY name_en");
 $units      = unit_options();
 $unitPresets = unit_preset_rows();
+$bodyClassExtra = $inventoryPopupMode ? 'inventory-popup-mode' : '';
 
 include __DIR__ . '/../../views/layouts/header.php';
 ?>
 
 <style>
+body.inventory-popup-mode .sidebar,
+body.inventory-popup-mode .topbar {
+  display: none !important;
+}
+body.inventory-popup-mode .main-wrap {
+  margin-left: 0;
+}
+body.inventory-popup-mode .page-content {
+  padding: 18px;
+}
+body.inventory-popup-mode .flash {
+  margin-top: 0;
+}
+body.inventory-popup-mode .page-content > form {
+  max-width: 1380px;
+  margin: 0 auto;
+}
 .qc-overlay {
   display: none;
   position: fixed;
@@ -420,6 +503,13 @@ include __DIR__ . '/../../views/layouts/header.php';
 
 <?php if ($errors): ?>
 <div class="flash flash-error mb-2"><?= feather_icon('alert-circle',15) ?> <span><?= __('err_validation') ?></span></div>
+<?php endif; ?>
+
+<?php if ($inventoryPopupMode): ?>
+<div class="flash flash-info mb-2">
+  <?= feather_icon('layers', 15) ?>
+  <span><?= __('inv_count_create_hint') ?></span>
+</div>
 <?php endif; ?>
 
 <div style="display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start">
@@ -639,6 +729,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
 
     <!-- Stock -->
+    <?php if (!$inventoryPopupMode): ?>
     <div class="card">
       <div class="card-header"><span class="card-title"><?= __('prod_stock_qty') ?></span></div>
       <div class="card-body">
@@ -705,6 +796,7 @@ include __DIR__ . '/../../views/layouts/header.php';
         </div>
       </div>
     </div>
+    <?php endif; ?>
 
     <!-- Descriptions -->
     <div class="card">
@@ -767,7 +859,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       <button type="submit" class="btn btn-primary btn-block btn-lg">
         <?= feather_icon('save',17) ?> <?= __('btn_save') ?>
       </button>
-      <a href="<?= url('modules/products/') ?>" class="btn btn-ghost btn-block">
+      <a href="<?= $inventoryPopupMode ? '#' : url('modules/products/') ?>" class="btn btn-ghost btn-block"<?= $inventoryPopupMode ? ' onclick="window.close(); return false;"' : '' ?>>
         <?= feather_icon('arrow-left',15) ?> <?= __('btn_back') ?>
       </a>
     </div>

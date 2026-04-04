@@ -22,7 +22,7 @@ class UISettings
     // ── Module definitions (default schema for each module) ───────
     private static array $moduleDefaults = [
         'sidebar' => [
-            'items'  => ['dashboard','pos','products','categories','inventory',
+            'items'  => ['dashboard','pos','products','categories','inventory','inventory_count',
                          'receipts','acceptance','transfers','sales','customers',
                          'shifts','reports','suppliers','warehouses','users','settings'],
             'hidden' => [],

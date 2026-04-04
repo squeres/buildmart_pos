@@ -10,6 +10,7 @@ $breadcrumbs = [[$pageTitle, null]];
 $requiredSettings = [
     ['timezone', 'Asia/Almaty', 'Timezone', 'general', 'select'],
     ['currency_code', 'KZT', 'Currency Code', 'general', 'select'],
+    ['allow_negative_stock', '1', 'Allow Negative Stock', 'pos', 'boolean'],
     ['currency_symbol', '₸', 'Currency Symbol', 'general', 'text'],
     ['store_open_time', '08:30', 'Store Open Time', 'shifts', 'text'],
     ['store_close_time', '21:00', 'Store Close Time', 'shifts', 'text'],

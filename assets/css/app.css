@@ -1492,11 +1492,188 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .empty-state-icon { margin: 0 auto 14px; opacity: .3; }
 .empty-state-title { font-size: 16px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
 .empty-state-text  { font-size: 13px; }
+.hidden { display: none !important; }
+
+.inventory-count-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(360px, 0.9fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.inventory-count-main,
+.inventory-count-side {
+  min-width: 0;
+}
+
+.inventory-count-search-input {
+  min-height: 50px;
+  font-size: 16px;
+  padding-inline: 16px;
+}
+
+.inventory-count-status-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  margin-top: 14px;
+  border: 1px solid var(--border-dim);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.02);
+}
+
+.inventory-count-status-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.inventory-count-status-text {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.inventory-count-not-found {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-top: 14px;
+  border-radius: 16px;
+  border: 1px dashed rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.inventory-count-not-found-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+}
+
+.inventory-count-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.inventory-count-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid var(--border-dim);
+  background: rgba(255,255,255,0.015);
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s, transform .15s, background .15s;
+}
+
+.inventory-count-result:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.06);
+  transform: translateY(-1px);
+}
+
+.inventory-count-result-main {
+  min-width: 0;
+}
+
+.inventory-count-result-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.inventory-count-result-meta,
+.inventory-count-result-aliases {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.inventory-count-result-action {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.inventory-count-queue-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.inventory-count-queue-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.inventory-count-queue-empty {
+  padding: 26px 14px;
+  text-align: center;
+  border: 1px dashed var(--border-dim);
+  border-radius: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.inventory-count-queue-table-wrap {
+  max-height: calc(100vh - 250px);
+  overflow: auto;
+}
+
+.inventory-count-row-product {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.inventory-count-row-meta {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.inventory-count-diff {
+  font-weight: 700;
+}
+
+.inventory-count-diff.positive {
+  color: var(--success);
+}
+
+.inventory-count-diff.negative {
+  color: var(--danger);
+}
+
+.inventory-count-note-input,
+.inventory-count-qty-input {
+  min-width: 120px;
+}
 
 /* ── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 1100px) {
   .pos-layout { grid-template-columns: 1fr 340px; }
   .products-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+  .inventory-count-shell { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {
@@ -1508,6 +1685,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   .pos-layout { grid-template-columns: 1fr; height: auto; }
   .grid-4 { grid-template-columns: 1fr 1fr; }
   .profile-grid { grid-template-columns: 1fr; }
+  .inventory-count-queue-actions,
+  .inventory-count-status-row,
+  .inventory-count-not-found {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1566,6 +1749,15 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   }
   .profile-meta-value {
     text-align: left;
+  }
+  .inventory-count-result {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .inventory-count-queue-buttons {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
   }
 }
 

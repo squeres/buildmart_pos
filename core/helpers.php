@@ -946,8 +946,12 @@ function product_min_stock_data(array $product, ?array $units = null): array
 
 function product_stock_breakdown(float $baseQty, array $units, string $baseUnit): string
 {
-    if ($baseQty <= 0) {
+    if (abs($baseQty) < 0.000001) {
         return qty_display(0, $baseUnit);
+    }
+
+    if ($baseQty < 0) {
+        return '-' . product_stock_breakdown(abs($baseQty), $units, $baseUnit);
     }
 
     usort($units, static fn($a, $b) => (float)$a['ratio_to_base'] <=> (float)$b['ratio_to_base']);
@@ -1103,6 +1107,59 @@ function setting(string $key, mixed $default = ''): string
         $cache[$key] = $row !== null ? (string)$row['value'] : null;
     }
     return $cache[$key] ?? $default;
+}
+
+function allow_negative_stock(): bool
+{
+    return setting('allow_negative_stock', '1') === '1';
+}
+
+function normalized_lookup_value(string $value): string
+{
+    $value = trim((string)$value);
+    if ($value === '') {
+        return '';
+    }
+
+    if (function_exists('mb_strtolower')) {
+        $value = mb_strtolower($value, 'UTF-8');
+    } else {
+        $value = strtolower($value);
+    }
+
+    $value = preg_replace('/\s+/u', ' ', $value) ?? $value;
+    return trim($value);
+}
+
+function inventory_movement_supported_types(): array
+{
+    static $types = null;
+    if ($types !== null) {
+        return $types;
+    }
+
+    try {
+        $column = Database::row("SHOW COLUMNS FROM inventory_movements LIKE 'type'");
+        $typeDef = (string)($column['Type'] ?? '');
+        if (preg_match_all("/'([^']+)'/", $typeDef, $matches)) {
+            $types = $matches[1];
+            return $types;
+        }
+    } catch (Throwable) {
+        // Fall through to the conservative built-in list.
+    }
+
+    return $types = ['receipt', 'sale', 'return', 'adjustment', 'writeoff', 'transfer'];
+}
+
+function inventory_movement_type(string $preferred, string $fallback = 'adjustment'): string
+{
+    $supported = inventory_movement_supported_types();
+    if (in_array($preferred, $supported, true)) {
+        return $preferred;
+    }
+
+    return in_array($fallback, $supported, true) ? $fallback : ($supported[0] ?? $fallback);
 }
 
 function setting_group_label(string $group): string
@@ -1323,6 +1380,7 @@ function movement_label(string $type): string
         'sale'       => __('mv_sale'),
         'return'     => __('mv_return'),
         'adjustment' => __('mv_adjustment'),
+        'inventory'  => __('mv_inventory'),
         'writeoff'   => __('mv_writeoff'),
         'transfer'   => __('mv_transfer'),
     ];
@@ -1336,6 +1394,7 @@ function movement_badge_class(string $type): string
         'sale'       => 'info',
         'return'     => 'warning',
         'adjustment' => 'secondary',
+        'inventory'  => 'warning',
         'writeoff'   => 'danger',
         default      => 'secondary',
     };

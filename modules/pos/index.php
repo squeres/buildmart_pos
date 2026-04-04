@@ -20,6 +20,7 @@ $canOpenShift = Auth::can('shifts.open');
 $canCloseShift = Auth::can('shifts.close');
 $canRequestShiftExtension = Auth::can('shifts.extend');
 $canSell = Auth::can('pos.sell');
+$allowNegativeStock = allow_negative_stock();
 
 if (!$canRequestShiftExtension) {
     $openShiftExtensionState = [
@@ -42,8 +43,8 @@ $products = Database::all(
             p.min_stock_qty, p.image, p.is_active
      FROM products p
      LEFT JOIN stock_balances sb ON sb.product_id = p.id AND sb.warehouse_id = ?
-     WHERE p.is_active=1 AND COALESCE(sb.qty, 0) > 0
-     ORDER BY p.name_en
+     WHERE p.is_active=1" . ($allowNegativeStock ? '' : ' AND COALESCE(sb.qty, 0) > 0') . "
+     ORDER BY (COALESCE(sb.qty, 0) <= 0), p.name_en
      LIMIT 120",
     [$activeWhId]
 );
@@ -89,9 +90,11 @@ window.POS_SHIFT_EXTENSION_OPTIONS = ' . $initialShiftExtensionOptions . ';
 window.POS_SHIFT_EXTENSION_REMAINING = ' . $initialShiftExtensionRemaining . ';
 window.POS_CAN_REQUEST_SHIFT_EXTENSION = ' . ($canRequestShiftExtension && !empty($openShiftExtensionState['ok']) ? 'true' : 'false') . ';
 window.POS_CAN_SELL = ' . ($canSell ? 'true' : 'false') . ';
+window.POS_ALLOW_NEGATIVE_STOCK = ' . ($allowNegativeStock ? 'true' : 'false') . ';
 window.LANG = {
   cart_empty:           "' . _r('pos_cart_empty') . '",
   out_of_stock:         "' . _r('out_of_stock') . '",
+  negative_stock:       "' . _r('negative_stock') . '",
   low_stock:            "' . _r('low_stock') . '",
   err_validation:       "' . addslashes(_r('err_validation')) . '",
   prod_not_found:       "' . addslashes(_r('prod_not_found')) . '",
@@ -205,7 +208,9 @@ include __DIR__ . '/../../views/layouts/header.php';
               <div class="product-thumb-placeholder"><?= feather_icon('package', 28) ?></div>
             <?php endif; ?>
           </div>
-          <?php if ($p['stock_qty'] <= 0): ?>
+          <?php if ($p['stock_qty'] < 0): ?>
+            <span class="badge badge-warning product-card-stock-badge"><?= __('negative_stock') ?></span>
+          <?php elseif ($p['stock_qty'] == 0.0): ?>
             <span class="badge badge-danger product-card-stock-badge"><?= __('out_of_stock') ?></span>
           <?php elseif ($p['min_stock_qty'] > 0 && $p['stock_qty'] <= $p['min_stock_qty']): ?>
             <span class="badge badge-warning product-card-stock-badge"><?= __('low_stock') ?></span>

@@ -17,6 +17,10 @@
     return `${base.replace(/\/+$/, '/')}${String(path || '').replace(/^\/+/, '')}`;
   }
 
+  function posAllowsNegativeStock() {
+    return !!window.POS_ALLOW_NEGATIVE_STOCK;
+  }
+
   function parseNumber(value) {
     if (typeof value === 'number') {
       return Number.isFinite(value) ? value : 0;
@@ -361,6 +365,9 @@
     }
 
     function getUnitMaxQtyFromBase(stockBaseQty, unit) {
+      if (posAllowsNegativeStock()) {
+        return unit?.allow_fractional ? 999999.999 : 999999;
+      }
       const maxQty = Math.max(0, parseNumber(stockBaseQty)) * Math.max(0.000001, parseNumber(unit?.ratio_to_base) || 1);
       if (unit?.allow_fractional) {
         return roundQty(maxQty);
@@ -370,6 +377,9 @@
 
     function getPreferredAvailableUnit(units, preferredCode, stockBaseQty) {
       const preferredUnit = getDefaultUnit(units, preferredCode);
+      if (posAllowsNegativeStock()) {
+        return preferredUnit || units[0] || null;
+      }
       if (preferredUnit && getUnitMaxQtyFromBase(stockBaseQty, preferredUnit) >= getUnitMinQty(preferredUnit)) {
         return preferredUnit;
       }
@@ -446,6 +456,9 @@
     }
 
     function getMaxQtyForLine(group, unit, exceptLineKey = null) {
+      if (posAllowsNegativeStock()) {
+        return unit?.allow_fractional ? 999999.999 : 999999;
+      }
       const remainingBaseQty = Math.max(0, parseNumber(group.stock_base_qty) - getUsedBaseQty(group, exceptLineKey));
       const maxQty = remainingBaseQty * Math.max(0.000001, parseNumber(unit.ratio_to_base) || 1);
       if (unit.allow_fractional) {
@@ -535,6 +548,9 @@
     }
 
     function getAddableUnits(group, exceptLineKey = null) {
+      if (posAllowsNegativeStock()) {
+        return getUnusedUnits(group, exceptLineKey);
+      }
       return getUnusedUnits(group, exceptLineKey)
         .filter((unit) => getMaxQtyForLine(group, unit, exceptLineKey) > 0);
     }
@@ -1660,9 +1676,13 @@
                   ? `<img src="${escHtml(product.image_url)}" alt="${escHtml(product.name)}" loading="lazy">`
                   : `<div class="product-thumb-placeholder">${featherSvg('package', 28)}</div>`}
               </div>
-              ${product.stock_qty <= 0
-                ? `<span class="badge badge-danger product-card-stock-badge">${escHtml(lang('out_of_stock', 'Out of stock'))}</span>`
-                : ''}
+              ${product.stock_qty < 0
+                ? `<span class="badge badge-warning product-card-stock-badge">${escHtml(lang('negative_stock', 'Negative stock'))}</span>`
+                : product.stock_qty === 0
+                  ? `<span class="badge badge-danger product-card-stock-badge">${escHtml(lang('out_of_stock', 'Out of stock'))}</span>`
+                  : product.stock_low
+                    ? `<span class="badge badge-warning product-card-stock-badge">${escHtml(lang('low_stock', 'Low stock'))}</span>`
+                    : ''}
               <div class="product-card-name">${escHtml(product.name)}</div>
               <div class="product-card-sku">${escHtml(product.sku || '')}</div>
               <div class="product-card-price">${fmtMoney(product.sale_price)} <span style="font-size:11px;color:var(--text-muted)">${escHtml(product.unit_label || '')}</span></div>

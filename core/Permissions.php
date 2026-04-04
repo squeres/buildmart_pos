@@ -52,6 +52,14 @@ function permission_groups(): array
             ],
         ],
         [
+            'group_key' => 'nav_inventory_count',
+            'items' => [
+                ['key' => 'inventory.count', 'label_key' => 'perm_access'],
+                ['key' => 'inventory.apply', 'label_key' => 'perm_apply'],
+                ['key' => 'inventory.create_product', 'label_key' => 'perm_create'],
+            ],
+        ],
+        [
             'group_key' => 'nav_receipts',
             'items' => [
                 ['key' => 'receipts', 'label_key' => 'perm_access'],

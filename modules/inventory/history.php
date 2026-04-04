@@ -39,7 +39,7 @@ $movements = Database::all(
 );
 
 $products = Database::all("SELECT id,name_en,name_ru,sku FROM products ORDER BY name_en");
-$types    = ['receipt','sale','return','adjustment','writeoff','transfer'];
+$types    = ['receipt','sale','return','adjustment','inventory','writeoff','transfer'];
 
 include __DIR__ . '/../../views/layouts/header.php';
 ?>

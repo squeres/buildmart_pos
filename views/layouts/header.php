@@ -12,7 +12,7 @@
 <link rel="stylesheet" href="<?= url('assets/css/ui-settings.css') ?>">
 <?php if (!empty($extraCss)) echo $extraCss; ?>
 </head>
-<body class="app-body">
+<body class="app-body<?= !empty($bodyClassExtra) ? ' ' . e($bodyClassExtra) : '' ?>">
 <?php
 $menuCfg    = UISettings::menu();
 $menuOrder  = $menuCfg['items']  ?? [];
@@ -24,6 +24,7 @@ $menuDefs = [
   'products'   => ['perm'=>'products',   'path'=>'/modules/products/',    'icon'=>'package',      'key'=>'nav_products'],
   'categories' => ['perm'=>'categories', 'path'=>'/modules/categories/', 'icon'=>'tag',          'key'=>'nav_categories'],
   'inventory'  => ['perm'=>'inventory',  'path'=>'/modules/inventory/',   'icon'=>'layers',       'key'=>'nav_inventory'],
+  'inventory_count' => ['perm'=>'inventory.count', 'path'=>'/modules/inventory/count.php', 'icon'=>'check-square', 'key'=>'nav_inventory_count'],
   'receipts'   => ['perm'=>'receipts',   'path'=>'/modules/receipts/',    'icon'=>'truck',        'key'=>'nav_receipts'],
   'acceptance' => ['perm'=>'acceptance', 'path'=>'/modules/acceptance/',  'icon'=>'clipboard',    'key'=>'nav_acceptance'],
   'transfers'  => ['perm'=>'transfers',  'path'=>'/modules/transfers/',   'icon'=>'shuffle',      'key'=>'nav_transfers'],
@@ -38,7 +39,44 @@ $menuDefs = [
   'settings'   => ['perm'=>'settings',   'path'=>'/modules/settings/',    'icon'=>'settings',     'key'=>'nav_settings'],
 ];
 $orderedKeys = array_unique(array_merge($menuOrder, array_keys($menuDefs)));
+if (in_array('inventory', $orderedKeys, true) && in_array('inventory_count', $orderedKeys, true)) {
+  $orderedKeys = array_values(array_filter($orderedKeys, static fn(string $key): bool => $key !== 'inventory_count'));
+  $inventoryIndex = array_search('inventory', $orderedKeys, true);
+  if ($inventoryIndex === false) {
+    $orderedKeys[] = 'inventory_count';
+  } else {
+    array_splice($orderedKeys, $inventoryIndex + 1, 0, ['inventory_count']);
+  }
+}
 $currentPath = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$activeMenuKey = null;
+$activeMenuPathLength = -1;
+$basePathPrefix = rtrim(BASE_URL, '/');
+$normalizedCurrentPath = rtrim($currentPath ?: '/', '/');
+$normalizedCurrentPath = $normalizedCurrentPath === '' ? '/' : $normalizedCurrentPath;
+
+foreach ($orderedKeys as $menuKey) {
+  if (!isset($menuDefs[$menuKey])) continue;
+  $item = $menuDefs[$menuKey];
+  if (!Auth::can($item['perm'])) continue;
+  if (in_array($menuKey, $menuHidden, true)) continue;
+
+  $path = (string)$item['path'];
+  if ($path === '/') {
+    $matches = ($normalizedCurrentPath === $basePathPrefix || $normalizedCurrentPath === '/' || $normalizedCurrentPath === rtrim($basePathPrefix . '/index.php', '/'));
+    $pathLen = 1;
+  } else {
+    $targetPath = rtrim($basePathPrefix . $path, '/');
+    $matches = $normalizedCurrentPath === $targetPath || str_starts_with($normalizedCurrentPath . '/', $targetPath . '/');
+    $pathLen = strlen($targetPath);
+  }
+
+  if ($matches && $pathLen > $activeMenuPathLength) {
+    $activeMenuKey = $menuKey;
+    $activeMenuPathLength = $pathLen;
+  }
+}
+
 $acceptanceBadge = (function() { try { return gr_pending_count(); } catch(\Throwable $e) { return 0; } })();
 $u = Auth::user();
 $userInitial = (string)($u['name'] ?? '?');
@@ -69,9 +107,7 @@ $userInitial = function_exists('mb_strtoupper')
       if (in_array($menuKey, $menuHidden)) continue;
       $isPinned = in_array($menuKey, $menuPinned);
       $href = BASE_URL . $item['path'];
-      $active = ($item['path'] === '/')
-        ? ($currentPath === BASE_URL.'/' || $currentPath === BASE_URL.'/index.php' || $currentPath === '/' || $currentPath === '/index.php')
-        : str_contains($currentPath, rtrim($item['path'],'/'));
+      $active = $menuKey === $activeMenuKey;
     ?>
       <a href="<?= $href ?>" class="nav-link <?= $active ? 'active' : '' ?><?= $isPinned ? ' nav-pinned' : '' ?>" data-menu-key="<?= e($menuKey) ?>">
         <span class="nav-icon"><?php echo feather_icon($item['icon']); ?></span>

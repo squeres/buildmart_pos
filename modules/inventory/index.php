@@ -121,8 +121,11 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= __('inv_title') ?></h1>
   <div class="page-actions">
     <a href="<?= url('modules/inventory/needs.php') ?>" class="btn btn-ghost"><?= feather_icon('alert-triangle',15) ?> <?= __('repl_needs_title') ?></a>
+    <?php if (Auth::can('inventory.count')): ?>
+      <a href="<?= url('modules/inventory/count.php') ?>" class="btn btn-primary"><?= feather_icon('check-square',15) ?> <?= __('inv_count_title') ?></a>
+    <?php endif; ?>
     <?php if (Auth::can('inventory.receive')): ?>
-      <a href="<?= url('modules/inventory/receive.php') ?>"  class="btn btn-primary"><?= feather_icon('plus',15) ?> <?= __('inv_receive') ?></a>
+      <a href="<?= url('modules/inventory/receive.php') ?>"  class="btn btn-secondary"><?= feather_icon('plus',15) ?> <?= __('inv_receive') ?></a>
     <?php endif; ?>
     <?php if (Auth::can('inventory.adjust')): ?>
       <a href="<?= url('modules/inventory/adjust.php') ?>"   class="btn btn-secondary"><?= feather_icon('sliders',15) ?> <?= __('inv_adjust') ?></a>
@@ -210,7 +213,8 @@ include __DIR__ . '/../../views/layouts/header.php';
                 }
                 return false;
             })();
-            $isOut = $totalWhQty <= 0;
+            $isOut = abs($totalWhQty) < 0.000001;
+            $isNegative = $totalWhQty < 0;
           ?>
           <tr>
             <td class="fw-600"><?= e(product_name($p)) ?></td>
@@ -220,7 +224,7 @@ include __DIR__ . '/../../views/layouts/header.php';
               <?php $q = $whQtys[$wh['id']]; ?>
               <td class="col-num" style="font-family:monospace;<?=
                 ($minQty > 0 && $q > 0 && $q <= $minQty) ? 'color:var(--warning);font-weight:600' :
-                ($q <= 0 ? 'color:var(--border-medium)' : '') ?>">
+                ($q < 0 ? 'color:var(--danger);font-weight:600' : ($q <= 0 ? 'color:var(--border-medium)' : '')) ?>">
                 <?= $q > 0 ? e(product_stock_breakdown($q, $displayMap[(int)$p['id']]['units'], $p['unit'])) : '—' ?>
               </td>
             <?php endforeach; ?>
@@ -237,10 +241,12 @@ include __DIR__ . '/../../views/layouts/header.php';
               <?= $retailDisplay > 0 ? money($retailDisplay) : '—' ?>
             </td>
             <td>
-              <?= $isOut
+              <?= $isNegative
+                  ? '<span class="badge badge-warning">'.__('negative_stock').'</span>'
+                  : ($isOut
                   ? '<span class="badge badge-danger">'.__('out_of_stock').'</span>'
                   : ($isLow ? '<span class="badge badge-' . e($replenishmentMeta['badge_class']) . '">'.__('low_stock').'</span>'
-                             : '<span class="badge badge-success">'.__('lbl_active').'</span>') ?>
+                             : '<span class="badge badge-success">'.__('lbl_active').'</span>')) ?>
               <?php if ($minQty > 0): ?>
                 <div style="margin-top:4px"><?= replenishment_class_badge($p['replenishment_class'] ?? 'C') ?></div>
               <?php endif; ?>

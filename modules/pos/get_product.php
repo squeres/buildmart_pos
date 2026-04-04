@@ -5,12 +5,13 @@ Auth::requirePerm('pos');
 
 $id   = (int)($_GET['id'] ?? 0);
 $whId = pos_warehouse_id();
+$allowNegativeStock = allow_negative_stock();
 
 $p = Database::row(
     'SELECT p.*, COALESCE(sb.qty, 0) AS stock_qty
      FROM products p
      LEFT JOIN stock_balances sb ON sb.product_id = p.id AND sb.warehouse_id = ?
-     WHERE p.id=? AND p.is_active=1 AND COALESCE(sb.qty, 0) > 0',
+     WHERE p.id=? AND p.is_active=1' . ($allowNegativeStock ? '' : ' AND COALESCE(sb.qty, 0) > 0'),
     [$whId, $id]
 );
 
