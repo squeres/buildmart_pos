@@ -682,7 +682,10 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: 2px;
 }
 .product-card:hover { border-color: var(--amber-border); background: var(--bg-raised); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
-.product-card.out-of-stock { opacity: .5; pointer-events: none; }
+.product-card.out-of-stock {
+  opacity: .78;
+  border-color: rgba(239, 68, 68, .28);
+}
 .product-thumb {
   width: 100%; aspect-ratio: 1;
   background: var(--bg-raised);

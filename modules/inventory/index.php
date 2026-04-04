@@ -225,7 +225,7 @@ include __DIR__ . '/../../views/layouts/header.php';
               <td class="col-num" style="font-family:monospace;<?=
                 ($minQty > 0 && $q > 0 && $q <= $minQty) ? 'color:var(--warning);font-weight:600' :
                 ($q < 0 ? 'color:var(--danger);font-weight:600' : ($q <= 0 ? 'color:var(--border-medium)' : '')) ?>">
-                <?= $q > 0 ? e(product_stock_breakdown($q, $displayMap[(int)$p['id']]['units'], $p['unit'])) : '—' ?>
+                <?= abs($q) >= 0.000001 ? e(product_stock_breakdown($q, $displayMap[(int)$p['id']]['units'], $p['unit'])) : '&mdash;' ?>
               </td>
             <?php endforeach; ?>
             <td class="col-num fw-600" style="font-family:monospace"><?= e(product_stock_breakdown($totalWhQty, $displayMap[(int)$p['id']]['units'], $p['unit'])) ?></td>

@@ -32,7 +32,7 @@ if ($search !== '') {
 
 // Filter by warehouse: only show products that have any stock on that wh
 if ($whId > 0 && in_array($whId, $myWhIds)) {
-    $where[] = "EXISTS (SELECT 1 FROM stock_balances sb WHERE sb.product_id=p.id AND sb.warehouse_id=? AND sb.qty>0)";
+    $where[] = "EXISTS (SELECT 1 FROM stock_balances sb WHERE sb.product_id=p.id AND sb.warehouse_id=? AND ABS(sb.qty) > 0.000001)";
     $params[] = $whId;
 }
 
@@ -145,8 +145,8 @@ include __DIR__ . '/../../views/layouts/header.php';
             <td><?= e(product_unit_label_text($displayMap[(int)$p['id']]['default_unit'])) ?></td>
             <?php foreach ($warehouses as $w): ?>
               <?php $q = $whQtys[$w['id']]; ?>
-              <td class="col-num <?= $q <= 0 ? 'text-muted' : '' ?>" style="font-family:monospace">
-                <?= $q > 0 ? e(product_stock_breakdown($q, $displayMap[(int)$p['id']]['units'], $p['unit'])) : '<span style="color:var(--border-medium)">—</span>' ?>
+              <td class="col-num <?= abs($q) < 0.000001 ? 'text-muted' : '' ?>" style="font-family:monospace;<?= $q < 0 ? 'color:var(--danger);font-weight:600' : '' ?>">
+                <?= abs($q) >= 0.000001 ? e(product_stock_breakdown($q, $displayMap[(int)$p['id']]['units'], $p['unit'])) : '<span style="color:var(--border-medium)">&mdash;</span>' ?>
               </td>
             <?php endforeach; ?>
             <td class="col-num fw-600" style="font-family:monospace">
