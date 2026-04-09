@@ -21,7 +21,7 @@ $errors = [];
 $initialRows = [];
 
 $productRows = Database::all(
-    "SELECT id, name_en, name_ru, sku, unit, is_weighable
+    "SELECT id, name_en, name_ru, sku, barcode, unit, is_weighable
      FROM products
      WHERE is_active=1
      ORDER BY name_en"
@@ -56,6 +56,7 @@ foreach ($productRows as $productRow) {
         'id' => $productId,
         'name' => product_name($productRow),
         'sku' => (string)$productRow['sku'],
+        'barcode' => (string)($productRow['barcode'] ?? ''),
         'base_unit' => (string)$productRow['unit'],
         'base_unit_label' => product_unit_label_text(product_resolve_unit($units, (string)$productRow['unit'], (string)$productRow['unit'])),
         'default_unit' => (string)$defaultUnit['unit_code'],
@@ -472,6 +473,21 @@ function productAvailableInWarehouse(product, warehouseId) {
   return qty > 0;
 }
 
+function findTransferProductByCode(code) {
+  const needle = String(code || '').trim().toLowerCase();
+  if (!needle) {
+    return null;
+  }
+  const warehouseId = selectedSourceWarehouseId();
+  return Object.values(PRODUCTS).find((product) => (
+    productAvailableInWarehouse(product, warehouseId)
+    && (
+      String(product.barcode || '').trim().toLowerCase() === needle
+      || String(product.sku || '').trim().toLowerCase() === needle
+    )
+  )) || null;
+}
+
 function showItemsClientError(message) {
   const wrap = document.getElementById('transfer-items-client-error');
   const text = document.getElementById('transfer-items-client-error-text');
@@ -776,6 +792,12 @@ function addRow(productId = '', qty = '', unitCode = '', insertAfter = null) {
           <button type="button" class="btn btn-sm btn-ghost transfer-add-unit">
             <?= feather_icon('plus', 13) ?> ${escapeHtml(I18N.addUnitLine)}
           </button>
+          <button type="button"
+                  class="product-field-icon product-camera-trigger transfer-camera-btn"
+                  title="<?= e(__('camera_scan_title')) ?>"
+                  hidden>
+            <?= feather_icon('camera', 13) ?>
+          </button>
         </div>
       </div>
     </td>
@@ -842,6 +864,23 @@ function addRow(productId = '', qty = '', unitCode = '', insertAfter = null) {
     validateProductRows(tr.querySelector('.prod-select')?.value || '');
   });
   tr.querySelector('.transfer-add-unit')?.addEventListener('click', () => addSameProductUnit(tr));
+  if (window.ProductCameraScanner) {
+    window.ProductCameraScanner.attach(tr.querySelector('.transfer-camera-btn'), {
+      onDetected: async (code) => {
+        const product = findTransferProductByCode(code);
+        if (!product) {
+          return;
+        }
+        const select = tr.querySelector('.prod-select');
+        if (!select) {
+          return;
+        }
+        select.value = String(product.id);
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        tr.querySelector('.qty-input')?.focus();
+      }
+    });
+  }
   tr.querySelector('.remove-row')?.addEventListener('click', () => {
     const productIdToRefresh = tr.querySelector('.prod-select')?.value || '';
     tr.remove();

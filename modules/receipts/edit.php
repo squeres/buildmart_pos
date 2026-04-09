@@ -43,12 +43,30 @@ if ($isEdit) {
 
 $suppliers  = Database::all("SELECT id, name FROM suppliers  WHERE is_active=1 ORDER BY name");
 $warehouses = user_warehouses();
-$products   = Database::all("SELECT id, category_id, name_en, name_ru, sku, barcode, unit, cost_price, sale_price, image FROM products WHERE is_active=1 ORDER BY name_en");
 $categories = Database::all("SELECT id, name_en, name_ru FROM categories WHERE is_active=1 ORDER BY sort_order, name_en");
 $unitPresets = unit_preset_rows();
 
+$selectedProductIds = array_values(array_unique(array_filter(array_map(
+    static fn(array $item): int => (int)($item['product_id'] ?? 0),
+    $items
+))));
+$receiptProductsById = [];
+if ($selectedProductIds) {
+    $placeholders = implode(',', array_fill(0, count($selectedProductIds), '?'));
+    $selectedProducts = Database::all(
+        "SELECT id, category_id, name_en, name_ru, sku, barcode, unit, cost_price, sale_price, image
+         FROM products
+         WHERE is_active = 1
+           AND id IN ($placeholders)",
+        $selectedProductIds
+    );
+    foreach ($selectedProducts as $selectedProduct) {
+        $receiptProductsById[(int)$selectedProduct['id']] = $selectedProduct;
+    }
+}
+
 $productsJs = [];
-foreach ($products as $p) {
+foreach ($receiptProductsById as $p) {
     $units = product_units((int)$p['id'], $p['unit']);
     usort($units, static fn($a, $b) => (float)$a['ratio_to_base'] <=> (float)$b['ratio_to_base']);
     $defaultUnit = product_default_unit((int)$p['id'], $p['unit']);
@@ -447,6 +465,46 @@ include __DIR__ . '/../../views/layouts/header.php';
 </div>
 <?php endif; ?>
 
+<div class="qc-overlay" id="modal-product-picker" role="dialog" aria-modal="true">
+  <div class="qc-modal product-picker-modal" style="max-width:620px">
+    <div class="qc-modal-header">
+      <div class="qc-modal-title">
+        <?= feather_icon('list', 17) ?> <?= __('gr_product_picker') ?>
+      </div>
+      <button type="button" class="qc-modal-close" data-close-modal="modal-product-picker">×</button>
+    </div>
+    <div class="qc-modal-body">
+      <div class="product-search-field">
+        <div class="product-search-main">
+          <input
+            type="text"
+            id="receiptProductPickerSearch"
+            class="form-control"
+            placeholder="<?= e(__('gr_product_search_ph')) ?>"
+            autocomplete="off"
+            spellcheck="false"
+          >
+        </div>
+        <div class="product-field-actions">
+          <button type="button"
+                  class="product-field-icon product-camera-trigger"
+                  id="receiptProductPickerCamera"
+                  title="<?= e(__('camera_scan_title')) ?>"
+                  hidden>
+            <?= feather_icon('camera', 15) ?>
+          </button>
+        </div>
+      </div>
+      <div class="product-search-inline-hint"><?= __('gr_product_picker_hint') ?></div>
+      <div class="product-picker-empty hidden" id="receiptProductPickerEmpty"><?= __('gr_product_picker_empty') ?></div>
+      <div class="product-picker-list" id="receiptProductPickerList"></div>
+    </div>
+    <div class="qc-modal-footer">
+      <button type="button" class="btn btn-ghost" data-close-modal="modal-product-picker"><?= __('btn_close') ?></button>
+    </div>
+  </div>
+</div>
+
 <?php if ($canManageReceiptProducts): ?>
 <div class="qc-overlay" id="modal-product" role="dialog" aria-modal="true">
   <div class="qc-modal" style="max-width:580px">
@@ -627,19 +685,38 @@ PRODUCTS.forEach((product) => {
 });
 
 const AJAX_URL = <?= json_encode(url('modules/receipts/ajax_create.php')) ?>;
+const PRODUCT_SEARCH_URL = <?= json_encode(url('modules/receipts/search_products.php')) ?>;
 const CSRF_TOKEN = document.querySelector('input[name="_token"]')?.value || '';
 const UNIT_PRESET_AJAX_URL = <?= json_encode(url('modules/common/ajax_units.php')) ?>;
 const UNIT_PRESETS = <?= json_encode(array_values(array_map(static fn($row) => ['label' => (string)$row['unit_label'], 'storageCode' => unit_storage_code_from_label((string)$row['unit_label'])], $unitPresets)), JSON_UNESCAPED_UNICODE) ?>;
+const RECEIPT_SEARCH_STRINGS = {
+  recentTitle: <?= json_encode(__('gr_product_recent')) ?>,
+  recentHint: <?= json_encode(__('gr_product_recent_hint')) ?>,
+  searchMin: <?= json_encode(__('gr_product_search_min')) ?>,
+  noResults: <?= json_encode(__('gr_product_search_no_results')) ?>,
+  pickerEmpty: <?= json_encode(__('gr_product_picker_empty')) ?>,
+  sku: <?= json_encode(__('lbl_sku')) ?>,
+  barcode: <?= json_encode(__('lbl_barcode')) ?>,
+  aliases: <?= json_encode(__('inv_count_aliases')) ?>,
+  selected: <?= json_encode(__('gr_product_selected')) ?>,
+};
 
 let rowIndex = <?= max(count($items) - 1, -1) ?>;
 let _targetRow = null;
 let _editingProductId = 0;
+let _pickerResults = [];
+let _pickerSearchTimer = 0;
+const receiptProductCache = new Map();
 
 const prodUnitRowsWrap = document.getElementById('prod-unit-rows');
 const prodBaseUnitSelect = document.getElementById('prod-unit');
 const prodBaseUnitLabel = document.getElementById('prod-unit-label');
 const prodDefaultUnitSelect = document.getElementById('prod-default-unit');
 const productSaveBtn = document.getElementById('btn-product-save');
+const pickerSearchInput = document.getElementById('receiptProductPickerSearch');
+const pickerList = document.getElementById('receiptProductPickerList');
+const pickerEmpty = document.getElementById('receiptProductPickerEmpty');
+const pickerCameraBtn = document.getElementById('receiptProductPickerCamera');
 const unitPresetModal = document.getElementById('modal-unit-preset');
 const unitPresetNameInput = document.getElementById('unit-preset-name');
 const unitPresetError = document.getElementById('unit-preset-error');
@@ -868,6 +945,146 @@ function recalculateReceiptRowUnits(tr, product) {
   applyRowUnitPrice(tr, product, unitSelect.value || anchorCode);
   recalcRow(tr);
 }
+function formatReceiptProductLabel(product) {
+  if (!product) return '';
+  return `${product.name}${product.sku ? ` [${product.sku}]` : ''}`;
+}
+
+function formatReceiptProductMeta(product) {
+  if (!product) return '';
+  const parts = [];
+  if (product.sku) {
+    parts.push(`${RECEIPT_SEARCH_STRINGS.sku}: ${product.sku}`);
+  }
+  if (product.barcode) {
+    parts.push(`${RECEIPT_SEARCH_STRINGS.barcode}: ${product.barcode}`);
+  }
+  return parts.join(' · ');
+}
+
+function closeRowSearchResults(tr) {
+  const resultsWrap = tr?.querySelector('.row-product-results');
+  if (resultsWrap) {
+    resultsWrap.classList.add('hidden');
+    resultsWrap.innerHTML = '';
+  }
+}
+
+function clearRowProductSelection(tr, options = {}) {
+  if (!tr) return;
+  const keepInput = options.keepInput === true;
+  const productSel = tr.querySelector('.row-product-select');
+  const searchInput = tr.querySelector('.row-product-search-input');
+  const meta = tr.querySelector('.row-product-selected-meta');
+  const matrix = tr.querySelector('.row-unit-matrix');
+  const label = tr.querySelector('.row-selected-unit');
+  if (productSel) productSel.value = '';
+  if (searchInput) {
+    searchInput.dataset.selectedProductId = '';
+    searchInput.dataset.selectedProductLabel = '';
+    if (!keepInput) searchInput.value = '';
+  }
+  if (meta) meta.textContent = '';
+  if (matrix) matrix.innerHTML = '';
+  if (label) label.textContent = '';
+  setRowActionButtonsState(tr, null);
+  recalcRow(tr);
+}
+
+function updateRowProductDisplay(tr, product = null) {
+  const searchInput = tr?.querySelector('.row-product-search-input');
+  const meta = tr?.querySelector('.row-product-selected-meta');
+  if (!searchInput) return;
+  if (!product) {
+    searchInput.dataset.selectedProductId = '';
+    searchInput.dataset.selectedProductLabel = '';
+    if (meta) meta.textContent = '';
+    return;
+  }
+  const label = formatReceiptProductLabel(product);
+  searchInput.value = label;
+  searchInput.dataset.selectedProductId = String(product.id);
+  searchInput.dataset.selectedProductLabel = label;
+  if (meta) {
+    meta.textContent = formatReceiptProductMeta(product);
+  }
+}
+
+async function fetchReceiptProducts(query = '') {
+  const trimmed = String(query || '').trim();
+  const cacheKey = trimmed || '__recent__';
+  if (receiptProductCache.has(cacheKey)) {
+    return receiptProductCache.get(cacheKey);
+  }
+
+  const url = new URL(PRODUCT_SEARCH_URL, window.location.origin);
+  if (trimmed) {
+    url.searchParams.set('q', trimmed);
+  }
+
+  const response = await fetch(url.toString(), {
+    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+  });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(payload?.message || payload?.error || 'Search failed');
+  }
+  const products = Array.isArray(payload?.products) ? payload.products : [];
+  products.forEach((product) => {
+    PROD_MAP[product.id] = product;
+  });
+  const data = { products, mode: payload?.mode || (trimmed ? 'search' : 'recent') };
+  receiptProductCache.set(cacheKey, data);
+  return data;
+}
+
+function renderRowSearchResults(tr, products, meta = {}) {
+  const resultsWrap = tr?.querySelector('.row-product-results');
+  if (!resultsWrap) return;
+
+  if (!products.length) {
+    const emptyText = meta.query
+      ? RECEIPT_SEARCH_STRINGS.noResults
+      : RECEIPT_SEARCH_STRINGS.recentHint;
+    resultsWrap.innerHTML = `<div class="product-picker-empty">${escapeHtml(emptyText)}</div>`;
+    resultsWrap.classList.remove('hidden');
+    return;
+  }
+
+  resultsWrap.innerHTML = products.map((product, index) => `
+    <button
+      type="button"
+      class="product-search-result ${index === 0 ? 'is-active' : ''}"
+      data-product-id="${product.id}"
+      data-result-index="${index}"
+    >
+      <div class="product-search-result-top">
+        <span class="product-search-result-name">${escapeHtml(product.name)}</span>
+        ${meta.mode === 'recent' ? `<span class="badge badge-secondary">${escapeHtml(RECEIPT_SEARCH_STRINGS.recentTitle)}</span>` : ''}
+      </div>
+      <div class="product-search-result-meta">
+        <span>${escapeHtml(RECEIPT_SEARCH_STRINGS.sku)}: ${escapeHtml(product.sku || '-')}</span>
+        <span>${escapeHtml(RECEIPT_SEARCH_STRINGS.barcode)}: ${escapeHtml(product.barcode || '-')}</span>
+      </div>
+      ${product.aliases ? `<div class="product-search-result-sub">${escapeHtml(RECEIPT_SEARCH_STRINGS.aliases)}: ${escapeHtml(product.aliases)}</div>` : ''}
+    </button>
+  `).join('');
+  resultsWrap.classList.remove('hidden');
+}
+
+function activateRowSearchResult(tr, nextIndex) {
+  const buttons = [...(tr?.querySelectorAll('.row-product-results .product-search-result') || [])];
+  if (!buttons.length) return;
+  const normalized = Math.max(0, Math.min(buttons.length - 1, nextIndex));
+  buttons.forEach((button, index) => button.classList.toggle('is-active', index === normalized));
+  const activeButton = buttons[normalized];
+  activeButton?.scrollIntoView({ block: 'nearest' });
+  const searchInput = tr.querySelector('.row-product-search-input');
+  if (searchInput) {
+    searchInput.dataset.activeResultIndex = String(normalized);
+  }
+}
+
 function setRowActionButtonsState(tr, product = null) {
   const productSel = tr.querySelector('.row-product-select');
   const editBtn = tr.querySelector('.btn-edit-product-row');
@@ -897,13 +1114,16 @@ function applyProductToRow(tr, product, options = {}) {
   const desiredUnit = unitSel?.value || product.unit;
   const nextUnit = (product.units || []).some((unit) => unit.code === desiredUnit) ? desiredUnit : product.unit;
 
+  PROD_MAP[product.id] = product;
   if (productSel) productSel.value = String(product.id);
   if (nameInput) nameInput.value = product.name;
+  updateRowProductDisplay(tr, product);
   fillUnitOptions(unitSel, product, nextUnit);
   if (!preserveOverrides) {
     tr.dataset.priceOverrides = JSON.stringify({});
     if (priceJsonInput) priceJsonInput.value = '';
   }
+  closeRowSearchResults(tr);
   if (!matrix) return;
   applyRowUnitPrice(tr, product, unitSel?.value || product.unit);
   renderReceiptUnitMatrix(tr, product);
@@ -912,13 +1132,12 @@ function applyProductToRow(tr, product, options = {}) {
 }
 
 function updateProductOptions(product) {
-  const label = `${product.name} [${product.sku}]`;
-  document.querySelectorAll('.row-product-select').forEach((select) => {
-    const option = [...select.options].find((item) => item.value === String(product.id));
-    if (option) {
-      option.textContent = label;
-    } else {
-      select.add(new Option(label, product.id));
+  PROD_MAP[product.id] = product;
+  receiptProductCache.clear();
+  document.querySelectorAll('#items-body tr').forEach((row) => {
+    const productSel = row.querySelector('.row-product-select');
+    if (String(productSel?.value || '') === String(product.id)) {
+      updateRowProductDisplay(row, product);
     }
   });
 }
@@ -1139,6 +1358,79 @@ function clearUnitPresetError() {
   unitPresetError.classList.remove('show');
 }
 
+function exactReceiptProductMatch(code, products) {
+  const needle = String(code || '').trim().toLowerCase();
+  if (!needle) return null;
+  return products.find((product) => (
+    String(product.barcode || '').trim().toLowerCase() === needle
+    || String(product.sku || '').trim().toLowerCase() === needle
+  )) || (products.length === 1 ? products[0] : null);
+}
+
+async function runRowProductSearch(tr, rawQuery = '', options = {}) {
+  const searchInput = tr?.querySelector('.row-product-search-input');
+  if (!searchInput) return [];
+
+  const query = String(rawQuery || '').trim();
+  const exactLike = /^[0-9A-Za-z._-]{4,}$/.test(query);
+  if (query && !exactLike && query.length < 2) {
+    const resultsWrap = tr.querySelector('.row-product-results');
+    if (resultsWrap) {
+      resultsWrap.innerHTML = `<div class="product-picker-empty">${escapeHtml(RECEIPT_SEARCH_STRINGS.searchMin)}</div>`;
+      resultsWrap.classList.remove('hidden');
+    }
+    return [];
+  }
+
+  const token = `${Date.now()}_${Math.random()}`;
+  searchInput.dataset.searchToken = token;
+  try {
+    const payload = await fetchReceiptProducts(query);
+    if (searchInput.dataset.searchToken !== token) {
+      return [];
+    }
+    renderRowSearchResults(tr, payload.products, { query, mode: payload.mode });
+    searchInput.dataset.activeResultIndex = '0';
+    return payload.products;
+  } catch (_) {
+    renderRowSearchResults(tr, [], { query, mode: 'search' });
+    return [];
+  }
+}
+
+function bindRowSearchResults(tr) {
+  const resultsWrap = tr?.querySelector('.row-product-results');
+  if (!resultsWrap || resultsWrap.dataset.bound === '1') {
+    return;
+  }
+  resultsWrap.dataset.bound = '1';
+  resultsWrap.addEventListener('mousedown', (event) => {
+    const button = event.target.closest('.product-search-result');
+    if (!button) return;
+    event.preventDefault();
+    const product = PROD_MAP[button.dataset.productId];
+    if (product) {
+      applyProductToRow(tr, product, { preserveOverrides: false });
+      tr.querySelector('.row-qty')?.focus();
+      tr.querySelector('.row-qty')?.select();
+    }
+  });
+}
+
+async function handleRowProductScan(tr, code) {
+  const searchInput = tr?.querySelector('.row-product-search-input');
+  if (!searchInput) return;
+  searchInput.value = code;
+  clearRowProductSelection(tr, { keepInput: true });
+  const products = await runRowProductSearch(tr, code, { force: true });
+  const exact = exactReceiptProductMatch(code, products);
+  if (exact) {
+    applyProductToRow(tr, exact, { preserveOverrides: false });
+    tr.querySelector('.row-qty')?.focus();
+    tr.querySelector('.row-qty')?.select();
+  }
+}
+
 document.getElementById('btn-add-row')?.addEventListener('click', () => {
   rowIndex += 1;
   const html = document.getElementById('row-template').innerHTML.replaceAll('__IDX__', rowIndex);
@@ -1153,6 +1445,9 @@ document.getElementById('btn-add-row')?.addEventListener('click', () => {
 
 function initRow(tr) {
   const productSel = tr.querySelector('.row-product-select');
+  const searchInput = tr.querySelector('.row-product-search-input');
+  const pickerBtn = tr.querySelector('.btn-product-picker-row');
+  const cameraBtn = tr.querySelector('.btn-product-camera-row');
   const unitSel = tr.querySelector('.row-unit');
   const priceInput = tr.querySelector('.row-price');
   const delBtn = tr.querySelector('.btn-del-row');
@@ -1160,18 +1455,59 @@ function initRow(tr) {
   const newProdBtn = tr.querySelector('.btn-new-product-row');
   const editProdBtn = tr.querySelector('.btn-edit-product-row');
 
-  productSel?.addEventListener('change', function () {
-    const product = PROD_MAP[this.value];
-    if (product) {
-      applyProductToRow(tr, product, { preserveOverrides: false });
-    } else {
-      const matrix = tr.querySelector('.row-unit-matrix');
-      const label = tr.querySelector('.row-selected-unit');
-      if (matrix) matrix.innerHTML = '';
-      if (label) label.textContent = '';
-      setRowActionButtonsState(tr, null);
-      recalcRow(tr);
+  bindRowSearchResults(tr);
+
+  searchInput?.addEventListener('focus', () => {
+    if (!String(searchInput.value || '').trim()) {
+      runRowProductSearch(tr, '', { force: true });
     }
+  });
+
+  searchInput?.addEventListener('input', () => {
+    const typed = String(searchInput.value || '').trim();
+    if (typed !== String(searchInput.dataset.selectedProductLabel || '').trim()) {
+      clearRowProductSelection(tr, { keepInput: true });
+    }
+    window.clearTimeout(searchInput._searchTimer || 0);
+    searchInput._searchTimer = window.setTimeout(() => {
+      runRowProductSearch(tr, typed, { force: true });
+    }, typed ? 140 : 0);
+  });
+
+  searchInput?.addEventListener('keydown', (event) => {
+    const resultsButtons = [...(tr.querySelectorAll('.row-product-results .product-search-result') || [])];
+    if (!resultsButtons.length) {
+      return;
+    }
+    const currentIndex = parseInt(searchInput.dataset.activeResultIndex || '0', 10) || 0;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      activateRowSearchResult(tr, currentIndex + 1);
+      return;
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      activateRowSearchResult(tr, currentIndex - 1);
+      return;
+    }
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      const active = resultsButtons[parseInt(searchInput.dataset.activeResultIndex || '0', 10) || 0];
+      const product = active ? PROD_MAP[active.dataset.productId] : null;
+      if (product) {
+        applyProductToRow(tr, product, { preserveOverrides: false });
+        tr.querySelector('.row-qty')?.focus();
+        tr.querySelector('.row-qty')?.select();
+      }
+      return;
+    }
+    if (event.key === 'Escape') {
+      closeRowSearchResults(tr);
+    }
+  });
+
+  searchInput?.addEventListener('blur', () => {
+    window.setTimeout(() => closeRowSearchResults(tr), 120);
   });
 
   unitSel?.addEventListener('change', function () {
@@ -1196,6 +1532,7 @@ function initRow(tr) {
   });
 
   newProdBtn?.addEventListener('click', () => openProductModal(tr));
+  pickerBtn?.addEventListener('click', () => openProductPicker(tr));
   calcBtn?.addEventListener('click', () => {
     const product = PROD_MAP[productSel?.value];
     if (!product) return;
@@ -1215,6 +1552,12 @@ function initRow(tr) {
     renumberRows();
     recalcTotals();
   });
+
+  if (cameraBtn && window.ProductCameraScanner) {
+    window.ProductCameraScanner.attach(cameraBtn, {
+      onDetected: (code) => handleRowProductScan(tr, code),
+    });
+  }
 
   recalcRow(tr);
   if (productSel?.value && PROD_MAP[productSel.value]) {
@@ -1260,6 +1603,70 @@ function renumberRows() {
 document.querySelectorAll('#items-body tr').forEach(initRow);
 recalcTotals();
 
+document.addEventListener('click', (event) => {
+  if (!event.target.closest('.receipt-product-search')) {
+    document.querySelectorAll('#items-body tr').forEach((row) => closeRowSearchResults(row));
+  }
+});
+
+function renderPickerList(products, meta = {}) {
+  if (!pickerList || !pickerEmpty) return;
+  if (!products.length) {
+    pickerList.innerHTML = '';
+    pickerEmpty.classList.remove('hidden');
+    pickerEmpty.textContent = meta.query ? RECEIPT_SEARCH_STRINGS.noResults : RECEIPT_SEARCH_STRINGS.pickerEmpty;
+    return;
+  }
+
+  pickerEmpty.classList.add('hidden');
+  pickerList.innerHTML = products.map((product) => `
+    <button type="button" class="product-search-result" data-picker-product-id="${product.id}">
+      <div class="product-search-result-top">
+        <span class="product-search-result-name">${escapeHtml(product.name)}</span>
+        ${meta.mode === 'recent' ? `<span class="badge badge-secondary">${escapeHtml(RECEIPT_SEARCH_STRINGS.recentTitle)}</span>` : ''}
+      </div>
+      <div class="product-search-result-meta">
+        <span>${escapeHtml(RECEIPT_SEARCH_STRINGS.sku)}: ${escapeHtml(product.sku || '-')}</span>
+        <span>${escapeHtml(RECEIPT_SEARCH_STRINGS.barcode)}: ${escapeHtml(product.barcode || '-')}</span>
+      </div>
+      ${product.aliases ? `<div class="product-search-result-sub">${escapeHtml(RECEIPT_SEARCH_STRINGS.aliases)}: ${escapeHtml(product.aliases)}</div>` : ''}
+    </button>
+  `).join('');
+}
+
+async function loadProductPicker(query = '') {
+  const normalizedQuery = String(query || '').trim();
+  const exactLike = /^[0-9A-Za-z._-]{4,}$/.test(normalizedQuery);
+  if (normalizedQuery && !exactLike && normalizedQuery.length < 2) {
+    _pickerResults = [];
+    pickerList.innerHTML = '';
+    pickerEmpty.classList.remove('hidden');
+    pickerEmpty.textContent = RECEIPT_SEARCH_STRINGS.searchMin;
+    return [];
+  }
+  try {
+    const payload = await fetchReceiptProducts(normalizedQuery);
+    _pickerResults = payload.products;
+    renderPickerList(payload.products, { mode: payload.mode, query: normalizedQuery });
+    return payload.products;
+  } catch (_) {
+    _pickerResults = [];
+    renderPickerList([], { mode: 'search', query: normalizedQuery });
+    return [];
+  }
+}
+
+function openProductPicker(tr) {
+  _targetRow = tr;
+  if (pickerSearchInput) {
+    pickerSearchInput.value = '';
+  }
+  renderPickerList([], { mode: 'recent', query: '' });
+  openModal('modal-product-picker');
+  loadProductPicker('');
+  window.setTimeout(() => pickerSearchInput?.focus(), 70);
+}
+
 document.getElementById('btn-new-supplier')?.addEventListener('click', () => {
   clearError('supplier-error');
   ['sup-name','sup-phone','sup-inn','sup-contact','sup-address'].forEach((id) => {
@@ -1301,6 +1708,44 @@ document.getElementById('btn-supplier-save')?.addEventListener('click', async fu
     setLoading(this, false);
   }
 });
+
+pickerSearchInput?.addEventListener('input', () => {
+  window.clearTimeout(_pickerSearchTimer);
+  _pickerSearchTimer = window.setTimeout(() => {
+    loadProductPicker(pickerSearchInput.value || '');
+  }, (pickerSearchInput.value || '').trim() ? 140 : 0);
+});
+
+pickerList?.addEventListener('mousedown', (event) => {
+  const button = event.target.closest('[data-picker-product-id]');
+  if (!button) return;
+  event.preventDefault();
+  const product = PROD_MAP[button.dataset.pickerProductId];
+  if (_targetRow && product) {
+    applyProductToRow(_targetRow, product, { preserveOverrides: false });
+    closeModal('modal-product-picker');
+    _targetRow.querySelector('.row-qty')?.focus();
+    _targetRow.querySelector('.row-qty')?.select();
+  }
+});
+
+if (pickerCameraBtn && window.ProductCameraScanner) {
+  window.ProductCameraScanner.attach(pickerCameraBtn, {
+    onDetected: async (code) => {
+      if (pickerSearchInput) {
+        pickerSearchInput.value = code;
+      }
+      const products = await loadProductPicker(code);
+      const exact = exactReceiptProductMatch(code, products);
+      if (_targetRow && exact) {
+        applyProductToRow(_targetRow, exact, { preserveOverrides: false });
+        closeModal('modal-product-picker');
+        _targetRow.querySelector('.row-qty')?.focus();
+        _targetRow.querySelector('.row-qty')?.select();
+      }
+    },
+  });
+}
 
 function openProductModal(tr, productId = 0) {
   _targetRow = tr;

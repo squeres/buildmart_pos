@@ -2,7 +2,14 @@
 require_once __DIR__ . '/../../core/bootstrap.php';
 
 Auth::requireLogin();
-Auth::requirePerm('inventory.count');
+if (
+    !Auth::can('inventory.count')
+    && !Auth::can('inventory.receive')
+    && !Auth::can('inventory.adjust')
+    && !Auth::can('inventory.writeoff')
+) {
+    json_response(['products' => [], 'message' => _r('auth_no_permission')], 403);
+}
 
 $warehouseId = (int)($_GET['warehouse_id'] ?? 0);
 if ($warehouseId <= 0 || !user_can_access_warehouse($warehouseId)) {

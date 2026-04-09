@@ -9,6 +9,7 @@
   const dom = {
     warehouse: document.getElementById('inventoryCountWarehouse'),
     search: document.getElementById('inventoryCountSearch'),
+    cameraBtn: document.getElementById('inventoryCountCameraBtn'),
     results: document.getElementById('inventoryCountResults'),
     notFound: document.getElementById('inventoryCountNotFound'),
     queueBody: document.getElementById('inventoryCountQueueBody'),
@@ -452,6 +453,30 @@
     }
   }
 
+  async function handleCameraScan(code) {
+    dom.search.value = code;
+    try {
+      const products = await fetchProducts(code);
+      const exact = products.find((product) => (
+        String(product.barcode || '').trim() === code
+        || String(product.sku || '').trim().toLowerCase() === String(code).trim().toLowerCase()
+      )) || (products.length === 1 ? products[0] : null);
+      if (exact) {
+        upsertQueueItem(exact);
+        dom.search.value = '';
+        clearResults();
+        setNotFoundVisible(false);
+        focusSearch();
+        return;
+      }
+      state.results = products;
+      renderResults();
+      setNotFoundVisible(products.length === 0);
+    } catch (error) {
+      toast(error.message || 'Search failed', 'error');
+    }
+  }
+
   function queuePayload() {
     return queueItems().map((item) => ({
       product_id: item.id,
@@ -660,6 +685,12 @@
       runSearch(true);
     }
   });
+
+  if (dom.cameraBtn && window.ProductCameraScanner) {
+    window.ProductCameraScanner.attach(dom.cameraBtn, {
+      onDetected: (code) => handleCameraScan(code),
+    });
+  }
 
   window.addEventListener('message', (event) => {
     if (event.origin !== window.location.origin) {

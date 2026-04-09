@@ -32,8 +32,22 @@ window._uiStrings = {
   errorSavingMenu:     '<?= addslashes(__('ui_error_saving_menu')) ?>',
   errorSavingSettings: '<?= addslashes(__('ui_error_saving_settings')) ?>',
 };
+window.PRODUCT_CAMERA_I18N = {
+  title: '<?= addslashes(__('camera_scan_title')) ?>',
+  hint: '<?= addslashes(__('camera_scan_hint')) ?>',
+  close: '<?= addslashes(__('btn_cancel')) ?>',
+  scanning: '<?= addslashes(__('camera_scan_scanning')) ?>',
+  unsupported: '<?= addslashes(__('camera_scan_unsupported')) ?>',
+  unavailable: '<?= addslashes(__('camera_scan_unavailable')) ?>',
+  denied: '<?= addslashes(__('camera_scan_denied')) ?>',
+  failed: '<?= addslashes(__('camera_scan_failed')) ?>',
+};
+window.PRODUCT_CAMERA_CONFIG = {
+  fallbackLibUrl: '<?= addslashes(url('assets/js/vendor/zxing-browser.min.js')) ?>',
+};
 </script>
 <script src="<?= url('assets/js/ui-settings.js') ?>"></script>
+<script src="<?= url('assets/js/product-camera.js') ?>"></script>
 <?php if (!empty($extraJs)) echo $extraJs; ?>
 <script>
   if (typeof feather !== 'undefined') feather.replace();

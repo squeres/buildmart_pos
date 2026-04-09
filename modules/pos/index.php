@@ -130,6 +130,39 @@ window.LANG = {
   shift_sales_extension_required: "' . addslashes(_r('shift_sales_extension_required')) . '",
   shift_extension_pending: "' . addslashes(_r('shift_extension_pending')) . '"
 };
+window.POS_PRODUCT_SEARCH_URL = "' . addslashes(url('modules/pos/search_products.php')) . '";
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const cameraBtn = document.getElementById("posCameraTrigger");
+  const searchInput = document.getElementById("posSearch");
+  if (!cameraBtn || !searchInput || !window.ProductCameraScanner) {
+    return;
+  }
+  window.ProductCameraScanner.attach(cameraBtn, {
+    onDetected: async (code) => {
+      searchInput.value = code;
+      searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      try {
+        const url = new URL(window.POS_PRODUCT_SEARCH_URL, window.location.origin);
+        url.searchParams.set("q", code);
+        const response = await fetch(url.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } });
+        const products = await response.json();
+        const exact = (Array.isArray(products) ? products : []).find((product) => (
+          String(product.barcode || "").trim() === code
+          || String(product.sku || "").trim().toLowerCase() === String(code).trim().toLowerCase()
+        )) || ((Array.isArray(products) ? products : []).length === 1 ? products[0] : null);
+        if (exact && window.POS?.addProduct) {
+          await window.POS.addProduct(exact.id);
+          searchInput.value = "";
+          searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      } catch (_) {
+        // Keep manual search flow active if exact auto-pick fails.
+      }
+    }
+  });
+});
 </script>
 <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>';
 
@@ -177,6 +210,13 @@ include __DIR__ . '/../../views/layouts/header.php';
              placeholder="<?= __('pos_search_ph') ?>"
              autocomplete="off"
              autofocus>
+      <button type="button"
+              class="btn btn-secondary btn-icon product-camera-trigger"
+              id="posCameraTrigger"
+              title="<?= e(__('camera_scan_title')) ?>"
+              hidden>
+        <?= feather_icon('camera', 16) ?>
+      </button>
       <button class="btn btn-secondary btn-icon" onclick="POS.init()">
         <?= feather_icon('search') ?>
       </button>

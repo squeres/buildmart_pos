@@ -88,14 +88,27 @@ include __DIR__ . '/../../views/layouts/header.php';
           </div>
           <div class="form-group mb-0">
             <label class="form-label"><?= __('lbl_search') ?></label>
-            <input
-              type="text"
-              class="form-control inventory-count-search-input"
-              id="inventoryCountSearch"
-              placeholder="<?= e(__('inv_count_search_ph')) ?>"
-              autocomplete="off"
-              autofocus
-            >
+            <div class="product-search-field">
+              <div class="product-search-main">
+                <input
+                  type="text"
+                  class="form-control inventory-count-search-input"
+                  id="inventoryCountSearch"
+                  placeholder="<?= e(__('inv_count_search_ph')) ?>"
+                  autocomplete="off"
+                  autofocus
+                >
+              </div>
+              <div class="product-field-actions">
+                <button type="button"
+                        class="product-field-icon product-camera-trigger"
+                        id="inventoryCountCameraBtn"
+                        title="<?= e(__('camera_scan_title')) ?>"
+                        hidden>
+                  <?= feather_icon('camera', 15) ?>
+                </button>
+              </div>
+            </div>
             <div class="form-hint"><?= __('inv_count_search_hint') ?></div>
           </div>
         </div>

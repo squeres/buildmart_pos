@@ -1,68 +1,89 @@
 <?php
 /**
- * _row.php — Goods Receipt Item Row Partial
- * Variables: $idx, $item, $products, $unitOptions
+ * _row.php - Goods Receipt Item Row Partial
+ * Variables: $idx, $item, $receiptProductsById, $unitOptions
  */
 $unitOptions = $unitOptions ?? unit_options();
 $canCreateProducts = $canCreateProducts ?? true;
 $canManageReceiptProducts = $canManageReceiptProducts ?? true;
 $canEditProducts = $canEditProducts ?? true;
+$receiptProductsById = $receiptProductsById ?? [];
 $rowUnitOptions = $unitOptions;
-if (!empty($item['product_id'])) {
-    $productRow = null;
-    foreach ($products as $candidate) {
-        if ((string)$candidate['id'] === (string)$item['product_id']) {
-            $productRow = $candidate;
-            break;
-        }
-    }
-    if ($productRow) {
-        $rowUnitOptions = [];
-        foreach (product_units((int)$productRow['id'], $productRow['unit']) as $unitRow) {
-            $rowUnitOptions[$unitRow['unit_code']] = product_unit_label_text($unitRow);
-        }
+$productRow = null;
+
+if (!empty($item['product_id']) && isset($receiptProductsById[(int)$item['product_id']])) {
+    $productRow = $receiptProductsById[(int)$item['product_id']];
+}
+
+if ($productRow) {
+    $rowUnitOptions = [];
+    foreach (product_units((int)$productRow['id'], $productRow['unit']) as $unitRow) {
+        $rowUnitOptions[$unitRow['unit_code']] = product_unit_label_text($unitRow);
     }
 }
+
+$selectedProductLabel = $productRow
+    ? product_name($productRow) . (!empty($productRow['sku']) ? ' [' . (string)$productRow['sku'] . ']' : '')
+    : '';
+$selectedProductMeta = $productRow
+    ? trim(
+        ($productRow['sku'] ? __('lbl_sku') . ': ' . (string)$productRow['sku'] : '')
+        . ($productRow['barcode'] ? (($productRow['sku'] ? ' · ' : '') . __('lbl_barcode') . ': ' . (string)$productRow['barcode']) : '')
+    )
+    : '';
 ?>
 <td class="row-num text-muted fs-sm text-center"><?= is_int($idx) ? $idx + 1 : '' ?></td>
 <td class="receipt-row-product-cell">
   <input type="hidden" name="items[<?= $idx ?>][id]" value="<?= (int)($item['id'] ?? 0) ?>">
   <input type="hidden" name="items[<?= $idx ?>][unit_prices_json]" class="row-unit-prices-json" value="<?= e($item['unit_prices_json'] ?? '') ?>">
   <input type="hidden" name="items[<?= $idx ?>][sale_prices_json]" class="row-sale-prices-json" value="<?= e($item['sale_prices_json'] ?? '') ?>">
+  <input type="hidden" name="items[<?= $idx ?>][product_id]" class="row-product-select" value="<?= e((string)($item['product_id'] ?? '')) ?>">
 
-  <!-- Product select + quick-create button -->
   <div class="receipt-row-toolbar">
-    <select name="items[<?= $idx ?>][product_id]" class="form-control form-control-sm row-product-select">
-      <option value=""><?= __('gr_select_product') ?></option>
-      <?php foreach ($products as $p): ?>
-        <option value="<?= $p['id'] ?>"
-                <?= (string)($item['product_id'] ?? '') === (string)$p['id'] ? 'selected' : '' ?>>
-          <?= e(product_name($p)) ?> [<?= e($p['sku']) ?>]
-        </option>
-      <?php endforeach; ?>
-    </select>
-    <div class="receipt-row-toolbar-actions">
-      <button type="button" class="btn btn-sm btn-primary receipt-row-auto-btn btn-row-calc"
-            title="<?= __('btn_auto') ?>"
-        <?= e(__('btn_auto')) ?>
-      </button>
-      <?php if ($canCreateProducts): ?>
-      <button type="button" class="btn-qc btn-new-product-row receipt-row-side-btn"
-              title="<?= __('gr_quick_add_product') ?>">
-        <?= feather_icon('plus', 13) ?>
-      </button>
-      <?php endif; ?>
-      <?php if ($canEditProducts): ?>
-      <button type="button" class="btn-qc btn-edit-product-row receipt-row-side-btn"
-              title="<?= __('btn_edit') ?>"
-              <?= empty($item['product_id']) ? 'disabled' : '' ?>>
-        <?= feather_icon('edit-2', 13) ?>
-      </button>
-      <?php endif; ?>
+    <div class="product-search-field receipt-product-search">
+      <div class="product-search-main">
+        <input
+          type="text"
+          class="form-control form-control-sm row-product-search-input"
+          value="<?= e($selectedProductLabel) ?>"
+          placeholder="<?= e(__('gr_product_search_ph')) ?>"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <div class="product-search-results hidden row-product-results"></div>
+        <div class="receipt-product-search-label row-product-selected-meta"><?= e($selectedProductMeta) ?></div>
+      </div>
+      <div class="receipt-row-toolbar-actions product-field-actions">
+        <button type="button" class="btn btn-sm btn-primary receipt-row-auto-btn btn-row-calc"
+                title="<?= e(__('btn_auto')) ?>">
+          <?= e(__('btn_auto')) ?>
+        </button>
+        <button type="button" class="product-field-icon receipt-row-side-btn btn-product-picker-row"
+                title="<?= e(__('gr_product_picker_open')) ?>">
+          <?= feather_icon('list', 13) ?>
+        </button>
+        <button type="button" class="product-field-icon receipt-row-side-btn product-camera-trigger btn-product-camera-row"
+                title="<?= e(__('camera_scan_title')) ?>"
+                hidden>
+          <?= feather_icon('camera', 13) ?>
+        </button>
+        <?php if ($canCreateProducts): ?>
+        <button type="button" class="product-field-icon btn-new-product-row receipt-row-side-btn"
+                title="<?= e(__('gr_quick_add_product')) ?>">
+          <?= feather_icon('plus', 13) ?>
+        </button>
+        <?php endif; ?>
+        <?php if ($canEditProducts): ?>
+        <button type="button" class="product-field-icon btn-edit-product-row receipt-row-side-btn"
+                title="<?= e(__('btn_edit')) ?>"
+                <?= empty($item['product_id']) ? 'disabled' : '' ?>>
+          <?= feather_icon('edit-2', 13) ?>
+        </button>
+        <?php endif; ?>
+      </div>
     </div>
   </div>
 
-  <!-- Manual name override -->
   <input type="text" name="items[<?= $idx ?>][name]" class="form-control form-control-sm row-name"
          value="<?= e($item['name'] ?? '') ?>"
          placeholder="<?= __('gr_item_name_ph') ?>" maxlength="250">
@@ -93,7 +114,7 @@ if (!empty($item['product_id'])) {
 </td>
 <td>
   <input type="text" name="items[<?= $idx ?>][notes]" class="form-control form-control-sm row-notes"
-         value="<?= e($item['notes'] ?? '') ?>" placeholder="…" maxlength="255">
+         value="<?= e($item['notes'] ?? '') ?>" placeholder="..." maxlength="255">
 </td>
 <td>
   <button type="button" class="btn btn-sm btn-danger btn-icon btn-del-row">
