@@ -534,7 +534,19 @@ include __DIR__ . '/../../views/layouts/header.php';
         </div>
         <div class="form-group">
           <label class="form-label"><?= __('lbl_barcode') ?></label>
-          <input type="text" id="prod-barcode" class="form-control font-mono" placeholder="4600000000000" maxlength="60">
+          <div class="barcode-camera-field">
+            <input type="text" id="prod-barcode" class="form-control font-mono" placeholder="4600000000000" maxlength="60">
+            <div class="product-field-actions">
+              <button type="button"
+                      class="product-field-icon product-camera-trigger"
+                      data-barcode-camera
+                      data-camera-target="#prod-barcode"
+                      title="<?= e(__('camera_scan_title')) ?>"
+                      hidden>
+                <?= feather_icon('camera', 15) ?>
+              </button>
+            </div>
+          </div>
           <div style="font-size:11px;color:var(--text-muted);margin-top:3px">Оставьте пустым — сгенерируется автоматически</div>
         </div>
       </div>

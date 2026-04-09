@@ -571,7 +571,19 @@ body.inventory-popup-mode .page-content > form {
           </div>
           <div class="form-group mb-0">
             <label class="form-label"><?= __('lbl_barcode') ?></label>
-            <input type="text" name="barcode" class="form-control mono" value="<?= e($f['barcode']) ?>">
+            <div class="barcode-camera-field">
+              <input type="text" name="barcode" id="productBarcodeInput" class="form-control mono" value="<?= e($f['barcode']) ?>">
+              <div class="product-field-actions">
+                <button type="button"
+                        class="product-field-icon product-camera-trigger"
+                        data-barcode-camera
+                        data-camera-target="#productBarcodeInput"
+                        title="<?= e(__('camera_scan_title')) ?>"
+                        hidden>
+                  <?= feather_icon('camera', 15) ?>
+                </button>
+              </div>
+            </div>
             <?php if (isset($errors['barcode'])): ?><div class="form-error"><?= e($errors['barcode']) ?></div><?php endif; ?>
             <div class="form-hint">Leave blank to generate automatically.</div>
           </div>
