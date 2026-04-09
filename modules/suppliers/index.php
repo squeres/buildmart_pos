@@ -97,7 +97,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 <div class="<?= $canManageSuppliers ? 'content-split content-split-sidebar-xl' : 'mobile-stack' ?>">
 
   <!-- List -->
-  <div class="card">
+  <div class="card mobile-order-last">
     <div class="table-wrap mobile-table-wrap hide-on-mobile">
       <table class="table">
         <thead>
@@ -211,7 +211,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 
   <!-- Add/Edit form -->
   <?php if ($canManageSuppliers): ?>
-  <div class="card">
+  <div class="card mobile-order-first">
     <div class="card-header">
       <span class="card-title"><?= $editSup ? __('sup_edit') : __('sup_add') ?></span>
       <?php if ($editSup): ?>

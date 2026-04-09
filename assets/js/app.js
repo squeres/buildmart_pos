@@ -169,6 +169,57 @@
     });
   }
 
+  function initMobileScrollTop() {
+    const button = document.getElementById('mobileScrollTopBtn');
+    if (!button) {
+      return;
+    }
+
+    const allowedMenuKeys = new Set([
+      'pos',
+      'products',
+      'categories',
+      'inventory',
+      'sales',
+      'customers',
+      'shifts',
+      'reports',
+      'suppliers',
+      'warehouses',
+      'users',
+    ]);
+
+    const pageContent = document.getElementById('pageContent');
+    const activeMenuKey = String(
+      pageContent?.dataset.activeMenuKey
+      || window.APP_LAYOUT_META?.activeMenuKey
+      || ''
+    ).trim();
+
+    const isMobileViewport = () => window.innerWidth <= 900;
+    const isEnabledPage = () => allowedMenuKeys.has(activeMenuKey);
+
+    const syncVisibility = () => {
+      const enabled = isMobileViewport() && isEnabledPage();
+      button.hidden = !enabled;
+      if (!enabled) {
+        button.classList.remove('is-visible');
+        return;
+      }
+
+      const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+      button.classList.toggle('is-visible', scrollTop > 320);
+    };
+
+    button.addEventListener('click', () => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    window.addEventListener('scroll', syncVisibility, { passive: true });
+    window.addEventListener('resize', syncVisibility);
+    syncVisibility();
+  }
+
   function initFlashes() {
     $$('.flash-close').forEach((button) => {
       button.addEventListener('click', () => {
@@ -1835,6 +1886,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     initSidebar();
+    initMobileScrollTop();
     initFlashes();
     initDataConfirm();
     if (document.getElementById('productsGrid') && document.getElementById('cartItemsWrap')) {

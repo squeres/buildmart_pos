@@ -258,4 +258,4 @@ $userInitial = function_exists('mb_strtoupper')
     <button class="flash-close" onclick="this.closest('.flash').remove()" aria-label="<?= __('btn_close') ?>">×</button>
   </div>
   <?php endforeach; ?>
-  <main class="page-content" id="pageContent">
+  <main class="page-content" id="pageContent" data-active-menu-key="<?= e((string)($activeMenuKey ?? '')) ?>">

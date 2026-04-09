@@ -41,6 +41,7 @@ return [
     'btn_apply'         => 'Apply',
     'btn_new'           => 'New',
     'btn_view'          => 'View',
+    'ui_back_to_top'    => 'Back to top',
     'lbl_items'         => 'Items',
     'lbl_summary'       => 'Summary',
     'lbl_details'       => 'Details',

@@ -1,10 +1,24 @@
-  </main><!-- /page-content -->
+</main><!-- /page-content -->
 </div><!-- /main-wrap -->
+
+<button
+  type="button"
+  class="mobile-scroll-top-btn"
+  id="mobileScrollTopBtn"
+  aria-label="<?= __('ui_back_to_top') ?>"
+  title="<?= __('ui_back_to_top') ?>"
+  hidden
+>
+  <?= feather_icon('arrow-up', 18) ?>
+</button>
 
 <meta name="csrf-token" content="<?= csrf_token() ?>">
 <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
 <script src="<?= url('assets/js/app.js') ?>"></script>
 <script>
+window.APP_LAYOUT_META = {
+  activeMenuKey: '<?= addslashes((string)($activeMenuKey ?? '')) ?>',
+};
 window._uiSettingsApiUrl = '<?= url('modules/ui/settings_api.php') ?>';
 window._uiStrings = {
   configureView:       '<?= addslashes(__('ui_configure_view')) ?>',

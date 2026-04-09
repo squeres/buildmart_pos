@@ -86,7 +86,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 </div>
 
 <div class="<?= $canManageWarehouses ? 'content-split content-split-sidebar-wide' : 'mobile-stack' ?>">
-  <div class="card">
+  <div class="card mobile-order-last">
     <div class="table-wrap mobile-table-wrap hide-on-mobile">
       <table class="table">
         <thead>
@@ -177,7 +177,7 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
 
   <?php if ($canManageWarehouses): ?>
-  <div class="card">
+  <div class="card mobile-order-first">
     <div class="card-header">
       <span class="card-title"><?= $editWh ? __('wh_edit') : __('wh_add') ?></span>
       <?php if ($editWh): ?><a href="<?= url('modules/warehouses/') ?>" class="btn btn-sm btn-ghost"><?= __('btn_cancel') ?></a><?php endif; ?>
