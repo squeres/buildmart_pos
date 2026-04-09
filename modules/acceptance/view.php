@@ -152,6 +152,12 @@ include __DIR__ . '/../../views/layouts/header.php';
   font-weight: 600;
   letter-spacing: .01em;
 }
+.acc-unit-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
 .acc-unit-matrix .form-label {
   color: var(--text-secondary);
 }
@@ -203,9 +209,9 @@ include __DIR__ . '/../../views/layouts/header.php';
 <div class="page-header">
   <div>
     <h1 class="page-heading"><?= e($doc['doc_no']) ?></h1>
-    <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+    <div class="status-inline">
       <?= gr_status_badge($doc['status']) ?>
-      <span class="text-muted" style="font-size:13px"><?= date_fmt($doc['doc_date'], 'd.m.Y') ?></span>
+      <span class="text-muted fs-sm"><?= date_fmt($doc['doc_date'], 'd.m.Y') ?></span>
     </div>
   </div>
   <div class="page-actions">
@@ -219,11 +225,11 @@ include __DIR__ . '/../../views/layouts/header.php';
 </div>
 
 <!-- Мета -->
-<div class="grid grid-2 mb-3">
+<div class="grid grid-2 mobile-form-stack mb-3">
   <div class="card">
     <div class="card-header"><span class="card-title"><?= __('gr_header') ?></span></div>
-    <div class="card-body" style="font-size:13.5px">
-      <table style="width:100%;border-collapse:collapse">
+    <div class="card-body fs-md">
+      <table class="detail-table">
         <tr><td style="padding:4px 0;color:var(--text-muted);width:40%"><?= __('gr_doc_no') ?></td>
             <td class="font-mono fw-600"><?= e($doc['doc_no']) ?></td></tr>
         <tr><td style="padding:4px 0;color:var(--text-muted)"><?= __('lbl_date') ?></td>
@@ -232,10 +238,10 @@ include __DIR__ . '/../../views/layouts/header.php';
             <td>
               <div><?= !empty($doc['supplier_name']) ? e($doc['supplier_name']) : '&mdash;' ?></div>
               <?php if ($doc['supplier_inn']): ?>
-                <div class="text-muted" style="font-size:11px"><?= __('sup_inn') ?>: <?= e($doc['supplier_inn']) ?></div>
+                <div class="text-muted fs-xs"><?= __('sup_inn') ?>: <?= e($doc['supplier_inn']) ?></div>
               <?php endif; ?>
               <?php if ($doc['supplier_address']): ?>
-                <div class="text-muted" style="font-size:11px"><?= e($doc['supplier_address']) ?></div>
+                <div class="text-muted fs-xs"><?= e($doc['supplier_address']) ?></div>
               <?php endif; ?>
             </td></tr>
         <tr><td style="padding:4px 0;color:var(--text-muted)"><?= __('gr_warehouse') ?></td>
@@ -249,8 +255,8 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
   <div class="card">
     <div class="card-header"><span class="card-title"><?= __('lbl_status') ?></span></div>
-    <div class="card-body" style="font-size:13.5px">
-      <table style="width:100%;border-collapse:collapse">
+    <div class="card-body fs-md">
+      <table class="detail-table">
         <tr><td style="padding:4px 0;color:var(--text-muted);width:40%"><?= __('lbl_status') ?></td>
             <td><?= gr_status_badge($doc['status']) ?></td></tr>
         <tr><td style="padding:4px 0;color:var(--text-muted)"><?= __('lbl_created') ?></td>
@@ -282,12 +288,12 @@ include __DIR__ . '/../../views/layouts/header.php';
   <div class="card-header">
     <span class="card-title"><?= __('gr_items') ?></span>
     <?php if ($isEditable): ?>
-    <span class="text-muted" style="font-size:12px;font-weight:400;margin-left:8px">
+    <span class="text-muted fs-sm" style="font-weight:400;margin-left:8px">
       <?= __('acc_edit_hint') ?>
     </span>
     <?php endif; ?>
   </div>
-  <div class="table-wrap">
+  <div class="table-wrap mobile-table-scroll">
     <table class="table" id="acc-table">
       <thead>
         <tr>
@@ -354,18 +360,18 @@ include __DIR__ . '/../../views/layouts/header.php';
             data-sale-base="<?= e(number_format($saleBase, 6, '.', '')) ?>"
             data-purchase-prices='<?= e(json_encode($purchasePricesByUnit, JSON_UNESCAPED_UNICODE)) ?>'
             data-sale-prices='<?= e(json_encode($salePricesByUnit, JSON_UNESCAPED_UNICODE)) ?>'>
-          <td class="text-muted" style="font-size:12px;text-align:center"><?= $i+1 ?></td>
+          <td class="text-muted fs-sm text-center"><?= $i+1 ?></td>
           <td>
             <div class="fw-600"><?= e($item['name']) ?></div>
             <?php if ($item['sku']): ?>
-              <div class="text-muted font-mono" style="font-size:11px"><?= e($item['sku']) ?></div>
+              <div class="text-muted font-mono fs-xs"><?= e($item['sku']) ?></div>
             <?php endif; ?>
             <?php if ($isEditable): ?>
               <input type="hidden" name="items[<?= $i ?>][item_id]" value="<?= $item['id'] ?>">
               <input type="hidden" name="items[<?= $i ?>][unit_prices_json]" class="acc-unit-prices-json" value='<?= e(json_encode($purchasePricesByUnit, JSON_UNESCAPED_UNICODE)) ?>'>
               <input type="hidden" name="items[<?= $i ?>][sale_prices_json]" class="acc-sale-prices-json" value='<?= e(json_encode($salePricesByUnit, JSON_UNESCAPED_UNICODE)) ?>'>
             <?php endif; ?>
-            <div class="acc-unit-matrix" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+            <div class="acc-unit-matrix"></div>
           </td>
           <td>
             <?php if ($isEditable && $rowUnits): ?>
@@ -378,7 +384,7 @@ include __DIR__ . '/../../views/layouts/header.php';
                   </option>
                 <?php endforeach; ?>
               </select>
-              <div class="acc-selected-unit" style="font-size:12px"><?= e($purchasePricesByUnit ? ($rowUnits ? product_unit_label_text($selectedUnit) : unit_label($item['unit'])) : unit_label($item['unit'])) ?></div>
+              <div class="acc-selected-unit"><?= e($purchasePricesByUnit ? ($rowUnits ? product_unit_label_text($selectedUnit) : unit_label($item['unit'])) : unit_label($item['unit'])) ?></div>
             <?php else: ?>
               <?= unit_label($item['unit']) ?>
             <?php endif; ?>
@@ -428,10 +434,10 @@ include __DIR__ . '/../../views/layouts/header.php';
       <tfoot>
         <tr>
           <td colspan="7" class="text-right fw-600"><?= __('lbl_total') ?>:</td>
-          <td class="col-num fw-600" id="grand-total-purchase" style="font-size:15px">
+          <td class="col-num fw-600 fs-lg" id="grand-total-purchase">
             <?= money($doc['total']) ?>
           </td>
-          <td class="col-num fw-600" id="grand-total-sale" style="font-size:15px">
+          <td class="col-num fw-600 fs-lg" id="grand-total-sale">
             <?= money(array_reduce($items, static function ($carry, $item) {
                 $qty = $item['accepted_qty'] !== null ? (float)$item['accepted_qty'] : (float)$item['qty'];
                 $sale = (float)$item['sale_price'] ?: (float)($item['current_sale_price'] ?? 0);
@@ -446,7 +452,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 
 <?php if ($isEditable): ?>
 <div class="card">
-  <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap">
+  <div class="card-body stacked-actions">
     <?php if ($canProcessAcceptance): ?>
     <button type="submit" name="action" value="save" class="btn btn-secondary btn-lg">
       <?= feather_icon('save',17) ?> <?= __('btn_save') ?>
@@ -472,7 +478,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       <button type="button" class="qc-modal-close" id="accept-confirm-close">&times;</button>
     </div>
     <div class="qc-modal-body">
-      <p class="text-muted" style="margin:0 0 14px"><?= __('doc_confirm_summary_hint') ?></p>
+      <p class="text-muted mb-1"><?= __('doc_confirm_summary_hint') ?></p>
       <div class="doc-confirm-grid">
         <div class="doc-confirm-card">
           <div class="doc-confirm-label"><?= __('gr_doc_no') ?></div>
@@ -539,7 +545,7 @@ include __DIR__ . '/../../views/layouts/header.php';
           <div class="doc-confirm-value" id="sale-markup-cost">0.00</div>
         </div>
       </div>
-      <div class="form-group mb-0" style="margin-top:14px">
+      <div class="form-group mb-0 mt-2">
         <label class="form-label"><?= __('acc_markup_label') ?></label>
         <input type="number" id="sale-markup-percent" class="form-control" min="0" step="0.01" value="0">
       </div>
@@ -763,8 +769,8 @@ function renderAccUnitMatrix(tr) {
   tr.querySelector('.acc-sale-prices-json').value = JSON.stringify(saleMap);
   const selected = unitSelect.value || '';
   const autoButton = units.length > 1 ? `
-    <div style="display:flex;justify-content:flex-end;margin-bottom:8px">
-      <button type="button" class="btn btn-sm btn-primary acc-matrix-auto" style="min-width:118px"><?= e(__('btn_auto')) ?></button>
+    <div class="unit-matrix-toolbar">
+      <button type="button" class="btn btn-sm btn-primary acc-matrix-auto"><?= e(__('btn_auto')) ?></button>
     </div>
   ` : '';
 
@@ -774,8 +780,8 @@ function renderAccUnitMatrix(tr) {
     const purchase = accFormatPrice(purchaseMap[code] ?? 0);
     const sale = accFormatPrice(saleMap[code] ?? 0);
     return `
-      <div style="display:grid;grid-template-columns:auto minmax(120px,1.2fr) minmax(110px,1fr) minmax(150px,1fr);gap:8px;align-items:end;padding:8px 10px;border:1px solid var(--border-soft);border-radius:10px;background:var(--bg-raised)">
-        <label style="display:flex;align-items:center;justify-content:center;height:36px">
+      <div class="unit-matrix-card unit-matrix-card-extended">
+        <label class="unit-matrix-radio">
           <input type="radio" class="acc-doc-unit" name="acc_doc_unit_${tr.rowIndex}" value="${code}" ${code === selected ? 'checked' : ''}>
         </label>
         <div class="form-group mb-0">

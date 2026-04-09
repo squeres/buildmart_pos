@@ -92,21 +92,23 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
 </div>
 
-<form method="GET" class="filter-bar mb-2">
+<form method="GET" class="filter-bar filter-bar-card mobile-form-stack mb-2">
   <input type="text" name="search" class="form-control" placeholder="<?= __('btn_search') ?>…"
-         value="<?= e($search) ?>" style="max-width:220px">
-  <select name="wh" class="form-control" style="max-width:200px">
+         value="<?= e($search) ?>">
+  <select name="wh" class="form-control filter-field-lg">
     <option value=""><?= __('lbl_all') ?> <?= __('wh_title') ?></option>
     <?php foreach ($warehouses as $w): ?>
-      <option value="<?= $w['id'] ?>" <?= $whId==$w['id']?'selected':'' ?>><?= e($w['name']) ?></option>
+      <option value="<?= $w['id'] ?>" <?= $whId == $w['id'] ? 'selected' : '' ?>><?= e($w['name']) ?></option>
     <?php endforeach; ?>
   </select>
-  <button type="submit" class="btn btn-secondary"><?= feather_icon('search',14) ?> <?= __('btn_filter') ?></button>
-  <a href="<?= url('modules/inventory/balances.php') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  <div class="filter-actions">
+    <button type="submit" class="btn btn-secondary"><?= feather_icon('search', 14) ?> <?= __('btn_filter') ?></button>
+    <a href="<?= url('modules/inventory/balances.php') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  </div>
 </form>
 
 <div class="card">
-  <div class="table-wrap">
+  <div class="table-wrap mobile-table-scroll desktop-only">
     <table class="table" style="min-width:600px">
       <thead>
         <tr>
@@ -124,7 +126,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </thead>
       <tbody>
         <?php if (!$products): ?>
-          <tr><td colspan="<?= 6 + count($warehouses) ?>" class="text-center text-muted" style="padding:40px">
+          <tr><td colspan="<?= 6 + count($warehouses) ?>" class="text-center text-muted table-empty-cell">
             <?= __('no_results') ?>
           </td></tr>
         <?php else: ?>
@@ -134,7 +136,7 @@ include __DIR__ . '/../../views/layouts/header.php';
             foreach ($warehouses as $w) {
                 $whQtys[$w['id']] = $balanceMap[$p['id']][$w['id']] ?? 0.0;
             }
-            $total = array_sum($whQtys);
+            $totalQty = array_sum($whQtys);
           ?>
           <tr>
             <td>
@@ -150,14 +152,68 @@ include __DIR__ . '/../../views/layouts/header.php';
               </td>
             <?php endforeach; ?>
             <td class="col-num fw-600" style="font-family:monospace">
-              <?= e(product_stock_breakdown($total, $displayMap[(int)$p['id']]['units'], $p['unit'])) ?>
+              <?= e(product_stock_breakdown($totalQty, $displayMap[(int)$p['id']]['units'], $p['unit'])) ?>
             </td>
-            <td><?= stock_badge($total, (float)$p['min_stock_qty']) ?></td>
+            <td><?= stock_badge($totalQty, (float)$p['min_stock_qty']) ?></td>
           </tr>
           <?php endforeach; ?>
         <?php endif; ?>
       </tbody>
     </table>
+  </div>
+
+  <div class="mobile-card-list mobile-only">
+    <?php if (!$products): ?>
+      <div class="mobile-record-card text-center text-muted"><?= __('no_results') ?></div>
+    <?php else: ?>
+      <?php foreach ($products as $p): ?>
+      <?php
+        $whQtys = [];
+        foreach ($warehouses as $w) {
+            $whQtys[$w['id']] = $balanceMap[$p['id']][$w['id']] ?? 0.0;
+        }
+        $totalQty = array_sum($whQtys);
+      ?>
+      <div class="mobile-record-card">
+        <div class="mobile-record-header">
+          <div class="mobile-record-main">
+            <div class="mobile-record-title"><?= e(product_name($p)) ?></div>
+            <div class="mobile-record-subtitle"><?= e(category_name(['name_en' => $p['cat_en'], 'name_ru' => $p['cat_ru']])) ?></div>
+          </div>
+          <?= stock_badge($totalQty, (float)$p['min_stock_qty']) ?>
+        </div>
+        <div class="mobile-meta-grid">
+          <div class="mobile-meta-row">
+            <span class="mobile-meta-row-label"><?= __('lbl_sku') ?></span>
+            <span class="mobile-meta-row-value font-mono"><?= e($p['sku'] ?: '—') ?></span>
+          </div>
+          <div class="mobile-meta-row">
+            <span class="mobile-meta-row-label"><?= __('lbl_unit') ?></span>
+            <span class="mobile-meta-row-value"><?= e(product_unit_label_text($displayMap[(int)$p['id']]['default_unit'])) ?></span>
+          </div>
+          <div class="mobile-meta-row">
+            <span class="mobile-meta-row-label"><?= __('wh_balance_total') ?></span>
+            <span class="mobile-meta-row-value font-mono fw-600"><?= e(product_stock_breakdown($totalQty, $displayMap[(int)$p['id']]['units'], $p['unit'])) ?></span>
+          </div>
+          <div class="mobile-meta-row">
+            <span class="mobile-meta-row-label"><?= __('prod_min_stock') ?></span>
+            <span class="mobile-meta-row-value font-mono"><?= e(product_stock_breakdown((float)$p['min_stock_qty'], $displayMap[(int)$p['id']]['units'], $p['unit'])) ?></span>
+          </div>
+        </div>
+        <div class="warehouse-balance-list">
+          <?php foreach ($warehouses as $w): ?>
+            <?php $qty = $whQtys[$w['id']]; ?>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= e($w['name']) ?></span>
+              <span class="mobile-meta-row-value font-mono<?= $qty < 0 ? ' text-danger' : '' ?>">
+                <?= abs($qty) >= 0.000001 ? e(product_stock_breakdown($qty, $displayMap[(int)$p['id']]['units'], $p['unit'])) : '—' ?>
+              </span>
+            </div>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
   </div>
 
   <?php if ($pg['pages'] > 1): ?>

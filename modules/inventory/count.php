@@ -147,7 +147,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 
         <div class="inventory-count-queue-empty" id="inventoryCountQueueEmpty"><?= __('inv_count_queue_empty') ?></div>
 
-        <div class="table-wrap inventory-count-queue-table-wrap">
+        <div class="table-wrap inventory-count-queue-table-wrap desktop-only mobile-table-scroll">
           <table class="table inventory-count-queue-table hidden" id="inventoryCountQueueTable">
             <thead>
               <tr>
@@ -162,6 +162,8 @@ include __DIR__ . '/../../views/layouts/header.php';
             <tbody id="inventoryCountQueueBody"></tbody>
           </table>
         </div>
+
+        <div class="mobile-card-list mobile-only hidden" id="inventoryCountQueueCards"></div>
       </div>
     </div>
   </div>

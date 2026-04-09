@@ -317,17 +317,17 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= e($transfer['doc_no']) ?></h1>
   <div class="page-actions">
     <?php if ($transfer['status'] === 'draft'): ?>
-      <form method="POST" style="display:inline">
+      <form method="POST" class="inline-action-form">
         <?= csrf_field() ?>
         <input type="hidden" name="action" value="post">
         <button type="submit" class="btn btn-primary" data-doc-confirm="transfer-post">
           <?= feather_icon('send', 14) ?> <?= __('tr_post') ?>
         </button>
       </form>
-      <form method="POST" style="display:inline" onsubmit="return confirm('<?= __('tr_confirm_cancel') ?>')">
+      <form method="POST" class="inline-action-form" onsubmit="return confirm('<?= __('tr_confirm_cancel') ?>')">
         <?= csrf_field() ?>
         <input type="hidden" name="action" value="cancel">
-        <button type="submit" class="btn btn-ghost" style="color:var(--danger)">
+        <button type="submit" class="btn btn-ghost btn-danger-ghost">
           <?= feather_icon('x-circle', 14) ?> <?= __('tr_cancel') ?>
         </button>
       </form>
@@ -338,17 +338,17 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
 </div>
 
-<div style="margin-bottom:16px">
+<div class="mb-2">
   <?= transfer_status_badge($transfer['status'], 'lg') ?>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start">
+<div class="content-split content-split-sidebar">
   <div class="card">
     <div class="card-header">
       <span class="card-title"><?= __('tr_items') ?></span>
       <span class="text-muted fs-sm"><?= count($items) ?> <?= __('tr_items_count') ?></span>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap mobile-table-scroll desktop-only">
       <table class="table">
         <thead>
           <tr>
@@ -364,7 +364,7 @@ include __DIR__ . '/../../views/layouts/header.php';
         </thead>
         <tbody>
           <?php if (!$items): ?>
-            <tr><td colspan="<?= $transfer['status'] === 'draft' ? 6 : 5 ?>" class="text-center text-muted" style="padding:30px"><?= __('no_results') ?></td></tr>
+            <tr><td colspan="<?= $transfer['status'] === 'draft' ? 6 : 5 ?>" class="text-center text-muted table-empty-cell"><?= __('no_results') ?></td></tr>
           <?php else: ?>
             <?php foreach ($items as $item): ?>
             <?php
@@ -401,12 +401,61 @@ include __DIR__ . '/../../views/layouts/header.php';
         </tbody>
       </table>
     </div>
+    <div class="mobile-card-list mobile-only">
+      <?php if (!$items): ?>
+        <div class="mobile-record-card text-center text-muted"><?= __('no_results') ?></div>
+      <?php else: ?>
+        <?php foreach ($items as $item): ?>
+        <?php
+          $itemUnits = product_units((int)$item['product_id'], (string)$item['prod_unit']);
+          $resolvedUnit = product_resolve_unit($itemUnits, (string)$item['prod_unit'], (string)$item['unit']);
+          $storedUnitLabel = trim((string)($item['unit_label'] ?? ''));
+          $unitLabel = ($storedUnitLabel !== '' && $storedUnitLabel !== (string)$item['unit'])
+            ? $storedUnitLabel
+            : product_unit_label_text($resolvedUnit);
+          $qtyBase = (float)$item['qty_base'] > 0
+            ? (float)$item['qty_base']
+            : product_qty_to_base_unit((float)$item['qty'], $itemUnits, (string)$item['prod_unit'], (string)$resolvedUnit['unit_code']);
+          $baseUnitRow = product_resolve_unit($itemUnits, (string)$item['prod_unit'], (string)$item['prod_unit']);
+          $equivalentText = product_unit_qty_text($qtyBase, $baseUnitRow);
+          $availableBase = get_stock_qty((int)$item['product_id'], (int)$transfer['from_warehouse_id']);
+          $availableBreakdown = product_stock_breakdown($availableBase, $itemUnits, (string)$item['prod_unit']);
+          $availableSelected = product_formatted_qty_in_unit($availableBase, $itemUnits, (string)$item['prod_unit'], (string)$resolvedUnit['unit_code']);
+        ?>
+        <div class="mobile-record-card">
+          <div class="mobile-record-header">
+            <div class="mobile-record-main">
+              <div class="mobile-record-title"><?= e(product_name($item)) ?></div>
+              <div class="mobile-record-subtitle font-mono"><?= e($item['sku']) ?></div>
+            </div>
+            <div class="fw-600"><?= fmtQty((float)$item['qty']) ?> <?= e($unitLabel) ?></div>
+          </div>
+          <div class="mobile-meta-grid">
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('tr_equivalent') ?></span>
+              <span class="mobile-meta-row-value"><?= e($equivalentText) ?></span>
+            </div>
+            <?php if ($transfer['status'] === 'draft'): ?>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('tr_available') ?></span>
+              <span class="mobile-meta-row-value font-mono"><?= e($availableBreakdown) ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('tr_available_selected') ?></span>
+              <span class="mobile-meta-row-value"><?= e($availableSelected) ?></span>
+            </div>
+            <?php endif; ?>
+          </div>
+        </div>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
   </div>
 
   <div class="card">
     <div class="card-header"><span class="card-title"><?= __('tr_doc_info') ?></span></div>
     <div class="card-body">
-      <dl style="display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:14px">
+      <dl class="detail-definition">
         <dt class="text-muted"><?= __('tr_doc_no') ?></dt>
         <dd class="font-mono fw-600"><?= e($transfer['doc_no']) ?></dd>
 
@@ -414,10 +463,10 @@ include __DIR__ . '/../../views/layouts/header.php';
         <dd><?= date_fmt($transfer['doc_date'], 'd.m.Y') ?></dd>
 
         <dt class="text-muted"><?= __('tr_from_wh') ?></dt>
-        <dd class="fw-600" style="color:var(--text-primary)"><?= e($transfer['from_wh_name']) ?></dd>
+        <dd class="fw-600 text-primary"><?= e($transfer['from_wh_name']) ?></dd>
 
         <dt class="text-muted"><?= __('tr_to_wh') ?></dt>
-        <dd class="fw-600" style="color:var(--text-primary)"><?= e($transfer['to_wh_name']) ?></dd>
+        <dd class="fw-600 text-primary"><?= e($transfer['to_wh_name']) ?></dd>
 
         <dt class="text-muted"><?= __('tr_created_by') ?></dt>
         <dd><?= e($transfer['created_by_name']) ?></dd>
