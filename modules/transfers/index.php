@@ -64,31 +64,33 @@ include __DIR__ . '/../../views/layouts/header.php';
   <?php endif; ?>
 </div>
 
-<form method="GET" class="filter-bar mb-2">
-  <select name="from_wh" class="form-control" style="max-width:180px">
+<form method="GET" class="filter-bar mobile-form-stack mb-2">
+  <select name="from_wh" class="form-control filter-field-md">
     <option value=""><?= __('tr_from_wh') ?>: <?= __('lbl_all') ?></option>
     <?php foreach ($warehouses as $w): ?>
       <option value="<?= $w['id'] ?>" <?= $fromWh==$w['id']?'selected':'' ?>><?= e($w['name']) ?></option>
     <?php endforeach; ?>
   </select>
-  <select name="to_wh" class="form-control" style="max-width:180px">
+  <select name="to_wh" class="form-control filter-field-md">
     <option value=""><?= __('tr_to_wh') ?>: <?= __('lbl_all') ?></option>
     <?php foreach ($warehouses as $w): ?>
       <option value="<?= $w['id'] ?>" <?= $toWh==$w['id']?'selected':'' ?>><?= e($w['name']) ?></option>
     <?php endforeach; ?>
   </select>
-  <select name="status" class="form-control" style="max-width:150px">
+  <select name="status" class="form-control filter-field-sm">
     <option value=""><?= __('lbl_all') ?></option>
     <option value="draft"     <?= $status==='draft'    ?'selected':'' ?>><?= __('tr_status_draft') ?></option>
     <option value="posted"    <?= $status==='posted'   ?'selected':'' ?>><?= __('tr_status_posted') ?></option>
     <option value="cancelled" <?= $status==='cancelled'?'selected':'' ?>><?= __('tr_status_cancelled') ?></option>
   </select>
-  <button type="submit" class="btn btn-secondary"><?= feather_icon('search',14) ?> <?= __('btn_filter') ?></button>
-  <a href="<?= url('modules/transfers/') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  <div class="filter-actions">
+    <button type="submit" class="btn btn-secondary"><?= feather_icon('search',14) ?> <?= __('btn_filter') ?></button>
+    <a href="<?= url('modules/transfers/') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  </div>
 </form>
 
 <div class="card">
-  <div class="table-wrap">
+  <div class="table-wrap desktop-only mobile-table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -104,7 +106,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </thead>
       <tbody>
         <?php if (!$transfers): ?>
-          <tr><td colspan="8" class="text-center text-muted" style="padding:40px"><?= __('no_results') ?></td></tr>
+          <tr><td colspan="8" class="text-center text-muted table-empty-cell"><?= __('no_results') ?></td></tr>
         <?php else: ?>
           <?php foreach ($transfers as $t): ?>
           <tr>
@@ -132,6 +134,55 @@ include __DIR__ . '/../../views/layouts/header.php';
         <?php endif; ?>
       </tbody>
     </table>
+  </div>
+
+  <div class="mobile-card-list mobile-only">
+    <?php if (!$transfers): ?>
+      <div class="empty-state">
+        <div class="empty-state-icon"><?= feather_icon('shuffle', 36) ?></div>
+        <div class="empty-state-title"><?= __('no_results') ?></div>
+      </div>
+    <?php else: ?>
+      <?php foreach ($transfers as $t): ?>
+        <div class="mobile-record-card">
+          <div class="mobile-record-header">
+            <div class="mobile-record-main">
+              <div class="mobile-record-title"><?= e($t['doc_no']) ?></div>
+              <div class="mobile-record-subtitle"><?= e($t['from_wh_name']) ?> → <?= e($t['to_wh_name']) ?></div>
+            </div>
+            <div class="mobile-badge-row">
+              <?= transfer_status_badge($t['status']) ?>
+            </div>
+          </div>
+
+          <div class="mobile-meta-grid">
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('lbl_date') ?></span>
+              <span class="mobile-meta-row-value"><?= date_fmt($t['doc_date'], 'd.m.Y') ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('tr_items') ?></span>
+              <span class="mobile-meta-row-value"><?= (int)$t['item_count'] ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('tr_created_by') ?></span>
+              <span class="mobile-meta-row-value"><?= e($t['created_by_name']) ?></span>
+            </div>
+          </div>
+
+          <div class="mobile-actions">
+            <a href="<?= url('modules/transfers/view.php?id='.$t['id']) ?>" class="btn btn-secondary">
+              <?= feather_icon('eye', 14) ?> <?= __('btn_view') ?>
+            </a>
+            <?php if ($t['status'] === 'draft'): ?>
+              <a href="<?= url('modules/transfers/view.php?id='.$t['id']) ?>" class="btn btn-ghost">
+                <?= feather_icon('send', 12) ?> <?= __('tr_post') ?>
+              </a>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
   </div>
 
   <?php if ($pg['pages'] > 1): ?>

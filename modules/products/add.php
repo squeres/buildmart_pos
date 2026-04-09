@@ -510,6 +510,14 @@ body.inventory-popup-mode .page-content > form {
   cursor: pointer;
   padding: 0;
 }
+@media (max-width: 900px) {
+  .qc-select-wrap {
+    flex-wrap: wrap;
+  }
+  .btn-qc {
+    width: 100%;
+  }
+}
 </style>
 
 <form method="POST" enctype="multipart/form-data">
@@ -526,10 +534,10 @@ body.inventory-popup-mode .page-content > form {
 </div>
 <?php endif; ?>
 
-<div style="display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start">
+<div class="content-split content-split-sidebar">
 
   <!-- Left: main fields -->
-  <div style="display:flex;flex-direction:column;gap:16px">    <!-- Names -->
+  <div class="mobile-stack">    <!-- Names -->
     <div class="card">
       <div class="card-header"><span class="card-title"><?= __('lbl_name') ?></span></div>
       <div class="card-body">
@@ -554,7 +562,7 @@ body.inventory-popup-mode .page-content > form {
         <div class="form-row form-row-3">
           <div class="form-group mb-0">
             <label class="form-label"><?= __('lbl_sku') ?> <span class="req">*</span></label>
-            <input type="text" name="sku" class="form-control mono" value="<?= e($f['sku']) ?>" required style="text-transform:uppercase">
+            <input type="text" name="sku" class="form-control mono text-uppercase" value="<?= e($f['sku']) ?>" required>
             <?php if (isset($errors['sku'])): ?><div class="form-error"><?= e($errors['sku']) ?></div><?php endif; ?>
           </div>
           <div class="form-group mb-0">
@@ -607,7 +615,7 @@ body.inventory-popup-mode .page-content > form {
             <div class="form-hint">Единица выбирается из общего справочника, а старый технический код хранится только внутри системы.</div>
           </div>
         </div>
-        <div class="form-group mb-0" style="display:none">
+        <div class="form-group mb-0 hidden">
           <label class="form-label"><?= __('lbl_unit') ?></label>
           <select name="unit" class="form-control">
             <?php foreach ($units as $uKey => $uLabel): ?>
@@ -630,11 +638,11 @@ body.inventory-popup-mode .page-content > form {
             <?php endforeach; ?>
           </select>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="section-toolbar mb-1">
           <div class="form-hint">Эта единица будет показываться по умолчанию в товарах, складе и кассе. Цепочку добавляйте сверху вниз: самая большая единица, затем меньшая внутри нее, затем еще меньшая.</div>
           <button type="button" class="btn btn-sm btn-ghost" id="addUnitRowBtn"><?= feather_icon('plus', 14) ?> Добавить единицу</button>
         </div>
-        <div class="unit-row" style="display:grid;grid-template-columns:1.3fr .9fr auto;gap:10px;align-items:end;margin-bottom:10px">
+        <div class="unit-builder-row mb-1">
           <div class="form-group mb-0">
             <label class="form-label">Уровень 1: корневая единица</label>
             <input type="text" class="form-control" value="<?= e($baseUnitLabel) ?>" readonly>
@@ -643,12 +651,12 @@ body.inventory-popup-mode .page-content > form {
             <label class="form-label">Содержит</label>
             <input type="text" class="form-control mono" value="1" readonly>
           </div>
-          <div class="form-hint" style="align-self:center">Корень</div>
+          <div class="form-hint text-nowrap">Корень</div>
         </div>
-        <div id="unitRows" style="display:flex;flex-direction:column;gap:10px">
+        <div id="unitRows" class="mobile-stack">
           <?php foreach ($extraUnits as $idx => $unitRow): ?>
           <?php $prevRatio = $idx === 0 ? 1 : (float)$extraUnits[$idx - 1]['ratio_to_base']; ?>
-          <div class="unit-row" style="display:grid;grid-template-columns:1.3fr .9fr auto;gap:10px;align-items:end">
+          <div class="unit-row unit-builder-row">
             <div class="form-group mb-0">
               <label class="form-label">Следующая меньшая единица</label>
               <select name="unit_rows[<?= $idx ?>][unit_label]" class="form-control unit-preset-select" data-allow-empty="1">
@@ -678,8 +686,8 @@ body.inventory-popup-mode .page-content > form {
     <div class="card">
       <div class="card-header"><span class="card-title"><?= __('lbl_price') ?></span></div>
       <div class="card-body">
-        <div class="form-hint" style="margin-bottom:12px">Эти поля относятся к выбранной единице по умолчанию. Главной ценой станет цена именно этой единицы.</div>
-        <div class="form-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+        <div class="form-hint mb-1">Эти поля относятся к выбранной единице по умолчанию. Главной ценой станет цена именно этой единицы.</div>
+        <div class="auto-fit-grid-sm">
           <?php foreach ($priceTypes as $priceType): ?>
           <?php
             $code = $priceType['code'];
@@ -707,16 +715,16 @@ body.inventory-popup-mode .page-content > form {
             <input type="number" name="tax_rate" class="form-control mono" value="<?= e($f['tax_rate']) ?>" min="0" max="100" step="0.01">
           </div>
         </div>
-        <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border-dim)">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div class="section-divider">
+          <div class="section-toolbar mb-1">
             <div>
-              <div class="form-label" style="margin-bottom:4px">Цены по единицам</div>
+              <div class="form-label mb-0">Цены по единицам</div>
               <div class="form-hint">Можно задать отдельную цену для каждой единицы. Пустое поле возьмет автопересчет от базовой цены.</div>
             </div>
           </div>
-          <div id="unitPriceRows" style="display:flex;flex-direction:column;gap:10px">
+          <div id="unitPriceRows" class="mobile-stack">
             <?php foreach ($unitPriceRows as $unitIdx => $priceRow): ?>
-            <div class="unit-price-row" data-unit-index="<?= $unitIdx ?>" style="display:grid;grid-template-columns:minmax(180px,1.2fr) repeat(<?= count($priceTypes) ?>, minmax(130px,1fr));gap:10px;align-items:end">
+            <div class="unit-price-row" data-unit-index="<?= $unitIdx ?>" style="--unit-price-columns: <?= count($priceTypes) ?>">
               <div class="form-group mb-0">
                 <label class="form-label"><?= $unitIdx === 0 ? 'Базовая единица' : 'Единица' ?></label>
                 <input type="text" class="form-control" value="<?= e($priceRow['unit_label']) ?>" readonly>
@@ -756,7 +764,7 @@ body.inventory-popup-mode .page-content > form {
           <?php else: ?>
           <div class="form-group mb-0">
             <label class="form-label"><?= __('prod_stock_qty') ?></label>
-            <div class="form-control" style="background:var(--bg-raised);cursor:default">
+            <div class="form-control form-control-static">
               <?= qty_display((float)$f['stock_qty'], $f['unit']) ?>
             </div>
             <?php if ($isEdit): ?>
@@ -767,7 +775,7 @@ body.inventory-popup-mode .page-content > form {
           <?php endif; ?>
           <div class="form-group mb-0">
             <label class="form-label"><?= __('prod_min_stock') ?></label>
-            <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:10px">
+            <div class="split-input-row">
               <input type="number" name="min_stock_qty" class="form-control mono" value="<?= e($f['min_stock_qty']) ?>" min="0" step="0.001">
               <select name="min_stock_display_unit_code" id="minStockDisplayUnit" class="form-control">
                 <?php foreach ($productUnits as $unitRow): ?>
@@ -780,7 +788,7 @@ body.inventory-popup-mode .page-content > form {
             <div class="form-hint" id="minStockPreview"><?= e(__('prod_min_stock_saved_as')) ?>: <?= e($minStockState['base_text']) ?></div>
           </div>
         </div>
-        <div class="form-row form-row-2" style="margin-top:14px">
+        <div class="form-row form-row-2 mt-2">
           <div class="form-group mb-0">
             <label class="form-label"><?= __('repl_class') ?></label>
             <select name="replenishment_class" class="form-control">
@@ -794,7 +802,7 @@ body.inventory-popup-mode .page-content > form {
           </div>
           <div class="form-group mb-0">
             <label class="form-label"><?= __('repl_target_stock') ?> (<?= __('lbl_optional') ?>)</label>
-            <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:10px">
+            <div class="split-input-row">
               <input type="number" name="target_stock_qty" class="form-control mono" value="<?= e($f['target_stock_qty']) ?>" min="0" step="0.001">
               <select name="target_stock_display_unit_code" id="targetStockDisplayUnit" class="form-control">
                 <?php foreach ($productUnits as $unitRow): ?>
@@ -830,21 +838,20 @@ body.inventory-popup-mode .page-content > form {
   </div>
 
   <!-- Right: image + options -->
-  <div style="display:flex;flex-direction:column;gap:16px">
+  <div class="mobile-stack">
 
     <!-- Image -->
     <div class="card">
       <div class="card-header"><span class="card-title"><?= __('lbl_image') ?></span></div>
       <div class="card-body">
         <?php if ($f['image']): ?>
-          <img src="<?= e(UPLOAD_URL.$f['image']) ?>" alt=""
-               style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:var(--radius);margin-bottom:12px;border:1px solid var(--border-soft)">
+          <img src="<?= e(UPLOAD_URL.$f['image']) ?>" alt="" class="image-preview-square">
         <?php else: ?>
-          <div style="width:100%;aspect-ratio:1;background:var(--bg-raised);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;color:var(--text-muted);margin-bottom:12px;border:1px dashed var(--border-soft)">
+          <div class="image-placeholder-square">
             <?= feather_icon('image', 48) ?>
           </div>
         <?php endif; ?>
-        <input type="file" name="image" class="form-control" accept="image/*" style="font-size:12px">
+        <input type="file" name="image" class="form-control file-input-sm" accept="image/*">
         <?php if (isset($errors['image'])): ?><div class="form-error"><?= e($errors['image']) ?></div><?php endif; ?>
       </div>
     </div>
@@ -852,7 +859,7 @@ body.inventory-popup-mode .page-content > form {
     <!-- Options -->
     <div class="card">
       <div class="card-header"><span class="card-title"><?= __('lbl_status') ?></span></div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:12px">
+      <div class="card-body option-stack">
         <label class="form-check">
           <input type="checkbox" name="is_active" value="1" <?= $f['is_active']?'checked':'' ?>>
           <span class="form-check-label"><?= __('lbl_active') ?></span>
@@ -869,7 +876,7 @@ body.inventory-popup-mode .page-content > form {
     </div>
 
     <!-- Actions -->
-    <div style="display:flex;flex-direction:column;gap:8px">
+    <div class="mobile-stack">
       <button type="submit" class="btn btn-primary btn-block btn-lg">
         <?= feather_icon('save',17) ?> <?= __('btn_save') ?>
       </button>
@@ -910,10 +917,10 @@ body.inventory-popup-mode .page-content > form {
       <button type="button" class="qc-modal-close" data-close-modal="product-confirm-modal">×</button>
     </div>
     <div class="qc-modal-body">
-      <div class="form-hint" style="margin-bottom:12px"><?= e(__('prod_confirm_changes_hint')) ?></div>
-      <div id="product-confirm-empty" class="form-hint" style="display:none;margin-bottom:12px"><?= e(__('prod_confirm_no_changes')) ?></div>
-      <div id="product-confirm-list" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto"></div>
-      <label class="form-check" style="margin-top:14px">
+      <div class="form-hint mb-1"><?= e(__('prod_confirm_changes_hint')) ?></div>
+      <div id="product-confirm-empty" class="form-hint hidden mb-1"><?= e(__('prod_confirm_no_changes')) ?></div>
+      <div id="product-confirm-list" class="mobile-stack" style="max-height:340px;overflow:auto"></div>
+      <label class="form-check mt-2">
         <input type="checkbox" id="product-confirm-check">
         <span class="form-check-label"><?= e(__('prod_confirm_checkbox')) ?></span>
       </label>
@@ -1245,7 +1252,7 @@ feather.replace();
         `;
       }).join('');
       return `
-        <div class="unit-price-row" data-unit-index="${idx}" style="display:grid;grid-template-columns:minmax(180px,1.2fr) repeat(${priceTypes.length}, minmax(130px,1fr));gap:10px;align-items:end">
+        <div class="unit-price-row" data-unit-index="${idx}" style="--unit-price-columns:${priceTypes.length}">
           <div class="form-group mb-0">
             <label class="form-label">${idx === 0 ? 'Базовая единица' : 'Единица'}</label>
             <input type="text" class="form-control" value="${unit.label}" readonly>
@@ -1292,8 +1299,7 @@ feather.replace();
 
   addBtn?.addEventListener('click', () => {
     const row = document.createElement('div');
-    row.className = 'unit-row';
-    row.style.cssText = 'display:grid;grid-template-columns:1.3fr .9fr auto;gap:10px;align-items:end';
+    row.className = 'unit-row unit-builder-row';
     row.innerHTML = `
       <div class="form-group mb-0">
         <label class="form-label">Следующая меньшая единица</label>
@@ -1450,15 +1456,15 @@ feather.replace();
 
   function renderProductConfirmChanges(changes) {
     if (!confirmList || !confirmEmpty) return;
-    confirmEmpty.style.display = changes.length ? 'none' : 'block';
-    confirmList.style.display = changes.length ? 'flex' : 'none';
+    confirmEmpty.classList.toggle('hidden', changes.length > 0);
+    confirmList.classList.toggle('hidden', changes.length === 0);
     confirmList.innerHTML = changes.map((change) => `
-      <div style="border:1px solid var(--border-soft);border-radius:10px;padding:10px 12px;background:var(--bg-raised)">
-        <div style="font-weight:600;margin-bottom:6px">${escapeHtml(change.label)}</div>
-        <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;color:var(--text-muted);font-size:13px">
+      <div class="confirm-change-card">
+        <div class="confirm-change-title">${escapeHtml(change.label)}</div>
+        <div class="confirm-change-row">
           <div>${escapeHtml(change.before)}</div>
-          <div style="color:var(--warning)">→</div>
-          <div style="color:var(--text)">${escapeHtml(change.after)}</div>
+          <div class="confirm-change-arrow">→</div>
+          <div class="text-primary">${escapeHtml(change.after)}</div>
         </div>
       </div>
     `).join('');

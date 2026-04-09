@@ -221,26 +221,28 @@ include __DIR__ . '/../../views/layouts/header.php';
 </div>
 
 <!-- Filters -->
-<form method="GET" class="filter-bar mb-2">
+<form method="GET" class="filter-bar mobile-form-stack mb-2">
   <input type="hidden" name="mode" value="<?= e($mode) ?>">
-  <input type="text" name="search" class="form-control" placeholder="<?= __('btn_search') ?>..." value="<?= e($search) ?>" style="max-width:220px">
-  <select name="cat" class="form-control" style="max-width:180px">
+  <input type="text" name="search" class="form-control filter-field-lg" placeholder="<?= __('btn_search') ?>..." value="<?= e($search) ?>">
+  <select name="cat" class="form-control filter-field-md">
     <option value=""><?= __('lbl_all') ?> <?= __('nav_categories') ?></option>
     <?php foreach ($categories as $c): ?>
       <option value="<?= $c['id'] ?>" <?= $catId==$c['id']?'selected':'' ?>><?= e(category_name($c)) ?></option>
     <?php endforeach; ?>
   </select>
-  <select name="stock" class="form-control" style="max-width:180px">
+  <select name="stock" class="form-control filter-field-md">
     <option value=""><?= __('lbl_all') ?></option>
     <option value="low" <?= $stockFilter === 'low' ? 'selected' : '' ?>><?= __('low_stock') ?></option>
     <option value="out" <?= $stockFilter === 'out' ? 'selected' : '' ?>><?= __('out_of_stock') ?></option>
   </select>
-  <button type="submit" class="btn btn-secondary"><?= feather_icon('search',14) ?> <?= __('btn_filter') ?></button>
-  <a href="<?= url('modules/products/') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  <div class="filter-actions">
+    <button type="submit" class="btn btn-secondary"><?= feather_icon('search',14) ?> <?= __('btn_filter') ?></button>
+    <a href="<?= url('modules/products/') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  </div>
 </form>
 
 <div class="card">
-  <div class="table-wrap">
+  <div class="table-wrap desktop-only mobile-table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -264,7 +266,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </thead>
       <tbody>
         <?php if (!$products): ?>
-          <tr><td colspan="<?= 1 + count($visibleColumns) ?>" class="text-center text-muted" style="padding:40px"><?= __('no_results') ?></td></tr>
+          <tr><td colspan="<?= 1 + count($visibleColumns) ?>" class="text-center text-muted table-empty-cell"><?= __('no_results') ?></td></tr>
         <?php else: ?>
           <?php foreach ($products as $p): ?>
           <tr class="<?= !$p['is_active'] ? 'product-row-inactive' : '' ?>">
@@ -367,6 +369,125 @@ include __DIR__ . '/../../views/layouts/header.php';
         <?php endif; ?>
       </tbody>
     </table>
+  </div>
+
+  <div class="mobile-card-list mobile-only">
+    <?php if (!$products): ?>
+      <div class="empty-state">
+        <div class="empty-state-icon"><?= feather_icon('package', 36) ?></div>
+        <div class="empty-state-title"><?= __('no_results') ?></div>
+      </div>
+    <?php else: ?>
+      <?php foreach ($products as $p): ?>
+        <?php
+          $replenishmentState = $displayMap[(int)$p['id']]['replenishment'];
+          $statusBadge = ($replenishmentState['is_below_min_stock'] || $replenishmentState['is_out_of_stock'])
+            ? replenishment_status_badge($replenishmentState)
+            : stock_badge((float)$p['stock_qty'], (float)$p['min_stock_qty']);
+        ?>
+        <div class="mobile-record-card<?= !$p['is_active'] ? ' product-row-inactive' : '' ?>">
+          <div class="mobile-record-header">
+            <div class="mobile-record-main">
+              <div class="mobile-record-title"><?= e(product_name($p)) ?></div>
+              <?php if ($p['brand']): ?>
+                <div class="mobile-record-subtitle"><?= e($p['brand']) ?></div>
+              <?php endif; ?>
+            </div>
+            <div class="mobile-record-thumb" aria-hidden="true">
+              <?php if ($p['image']): ?>
+                <img src="<?= e(UPLOAD_URL . $p['image']) ?>" alt="">
+              <?php else: ?>
+                <?= feather_icon('package', 18) ?>
+              <?php endif; ?>
+            </div>
+          </div>
+
+          <div class="mobile-badge-row">
+            <?= $statusBadge ?>
+            <?= replenishment_class_badge($p['replenishment_class'] ?? 'C') ?>
+            <?php if (!$p['is_active']): ?>
+              <span class="badge badge-secondary"><?= __('lbl_inactive') ?></span>
+            <?php endif; ?>
+          </div>
+
+          <div class="mobile-meta-grid">
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('lbl_sku') ?></span>
+              <span class="mobile-meta-row-value"><?= e($p['sku'] ?: '—') ?></span>
+            </div>
+            <?php if (!empty($p['barcode'])): ?>
+              <div class="mobile-meta-row">
+                <span class="mobile-meta-row-label"><?= __('lbl_barcode') ?></span>
+                <span class="mobile-meta-row-value"><?= e($p['barcode']) ?></span>
+              </div>
+            <?php endif; ?>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('lbl_category') ?></span>
+              <span class="mobile-meta-row-value"><?= e(category_name(['name_en'=>$p['cat_en'],'name_ru'=>$p['cat_ru']])) ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('prod_stock_qty') ?></span>
+              <span class="mobile-meta-row-value"><?= e($displayMap[(int)$p['id']]['stock_display']) ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('prod_min_stock') ?></span>
+              <span class="mobile-meta-row-value"><?= (float)$p['min_stock_qty'] > 0 ? e($displayMap[(int)$p['id']]['min_stock']['full_text']) : '—' ?></span>
+            </div>
+            <?php foreach ($priceTypes as $priceType): ?>
+              <?php
+                $priceCode = $priceType['code'];
+                $basePrice = (float)($priceMap[$p['id']][$priceCode] ?? 0);
+                $priceValue = $basePrice > 0
+                  ? product_unit_price((int)$p['id'], $displayMap[(int)$p['id']]['default_unit']['unit_code'], $priceCode, $basePrice, $displayMap[(int)$p['id']]['units'], $displayMap[(int)$p['id']]['overrides'])
+                  : 0;
+                $priceLabel = $priceCode === 'retail'
+                  ? __('prod_sale_price')
+                  : ($priceCode === 'purchase' ? __('prod_cost_price') : UISettings::priceTypeName($priceType));
+              ?>
+              <div class="mobile-meta-row">
+                <span class="mobile-meta-row-label"><?= e($priceLabel) ?></span>
+                <span class="mobile-meta-row-value"><?= $priceValue > 0 ? money($priceValue) : '—' ?></span>
+              </div>
+            <?php endforeach; ?>
+          </div>
+
+          <div class="mobile-actions">
+            <?php if (Auth::can('products.edit')): ?>
+              <a href="<?= url('modules/products/edit.php?id='.$p['id']) ?>" class="btn btn-secondary">
+                <?= feather_icon('edit-2', 14) ?> <?= __('btn_edit') ?>
+              </a>
+            <?php endif; ?>
+            <a href="<?= url('modules/inventory/history.php?product_id='.$p['id']) ?>" class="btn btn-ghost">
+              <?= feather_icon('clock', 14) ?> <?= __('inv_history') ?>
+            </a>
+            <?php if (Auth::can('products.edit')): ?>
+              <form method="POST" action="<?= url('modules/products/toggle_active.php') ?>" class="inline-action-form">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                <input type="hidden" name="active" value="<?= $p['is_active'] ? 0 : 1 ?>">
+                <input type="hidden" name="return_to" value="<?= e($currentListUrl) ?>">
+                <button type="submit"
+                        class="btn btn-ghost"
+                        data-confirm="<?= $p['is_active'] ? __('prod_confirm_deactivate') : __('prod_confirm_restore') ?>">
+                  <?= $p['is_active'] ? feather_icon('archive', 14) : feather_icon('rotate-ccw', 14) ?>
+                  <?= $p['is_active'] ? __('prod_deactivate') : __('prod_restore') ?>
+                </button>
+              </form>
+            <?php endif; ?>
+            <?php if (Auth::can('products.delete') && !(int)$p['has_moves']): ?>
+              <form method="POST" action="<?= url('modules/products/delete.php') ?>" class="inline-action-form">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= (int)$p['id'] ?>">
+                <input type="hidden" name="return_to" value="<?= e($currentListUrl) ?>">
+                <button type="submit" class="btn btn-danger" data-confirm="<?= __('confirm_delete') ?>">
+                  <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
+                </button>
+              </form>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
   </div>
 
   <?php if ($pg['pages'] > 1): ?>

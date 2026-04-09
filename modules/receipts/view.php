@@ -144,9 +144,9 @@ include __DIR__ . '/../../views/layouts/header.php';
 <div class="page-header">
   <div>
     <h1 class="page-heading"><?= e($doc['doc_no']) ?></h1>
-    <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+    <div class="status-inline">
       <?= gr_status_badge($doc['status']) ?>
-      <span class="text-muted" style="font-size:13px"><?= date_fmt($doc['doc_date'], 'd.m.Y') ?></span>
+      <span class="text-muted fs-sm"><?= date_fmt($doc['doc_date'], 'd.m.Y') ?></span>
     </div>
   </div>
   <div class="page-actions">
@@ -156,7 +156,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     </a>
     <?php endif; ?>
     <?php if ($doc['status'] === 'draft' && $canPostReceipts): ?>
-    <form method="POST" action="<?= url('modules/receipts/post.php') ?>" style="display:inline">
+    <form method="POST" action="<?= url('modules/receipts/post.php') ?>" class="inline-action-form">
       <?= csrf_field() ?>
       <input type="hidden" name="id" value="<?= (int)$id ?>">
       <button type="submit" class="btn btn-primary"
@@ -184,11 +184,11 @@ include __DIR__ . '/../../views/layouts/header.php';
     </a>
     <?php endif; ?>
     <?php if ($canCancelReceipts && in_array($doc['status'], ['draft','pending_acceptance','accepted'], true)): ?>
-    <form method="POST" action="<?= url('modules/receipts/cancel.php') ?>" style="display:inline">
+    <form method="POST" action="<?= url('modules/receipts/cancel.php') ?>" class="inline-action-form">
       <?= csrf_field() ?>
       <input type="hidden" name="id" value="<?= (int)$id ?>">
-      <button type="submit" class="btn btn-ghost"
-         style="color:var(--danger)" data-confirm="<?= __('gr_confirm_cancel') ?>">
+      <button type="submit" class="btn btn-ghost btn-danger-ghost"
+         data-confirm="<?= __('gr_confirm_cancel') ?>">
         <?= feather_icon('x-circle',15) ?> <?= __('gr_cancel') ?>
       </button>
     </form>
@@ -200,11 +200,11 @@ include __DIR__ . '/../../views/layouts/header.php';
 </div>
 
 <!-- Document metadata -->
-<div class="grid grid-2 mb-3">
+<div class="grid grid-2 mobile-form-stack mb-3">
   <div class="card">
     <div class="card-header"><span class="card-title"><?= __('gr_header') ?></span></div>
-    <div class="card-body" style="font-size:13.5px">
-      <table style="width:100%;border-collapse:collapse">
+    <div class="card-body fs-md">
+      <table class="detail-table">
         <tr><td style="padding:4px 0;color:var(--text-muted);width:45%"><?= __('gr_doc_no') ?></td>
             <td class="font-mono fw-600"><?= e($doc['doc_no']) ?></td></tr>
         <tr><td style="padding:4px 0;color:var(--text-muted)"><?= __('lbl_date') ?></td>
@@ -234,8 +234,8 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
   <div class="card">
     <div class="card-header"><span class="card-title"><?= __('lbl_status') ?></span></div>
-    <div class="card-body" style="font-size:13.5px">
-      <table style="width:100%;border-collapse:collapse">
+    <div class="card-body fs-md">
+      <table class="detail-table">
         <tr><td style="padding:4px 0;color:var(--text-muted);width:45%"><?= __('lbl_status') ?></td>
             <td><?= gr_status_badge($doc['status']) ?></td></tr>
         <tr><td style="padding:4px 0;color:var(--text-muted)"><?= __('lbl_created') ?></td>
@@ -256,7 +256,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 <!-- Items table -->
 <div class="card mb-3">
   <div class="card-header"><span class="card-title"><?= __('gr_items') ?></span></div>
-  <div class="table-wrap">
+  <div class="table-wrap mobile-table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -273,12 +273,12 @@ include __DIR__ . '/../../views/layouts/header.php';
       <tbody>
         <?php foreach ($items as $i => $item): ?>
         <tr>
-          <td class="text-muted" style="font-size:12px;text-align:center"><?= $i+1 ?></td>
+          <td class="text-muted fs-sm text-center"><?= $i+1 ?></td>
           <td>
             <div class="fw-600"><?= e($item['name']) ?></div>
             <?php if ($item['product_id']): ?>
               <?php $p = Database::row("SELECT sku FROM products WHERE id=?", [$item['product_id']]); ?>
-              <?php if ($p): ?><div class="text-muted font-mono" style="font-size:11px"><?= e($p['sku']) ?></div><?php endif; ?>
+              <?php if ($p): ?><div class="text-muted font-mono fs-xs"><?= e($p['sku']) ?></div><?php endif; ?>
             <?php endif; ?>
           </td>
           <td><?= unit_label($item['unit']) ?></td>
@@ -301,7 +301,7 @@ include __DIR__ . '/../../views/layouts/header.php';
           <td class="col-num"><?= money($doc['tax_amount']) ?></td>
           <td></td>
         </tr>
-        <tr style="font-size:15px">
+        <tr class="fs-lg">
           <td colspan="6" class="text-right fw-600"><?= __('lbl_total') ?>:</td>
           <td class="col-num fw-600"><?= money($doc['total']) ?></td>
           <td></td>
@@ -320,7 +320,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       <button type="button" class="qc-modal-close" id="doc-confirm-close">?</button>
     </div>
     <div class="qc-modal-body">
-      <p class="text-muted" style="margin:0 0 14px"><?= __('doc_confirm_summary_hint') ?></p>
+      <p class="text-muted mb-1"><?= __('doc_confirm_summary_hint') ?></p>
       <div class="doc-confirm-grid">
         <div class="doc-confirm-card">
           <div class="doc-confirm-label"><?= __('gr_doc_no') ?></div>

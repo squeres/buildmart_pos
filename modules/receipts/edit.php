@@ -333,13 +333,13 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
 
   <div class="card mb-3">
-    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+    <div class="card-header flex-between">
       <span class="card-title"><?= __('gr_items') ?></span>
       <button type="button" id="btn-add-row" class="btn btn-sm btn-secondary">
         <?= feather_icon('plus', 14) ?> <?= __('gr_add_row') ?>
       </button>
     </div>
-    <div class="table-wrap">
+    <div class="table-wrap mobile-table-scroll">
       <table class="table" id="items-table">
         <thead>
           <tr>
@@ -381,7 +381,7 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
 
   <div class="card">
-    <div class="card-body" style="display:flex;gap:10px;flex-wrap:wrap">
+    <div class="card-body stacked-actions">
       <button type="submit" name="action" value="save_draft" class="btn btn-secondary btn-lg">
         <?= feather_icon('save', 17) ?> <?= __('gr_save_draft') ?>
       </button>
@@ -518,7 +518,7 @@ include __DIR__ . '/../../views/layouts/header.php';
           <button type="button" class="btn btn-sm btn-ghost" id="prod-add-unit-row"><?= feather_icon('plus', 14) ?> Добавить единицу</button>
         </div>
         <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Стройте сверху вниз: самая большая единица, затем меньшая внутри нее, потом еще меньшая.</div>
-        <div id="prod-unit-rows" style="display:flex;flex-direction:column;gap:10px"></div>
+        <div id="prod-unit-rows" class="mobile-stack"></div>
       </div>
       <div class="form-group" style="margin-top:10px">
         <label class="form-label">Единица по умолчанию</label>
@@ -805,8 +805,8 @@ function renderReceiptUnitMatrix(tr, product) {
   if (saleJsonInput) saleJsonInput.value = JSON.stringify(saleState);
 
   container.innerHTML = units.map((unit) => `
-    <div style="display:grid;grid-template-columns:auto minmax(130px,1.2fr) minmax(120px,1fr);gap:8px;align-items:end;padding:8px 10px;border:1px solid var(--border-soft);border-radius:10px;background:var(--bg-raised)">
-      <label style="display:flex;align-items:center;justify-content:center;height:36px">
+    <div class="unit-matrix-card">
+      <label class="unit-matrix-radio">
         <input type="radio" class="row-doc-unit" name="row_doc_unit_${tr.rowIndex}" value="${unit.code}" ${unit.code === unitSelect.value ? 'checked' : ''}>
       </label>
       <div class="form-group mb-0">
@@ -997,7 +997,7 @@ function addModalUnitRow(label = '', step = '1') {
   if (!prodUnitRowsWrap) return;
   const row = document.createElement('div');
   row.className = 'prod-unit-row';
-  row.style.cssText = 'display:grid;grid-template-columns:1.2fr .9fr auto;gap:10px;align-items:end';
+  row.classList.add('unit-builder-row');
   row.innerHTML = `
     <div class="form-group mb-0">
       <label class="form-label">Следующая меньшая единица</label>

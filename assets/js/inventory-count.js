@@ -13,6 +13,7 @@
     notFound: document.getElementById('inventoryCountNotFound'),
     queueBody: document.getElementById('inventoryCountQueueBody'),
     queueTable: document.getElementById('inventoryCountQueueTable'),
+    queueCards: document.getElementById('inventoryCountQueueCards'),
     queueEmpty: document.getElementById('inventoryCountQueueEmpty'),
     saveBtn: document.getElementById('inventoryCountSaveBtn'),
     clearBtn: document.getElementById('inventoryCountClearBtn'),
@@ -246,6 +247,7 @@
     const items = queueItems();
     dom.queueEmpty.classList.toggle('hidden', items.length > 0);
     dom.queueTable.classList.toggle('hidden', items.length === 0);
+    dom.queueCards?.classList.toggle('hidden', items.length === 0);
 
     dom.queueBody.innerHTML = items.map((item) => {
       const diff = diffBaseQty(item);
@@ -299,6 +301,71 @@
         </tr>
       `;
     }).join('');
+
+    if (dom.queueCards) {
+      dom.queueCards.innerHTML = items.map((item) => {
+        const diff = diffBaseQty(item);
+        const diffClass = diff > 0
+          ? 'inventory-count-diff positive'
+          : (diff < 0 ? 'inventory-count-diff negative' : 'inventory-count-diff');
+
+        return `
+          <div class="mobile-record-card inventory-count-queue-card" data-product-id="${item.id}">
+            <div class="mobile-record-header">
+              <div class="mobile-record-main">
+                <div class="mobile-record-title">${escHtml(item.name)}</div>
+                <div class="mobile-record-subtitle">${escHtml(item.sku || '-')} · ${escHtml(item.barcode || '-')}</div>
+              </div>
+              <div class="mobile-badge-row">
+                <span class="${diffClass}">${escHtml(formatDiffInUnit(item))}</span>
+              </div>
+            </div>
+
+            <div class="mobile-meta-grid">
+              <div class="mobile-meta-row">
+                <span class="mobile-meta-row-label">${escHtml(t('warehouseStock', 'Current stock'))}</span>
+                <span class="mobile-meta-row-value">${escHtml(formatQtyInUnit(item.stock_qty, item, item.unit_code))}</span>
+              </div>
+            </div>
+
+            <div class="inventory-count-queue-card-fields">
+              <div class="inventory-count-qty-editor">
+                <input
+                  type="number"
+                  class="form-control mono inventory-count-qty-input"
+                  data-action="actual"
+                  data-product-id="${item.id}"
+                  min="0"
+                  step="0.001"
+                  value="${escHtml(item.actual_qty)}"
+                >
+                <select
+                  class="form-control inventory-count-unit-select"
+                  data-action="unit"
+                  data-product-id="${item.id}"
+                >
+                  ${buildUnitOptions(item)}
+                </select>
+              </div>
+              <input
+                type="text"
+                class="form-control inventory-count-note-input"
+                data-action="notes"
+                data-product-id="${item.id}"
+                value="${escHtml(item.notes || '')}"
+                placeholder="${escHtml(t('notePlaceholder', 'Comment'))}"
+              >
+            </div>
+
+            <div class="mobile-actions">
+              <button type="button" class="btn btn-danger" data-action="remove" data-product-id="${item.id}">
+                ${escHtml(t('btn_delete', 'Remove'))}
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
   }
 
   function buildQueueItem(product) {

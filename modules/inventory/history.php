@@ -48,8 +48,8 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= __('inv_history') ?></h1>
 </div>
 
-<form method="GET" class="filter-bar mb-2">
-  <select name="product_id" class="form-control" style="max-width:240px">
+<form method="GET" class="filter-bar mobile-form-stack mb-2">
+  <select name="product_id" class="form-control filter-field-xl">
     <option value=""><?= __('lbl_all') ?> <?= __('nav_products') ?></option>
     <?php foreach ($products as $p): ?>
       <option value="<?= $p['id'] ?>" <?= $productId==$p['id']?'selected':'' ?>>
@@ -57,20 +57,22 @@ include __DIR__ . '/../../views/layouts/header.php';
       </option>
     <?php endforeach; ?>
   </select>
-  <select name="type" class="form-control" style="max-width:150px">
+  <select name="type" class="form-control filter-field-sm">
     <option value=""><?= __('lbl_all') ?> <?= __('lbl_type') ?></option>
     <?php foreach ($types as $t): ?>
       <option value="<?= $t ?>" <?= $type===$t?'selected':'' ?>><?= movement_label($t) ?></option>
     <?php endforeach; ?>
   </select>
-  <input type="date" name="from" class="form-control" value="<?= e($from) ?>" style="max-width:150px">
-  <input type="date" name="to"   class="form-control" value="<?= e($to) ?>"   style="max-width:150px">
-  <button type="submit" class="btn btn-secondary"><?= feather_icon('filter',14) ?></button>
-  <a href="<?= url('modules/inventory/history.php') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  <input type="date" name="from" class="form-control filter-field-sm" value="<?= e($from) ?>">
+  <input type="date" name="to"   class="form-control filter-field-sm" value="<?= e($to) ?>">
+  <div class="filter-actions">
+    <button type="submit" class="btn btn-secondary"><?= feather_icon('filter',14) ?> <?= __('btn_filter') ?></button>
+    <a href="<?= url('modules/inventory/history.php') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  </div>
 </form>
 
 <div class="card">
-  <div class="table-wrap">
+  <div class="table-wrap desktop-only mobile-table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -89,7 +91,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </thead>
       <tbody>
         <?php if (!$movements): ?>
-          <tr><td colspan="11" class="text-center text-muted" style="padding:40px"><?= __('no_results') ?></td></tr>
+          <tr><td colspan="11" class="text-center text-muted table-empty-cell"><?= __('no_results') ?></td></tr>
         <?php else: ?>
           <?php foreach ($movements as $m): ?>
           <tr>
@@ -111,6 +113,65 @@ include __DIR__ . '/../../views/layouts/header.php';
         <?php endif; ?>
       </tbody>
     </table>
+  </div>
+  <div class="mobile-card-list mobile-only">
+    <?php if (!$movements): ?>
+      <div class="empty-state">
+        <div class="empty-state-icon"><?= feather_icon('clock', 36) ?></div>
+        <div class="empty-state-title"><?= __('no_results') ?></div>
+      </div>
+    <?php else: ?>
+      <?php foreach ($movements as $m): ?>
+        <div class="mobile-record-card">
+          <div class="mobile-record-header">
+            <div class="mobile-record-main">
+              <div class="mobile-record-title"><?= e(product_name($m)) ?></div>
+              <div class="mobile-record-subtitle"><?= e($m['sku']) ?></div>
+            </div>
+            <div class="mobile-badge-row">
+              <span class="badge badge-<?= movement_badge_class($m['type']) ?>"><?= movement_label($m['type']) ?></span>
+            </div>
+          </div>
+
+          <div class="mobile-meta-grid">
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('lbl_date') ?></span>
+              <span class="mobile-meta-row-value"><?= date_fmt($m['created_at']) ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('wh_title') ?></span>
+              <span class="mobile-meta-row-value"><?= e($m['warehouse_name'] ?? '—') ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('inv_qty_before') ?></span>
+              <span class="mobile-meta-row-value"><?= number_format((float)$m['qty_before'],3) ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('inv_qty_change') ?></span>
+              <span class="mobile-meta-row-value"><?= ($m['qty_change']>=0?'+':'').number_format((float)$m['qty_change'],3) ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('inv_qty_after') ?></span>
+              <span class="mobile-meta-row-value"><?= number_format((float)$m['qty_after'],3) ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('inv_unit_cost') ?></span>
+              <span class="mobile-meta-row-value"><?= $m['unit_cost'] ? money($m['unit_cost']) : '—' ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('nav_users') ?></span>
+              <span class="mobile-meta-row-value"><?= e($m['user_name']) ?></span>
+            </div>
+            <?php if (!empty($m['notes'])): ?>
+              <div class="mobile-meta-row">
+                <span class="mobile-meta-row-label"><?= __('lbl_notes') ?></span>
+                <span class="mobile-meta-row-value text-left"><?= e($m['notes']) ?></span>
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
   </div>
   <?php if ($pg['pages']>1): ?>
   <div class="card-footer flex-between">

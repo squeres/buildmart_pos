@@ -142,6 +142,7 @@ $userInitial = function_exists('mb_strtoupper')
     </div>
   </div>
 </aside>
+<div class="sidebar-overlay" id="sidebarOverlay" hidden></div>
 
 <!-- Configure Menu Drawer -->
 <div class="ui-drawer" id="configMenuDrawer" aria-hidden="true">

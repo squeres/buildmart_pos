@@ -139,9 +139,33 @@
     if (!sidebar || !overlay || !menuBtn) {
       return;
     }
+
+    const closeSidebar = () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+      overlay.hidden = true;
+    };
+
+    const openSidebar = () => {
+      sidebar.classList.add('open');
+      overlay.hidden = false;
+      overlay.classList.add('active');
+    };
+
     menuBtn.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-      overlay.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+      if (sidebar.classList.contains('open')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    });
+
+    overlay.addEventListener('click', closeSidebar);
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 900) {
+        closeSidebar();
+      }
     });
   }
 

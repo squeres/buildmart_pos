@@ -236,6 +236,62 @@ include __DIR__ . '/../../views/layouts/header.php';
   gap: 6px;
   white-space: nowrap;
 }
+.transfer-stock-breakdown {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.transfer-stock-selected {
+  font-size: 11px;
+  margin-top: 4px;
+}
+.transfer-row-remove {
+  text-align: right;
+}
+@media (max-width: 900px) {
+  #items-table.transfer-editor-table thead {
+    display: none;
+  }
+  #items-table.transfer-editor-table,
+  #items-table.transfer-editor-table tbody,
+  #items-table.transfer-editor-table tr,
+  #items-table.transfer-editor-table td {
+    display: block;
+    width: 100%;
+  }
+  #items-table.transfer-editor-table tbody {
+    display: grid;
+    gap: 12px;
+  }
+  #items-table.transfer-editor-table tbody tr {
+    padding: 12px;
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+    background: var(--bg-raised);
+  }
+  #items-table.transfer-editor-table td {
+    padding: 0;
+    border: 0;
+  }
+  #items-table.transfer-editor-table td + td {
+    margin-top: 10px;
+  }
+  #items-table.transfer-editor-table td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11px;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  #items-table.transfer-editor-table td[data-label=""]::before {
+    display: none;
+  }
+  .transfer-row-remove .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
 </style>
 
 <div class="page-header">
@@ -254,7 +310,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 <form method="POST" id="transfer-form">
   <?= csrf_field() ?>
 
-  <div style="display:grid;grid-template-columns:1fr 300px;gap:20px;align-items:start">
+  <div class="content-split content-split-sidebar">
     <div class="card">
       <div class="card-header"><span class="card-title"><?= __('tr_header') ?></span></div>
       <div class="card-body">
@@ -303,8 +359,8 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
 
     <div class="card">
-      <div class="card-body" style="padding:16px">
-        <p class="text-muted" style="font-size:13px;margin:0">
+      <div class="card-body">
+        <p class="text-muted fs-sm mb-0">
           <?= feather_icon('info', 13) ?>
           <?= __('tr_create_hint') ?>
         </p>
@@ -312,7 +368,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
   </div>
 
-  <div class="card" style="margin-top:16px">
+  <div class="card mt-2">
     <div class="card-header flex-between">
       <span class="card-title"><?= __('tr_items') ?></span>
       <button type="button" class="btn btn-secondary btn-sm" id="addRow">
@@ -325,8 +381,8 @@ include __DIR__ . '/../../views/layouts/header.php';
     <div id="transfer-items-client-error" style="display:none;padding:8px 16px">
       <div class="form-error" id="transfer-items-client-error-text"></div>
     </div>
-    <div class="table-wrap">
-      <table class="table" id="items-table">
+    <div class="table-wrap mobile-table-scroll">
+      <table class="table transfer-editor-table" id="items-table">
         <thead>
           <tr>
             <th style="width:36%"><?= __('lbl_name') ?></th>
@@ -339,7 +395,7 @@ include __DIR__ . '/../../views/layouts/header.php';
         <tbody id="items-body"></tbody>
       </table>
     </div>
-    <div class="card-footer" style="display:flex;justify-content:flex-end;gap:10px">
+    <div class="card-footer stacked-actions">
       <a href="<?= url('modules/transfers/') ?>" class="btn btn-ghost btn-lg"><?= __('btn_cancel') ?></a>
       <button type="submit" class="btn btn-primary btn-lg">
         <?= feather_icon('save', 16) ?> <?= __('tr_save_draft') ?>
@@ -560,7 +616,7 @@ function setRowStockError(tr, message) {
   const error = tr.querySelector('.qty-stock-error');
   if (!error) return;
   error.textContent = message || '';
-  error.style.display = message ? '' : 'none';
+  error.classList.toggle('hidden', !message);
 }
 
 function renderUnits(tr, preferredCode = '') {
@@ -710,7 +766,7 @@ function addRow(productId = '', qty = '', unitCode = '', insertAfter = null) {
   tr.dataset.idx = idx;
   tr.dataset.productId = String(productId || '');
   tr.innerHTML = `
-    <td>
+    <td data-label="${escapeHtml(<?= json_encode(__('lbl_name'), JSON_UNESCAPED_UNICODE) ?>)}">
       <div class="transfer-product-cell">
         <select name="items[${idx}][product_id]" class="form-control prod-select" required>
           ${renderProductOptions(productId)}
@@ -723,11 +779,11 @@ function addRow(productId = '', qty = '', unitCode = '', insertAfter = null) {
         </div>
       </div>
     </td>
-    <td class="col-num">
-      <div class="avail-breakdown text-muted" style="font-family:monospace;font-size:12px">-</div>
-      <div class="avail-selected text-muted" style="font-size:11px;margin-top:4px"></div>
+    <td class="col-num" data-label="${escapeHtml(<?= json_encode(__('tr_available'), JSON_UNESCAPED_UNICODE) ?>)}">
+      <div class="avail-breakdown text-muted transfer-stock-breakdown">-</div>
+      <div class="avail-selected text-muted transfer-stock-selected"></div>
     </td>
-    <td class="col-num">
+    <td class="col-num" data-label="${escapeHtml(<?= json_encode(__('lbl_qty'), JSON_UNESCAPED_UNICODE) ?>)}">
       <input type="number"
              name="items[${idx}][qty]"
              class="form-control mono qty-input"
@@ -735,16 +791,15 @@ function addRow(productId = '', qty = '', unitCode = '', insertAfter = null) {
              min="0.001"
              step="0.001"
              required>
-      <div class="form-hint qty-base-hint" style="margin-top:4px"></div>
-      <div class="form-error qty-stock-error" style="display:none;margin-top:4px"></div>
+      <div class="form-hint qty-base-hint"></div>
+      <div class="form-error qty-stock-error hidden"></div>
     </td>
-    <td>
+    <td data-label="${escapeHtml(<?= json_encode(__('tr_transfer_unit'), JSON_UNESCAPED_UNICODE) ?>)}">
       <select name="items[${idx}][unit_code]" class="form-control unit-select"></select>
     </td>
-    <td>
+    <td data-label="" class="transfer-row-remove">
       <button type="button"
-              class="btn btn-sm btn-ghost btn-icon remove-row"
-              style="color:var(--danger)"
+              class="btn btn-sm btn-ghost btn-icon remove-row btn-danger-ghost"
               title="<?= e(__('btn_delete')) ?>"
               aria-label="<?= e(__('btn_delete')) ?>">
         <?= feather_icon('trash-2', 13) ?>

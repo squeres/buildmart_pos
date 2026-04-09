@@ -142,37 +142,39 @@ include __DIR__ . '/../../views/layouts/header.php';
 <div class="flash flash-error mb-2">
   <?= feather_icon('x-circle',15) ?>
   <span><?= _r('inv_out_of_stock_summary', ['count' => $outCount]) ?></span>
-  <a href="?filter=out" class="btn btn-sm btn-outline" style="margin-left:auto"><?= __('btn_view') ?></a>
+  <a href="?filter=out" class="btn btn-sm btn-outline flash-action"><?= __('btn_view') ?></a>
 </div>
 <?php endif; ?>
 <?php if ($lowCount > 0): ?>
 <div class="flash flash-warning mb-2">
   <?= feather_icon('alert-triangle',15) ?>
   <span><?= _r('inv_low_stock_summary', ['count' => $lowCount]) ?></span>
-  <a href="?filter=low" class="btn btn-sm btn-outline" style="margin-left:auto"><?= __('btn_view') ?></a>
+  <a href="?filter=low" class="btn btn-sm btn-outline flash-action"><?= __('btn_view') ?></a>
 </div>
 <?php endif; ?>
 
 <!-- Filters -->
-<form method="GET" class="filter-bar mb-2">
+<form method="GET" class="filter-bar mobile-form-stack mb-2">
   <input type="text" name="search" class="form-control" placeholder="<?= __('btn_search') ?>…" value="<?= e($search) ?>" style="max-width:200px">
-  <select name="cat" class="form-control" style="max-width:180px">
+  <select name="cat" class="form-control filter-field-md">
     <option value=""><?= __('lbl_all') ?></option>
     <?php foreach ($cats as $c): ?>
       <option value="<?= $c['id'] ?>" <?= $catId==$c['id']?'selected':'' ?>><?= e(category_name($c)) ?></option>
     <?php endforeach; ?>
   </select>
-  <select name="filter" class="form-control" style="max-width:150px">
+  <select name="filter" class="form-control filter-field-sm">
     <option value=""><?= __('lbl_all') ?></option>
     <option value="low" <?= $filter=='low'?'selected':'' ?>><?= __('low_stock') ?></option>
     <option value="out" <?= $filter=='out'?'selected':'' ?>><?= __('out_of_stock') ?></option>
   </select>
-  <button type="submit" class="btn btn-secondary"><?= feather_icon('search',14) ?></button>
-  <a href="<?= url('modules/inventory/') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  <div class="filter-actions">
+    <button type="submit" class="btn btn-secondary"><?= feather_icon('search',14) ?> <?= __('btn_filter') ?></button>
+    <a href="<?= url('modules/inventory/') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  </div>
 </form>
 
 <div class="card">
-  <div class="table-wrap">
+  <div class="table-wrap desktop-only mobile-table-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -193,7 +195,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       </thead>
       <tbody>
         <?php if (!$products): ?>
-          <tr><td colspan="<?= 7 + count($myWarehouses) ?>" class="text-center text-muted" style="padding:40px"><?= __('no_results') ?></td></tr>
+          <tr><td colspan="<?= 7 + count($myWarehouses) ?>" class="text-center text-muted table-empty-cell"><?= __('no_results') ?></td></tr>
         <?php else: ?>
           <?php foreach ($products as $p): ?>
           <?php
@@ -291,6 +293,127 @@ include __DIR__ . '/../../views/layouts/header.php';
       </tbody>
     </table>
   </div>
+  <div class="mobile-card-list mobile-only">
+    <?php if (!$products): ?>
+      <div class="empty-state">
+        <div class="empty-state-icon"><?= feather_icon('layers', 36) ?></div>
+        <div class="empty-state-title"><?= __('no_results') ?></div>
+      </div>
+    <?php else: ?>
+      <?php foreach ($products as $p): ?>
+        <?php
+          $whQtys = [];
+          foreach ($myWarehouses as $wh) {
+              $whQtys[$wh['id']] = $balanceMap[$p['id']][$wh['id']] ?? 0.0;
+          }
+          $totalWhQty = array_sum($whQtys);
+          $minQty = (float)$p['min_stock_qty'];
+          $replenishmentMeta = replenishment_class_meta($p['replenishment_class'] ?? 'C');
+          $isLow = $minQty > 0 && (function () use ($whQtys, $minQty) {
+              foreach ($whQtys as $q) {
+                  if ($q > 0 && $q <= $minQty) {
+                      return true;
+                  }
+              }
+              return false;
+          })();
+          $isOut = abs($totalWhQty) < 0.000001;
+          $isNegative = $totalWhQty < 0;
+          $statusBadge = $isNegative
+              ? '<span class="badge badge-warning">' . __('negative_stock') . '</span>'
+              : ($isOut
+                  ? '<span class="badge badge-danger">' . __('out_of_stock') . '</span>'
+                  : ($isLow
+                      ? '<span class="badge badge-' . e($replenishmentMeta['badge_class']) . '">' . __('low_stock') . '</span>'
+                      : '<span class="badge badge-success">' . __('lbl_active') . '</span>'));
+          $displayUnit = $displayMap[(int)$p['id']]['default_unit'];
+          $retailBase = (float)($displayMap[(int)$p['id']]['prices']['retail'] ?? $p['sale_price']);
+          $retailDisplay = $retailBase > 0
+            ? product_unit_price((int)$p['id'], $displayUnit['unit_code'], 'retail', $retailBase, $displayMap[(int)$p['id']]['units'], $displayMap[(int)$p['id']]['overrides'])
+            : 0;
+        ?>
+        <div class="mobile-record-card">
+          <div class="mobile-record-header">
+            <div class="mobile-record-main">
+              <div class="mobile-record-title"><?= e(product_name($p)) ?></div>
+              <div class="mobile-record-subtitle"><?= e(category_name(['name_en'=>$p['cat_en'],'name_ru'=>$p['cat_ru']])) ?></div>
+            </div>
+            <div class="mobile-badge-row">
+              <?= $statusBadge ?>
+            </div>
+          </div>
+
+          <div class="mobile-badge-row">
+            <?= replenishment_class_badge($p['replenishment_class'] ?? 'C') ?>
+          </div>
+
+          <div class="mobile-meta-grid">
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('lbl_sku') ?></span>
+              <span class="mobile-meta-row-value"><?= e($p['sku'] ?: '—') ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('wh_balance_total') ?></span>
+              <span class="mobile-meta-row-value"><?= e(product_stock_breakdown($totalWhQty, $displayMap[(int)$p['id']]['units'], $p['unit'])) ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('prod_min_stock') ?></span>
+              <span class="mobile-meta-row-value"><?= $minQty > 0 ? e($displayMap[(int)$p['id']]['min_stock']['full_text']) : '—' ?></span>
+            </div>
+            <div class="mobile-meta-row">
+              <span class="mobile-meta-row-label"><?= __('prod_sale_price') ?></span>
+              <span class="mobile-meta-row-value"><?= $retailDisplay > 0 ? money($retailDisplay) : '—' ?></span>
+            </div>
+          </div>
+
+          <div class="mobile-stack">
+            <?php foreach ($myWarehouses as $wh): ?>
+              <?php $q = $whQtys[$wh['id']]; ?>
+              <div class="mobile-meta-row">
+                <span class="mobile-meta-row-label"><?= e($wh['name']) ?></span>
+                <span class="mobile-meta-row-value">
+                  <?= abs($q) >= 0.000001 ? e(product_stock_breakdown($q, $displayMap[(int)$p['id']]['units'], $p['unit'])) : '—' ?>
+                </span>
+              </div>
+            <?php endforeach; ?>
+          </div>
+
+          <div class="mobile-actions">
+            <?php if (Auth::can('inventory.adjust')): ?>
+              <button
+                type="button"
+                class="btn btn-secondary js-edit-stock"
+                data-id="<?= (int)$p['id'] ?>"
+                data-name="<?= e(product_name($p)) ?>"
+                data-min-stock="<?= e((string)$displayMap[(int)$p['id']]['min_stock']['display_qty']) ?>"
+                data-min-stock-unit="<?= e((string)$displayMap[(int)$p['id']]['min_stock']['display_unit_code']) ?>"
+                data-min-stock-base="<?= e((string)$displayMap[(int)$p['id']]['min_stock']['base_text']) ?>"
+                data-repl-class="<?= e((string)replenishment_class_normalize($p['replenishment_class'] ?? 'C')) ?>"
+                data-target-stock="<?= e((string)$displayMap[(int)$p['id']]['target_stock']['display_qty']) ?>"
+                data-target-stock-unit="<?= e((string)$displayMap[(int)$p['id']]['target_stock']['display_unit_code']) ?>"
+                data-target-stock-base="<?= e((string)$displayMap[(int)$p['id']]['target_stock']['base_text']) ?>"
+                data-unit-options="<?= e(json_encode(array_map(static fn($unit) => [
+                  'code' => (string)$unit['unit_code'],
+                  'label' => product_unit_label_text($unit),
+                  'ratio' => (float)$unit['ratio_to_base'],
+                ], $displayMap[(int)$p['id']]['units']), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) ?>"
+                data-edit-url="<?= e(url('modules/products/edit.php?id=' . (int)$p['id'])) ?>"
+              >
+                <?= feather_icon('edit-2',14) ?> <?= __('btn_edit') ?>
+              </button>
+            <?php endif; ?>
+            <?php if (Auth::can('inventory.receive')): ?>
+              <a href="<?= url('modules/inventory/receive.php?product_id='.$p['id']) ?>" class="btn btn-ghost"><?= feather_icon('plus-circle',14) ?> <?= __('inv_receive') ?></a>
+            <?php endif; ?>
+            <?php if (Auth::can('inventory.adjust')): ?>
+              <a href="<?= url('modules/inventory/adjust.php?product_id='.$p['id']) ?>" class="btn btn-ghost"><?= feather_icon('sliders',14) ?> <?= __('inv_adjust') ?></a>
+            <?php endif; ?>
+            <a href="<?= url('modules/inventory/history.php?product_id='.$p['id']) ?>" class="btn btn-ghost"><?= feather_icon('clock',14) ?> <?= __('inv_history') ?></a>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  </div>
   <?php if ($pg['pages'] > 1): ?>
   <div class="card-footer flex-between">
     <div class="text-secondary fs-sm"><?= __('showing') ?> <?= $pg['offset']+1 ?>–<?= min($pg['offset']+$pg['perPage'],$total) ?> <?= __('of') ?> <?= $total ?></div>
@@ -324,7 +447,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 
         <div class="form-group mb-2">
           <label class="form-label"><?= __('prod_min_stock') ?></label>
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:10px">
+          <div class="split-input-row">
             <input
               type="number"
               step="0.001"
@@ -342,7 +465,7 @@ include __DIR__ . '/../../views/layouts/header.php';
 
         <div class="form-group mb-2">
           <label class="form-label"><?= __('repl_target_stock') ?></label>
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:10px">
+          <div class="split-input-row">
             <input
               type="number"
               step="0.001"
