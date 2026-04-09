@@ -182,4 +182,24 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
 </div>
 
+<div class="modal-overlay hidden inventory-create-modal-overlay" id="inventoryCreateProductModal">
+  <div class="modal modal-xl inventory-create-modal" role="dialog" aria-modal="true" aria-labelledby="inventoryCreateProductModalTitle">
+    <div class="modal-header">
+      <span class="modal-title" id="inventoryCreateProductModalTitle"><?= __('inv_count_create_product') ?></span>
+      <button type="button" class="modal-close" id="inventoryCreateProductModalClose" aria-label="<?= e(__('btn_close')) ?>">
+        &times;
+      </button>
+    </div>
+    <div class="inventory-create-modal-body">
+      <iframe
+        src="about:blank"
+        class="inventory-create-modal-frame"
+        id="inventoryCreateProductFrame"
+        title="<?= e(__('inv_count_create_product')) ?>"
+        loading="lazy"
+      ></iframe>
+    </div>
+  </div>
+</div>
+
 <?php include __DIR__ . '/../../views/layouts/footer.php'; ?>

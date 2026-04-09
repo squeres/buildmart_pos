@@ -20,6 +20,9 @@
     clearBtn: document.getElementById('inventoryCountClearBtn'),
     createBtn: document.getElementById('inventoryCountCreateProductBtn'),
     createInlineBtn: document.getElementById('inventoryCountCreateInlineBtn'),
+    createModal: document.getElementById('inventoryCreateProductModal'),
+    createModalClose: document.getElementById('inventoryCreateProductModalClose'),
+    createModalFrame: document.getElementById('inventoryCreateProductFrame'),
   };
 
   if (!dom.warehouse || !dom.search || !dom.results || !dom.queueBody) {
@@ -559,11 +562,25 @@
       url.searchParams.set('inventory_query', currentQuery());
     }
 
-    window.open(
-      url.toString(),
-      'inventory_product_create',
-      'width=1360,height=920,resizable=yes,scrollbars=yes'
-    );
+    if (dom.createModal && dom.createModalFrame) {
+      dom.createModalFrame.src = url.toString();
+      dom.createModal.classList.remove('hidden');
+      document.body.classList.add('modal-open');
+      return;
+    }
+
+    window.open(url.toString(), 'inventory_product_create', 'width=1360,height=920,resizable=yes,scrollbars=yes');
+  }
+
+  function closeCreateProductModal(resetFrame = true) {
+    if (!dom.createModal) {
+      return;
+    }
+    dom.createModal.classList.add('hidden');
+    document.body.classList.remove('modal-open');
+    if (resetFrame && dom.createModalFrame) {
+      dom.createModalFrame.src = 'about:blank';
+    }
   }
 
   dom.search.addEventListener('input', () => {
@@ -671,6 +688,18 @@
   dom.saveBtn?.addEventListener('click', saveAll);
   dom.createBtn?.addEventListener('click', openCreateProductPopup);
   dom.createInlineBtn?.addEventListener('click', openCreateProductPopup);
+  dom.createModalClose?.addEventListener('click', () => closeCreateProductModal(true));
+  dom.createModal?.addEventListener('click', (event) => {
+    if (event.target === dom.createModal) {
+      closeCreateProductModal(true);
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && dom.createModal && !dom.createModal.classList.contains('hidden')) {
+      closeCreateProductModal(true);
+    }
+  });
 
   dom.warehouse.addEventListener('change', () => {
     if (state.items.size && !window.confirm(t('changeWarehouseConfirm', 'Change warehouse and clear current list?'))) {
@@ -698,14 +727,18 @@
     }
 
     const payload = event.data || {};
-    if (payload.type !== 'inventory-product-created' || !payload.product) {
+    if (payload.type === 'inventory-product-created' && payload.product) {
+      closeCreateProductModal(true);
+      upsertQueueItem(payload.product);
+      dom.search.value = '';
+      clearResults();
+      setNotFoundVisible(false);
       return;
     }
 
-    upsertQueueItem(payload.product);
-    dom.search.value = '';
-    clearResults();
-    setNotFoundVisible(false);
+    if (payload.type === 'inventory-popup-close') {
+      closeCreateProductModal(true);
+    }
   });
 
   renderQueue();

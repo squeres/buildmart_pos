@@ -382,6 +382,10 @@ if (is_post()) {
             <script>
             (function(){
               const payload = <?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+              if (window.parent && window.parent !== window) {
+                window.parent.postMessage(payload, window.location.origin);
+                return;
+              }
               if (window.opener && !window.opener.closed) {
                 window.opener.postMessage(payload, window.location.origin);
               }
@@ -880,7 +884,7 @@ body.inventory-popup-mode .page-content > form {
       <button type="submit" class="btn btn-primary btn-block btn-lg">
         <?= feather_icon('save',17) ?> <?= __('btn_save') ?>
       </button>
-      <a href="<?= $inventoryPopupMode ? '#' : url('modules/products/') ?>" class="btn btn-ghost btn-block"<?= $inventoryPopupMode ? ' onclick="window.close(); return false;"' : '' ?>>
+      <a href="<?= $inventoryPopupMode ? '#' : url('modules/products/') ?>" class="btn btn-ghost btn-block"<?= $inventoryPopupMode ? ' onclick="if (window.parent && window.parent !== window) { window.parent.postMessage({ type: \'inventory-popup-close\' }, window.location.origin); } else { window.close(); } return false;"' : '' ?>>
         <?= feather_icon('arrow-left',15) ?> <?= __('btn_back') ?>
       </a>
     </div>
