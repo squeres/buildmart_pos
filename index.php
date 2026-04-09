@@ -170,9 +170,9 @@ include __DIR__ . '/views/layouts/header.php';
 <?php endif; ?>
 
 <!-- Main grid -->
-<div class="grid" style="grid-template-columns:1fr 360px;gap:16px">
+<div class="dashboard-main-grid">
   <!-- Recent sales -->
-  <div class="card">
+  <div class="card dashboard-recent-sales-card">
     <div class="card-header">
       <span class="card-title"><?= __('dash_recent_sales') ?></span>
       <a href="<?= url('modules/sales/') ?>" class="btn btn-sm btn-ghost">
@@ -210,11 +210,11 @@ include __DIR__ . '/views/layouts/header.php';
   </div>
 
   <!-- Right column -->
-  <div style="display:flex;flex-direction:column;gap:16px">
+  <div class="dashboard-side-column">
     <!-- Quick actions -->
     <div class="card">
       <div class="card-header"><span class="card-title"><?= __('dash_quick_actions') ?></span></div>
-      <div class="card-body" style="display:flex;flex-direction:column;gap:8px">
+      <div class="card-body dashboard-quick-actions-body">
         <?php if (Auth::can('pos')): ?>
         <a href="<?= url('modules/pos/') ?>" class="btn btn-primary btn-block">
           <?= feather_icon('shopping-cart') ?><?= __('nav_pos') ?>

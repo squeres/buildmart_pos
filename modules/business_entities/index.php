@@ -42,14 +42,16 @@ include __DIR__ . '/../../views/layouts/header.php';
   </div>
 </div>
 
-<form method="GET" class="filter-bar mb-2">
+<form method="GET" class="filter-bar mobile-form-stack mb-2">
   <input type="text" name="search" class="form-control" value="<?= e($search) ?>" placeholder="<?= e(__('btn_search')) ?>" style="max-width:360px">
-  <button type="submit" class="btn btn-secondary"><?= feather_icon('search', 14) ?></button>
-  <a href="<?= url('modules/business_entities/') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  <div class="filter-actions">
+    <button type="submit" class="btn btn-secondary"><?= feather_icon('search', 14) ?> <?= __('btn_search') ?></button>
+    <a href="<?= url('modules/business_entities/') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
+  </div>
 </form>
 
 <div class="card">
-  <div class="table-wrap">
+  <div class="table-wrap mobile-table-wrap hide-on-mobile">
     <table class="table">
       <thead>
         <tr>
@@ -74,9 +76,9 @@ include __DIR__ . '/../../views/layouts/header.php';
                   <div class="text-muted" style="font-size:11px"><?= e($row['legal_name']) ?></div>
                 <?php endif; ?>
               </td>
-              <td class="font-mono"><?= e($row['iin_bin'] ?: '—') ?></td>
-              <td><?= e($row['phone'] ?: '—') ?></td>
-              <td><?= e($row['responsible_name'] ?: '—') ?></td>
+              <td class="font-mono"><?= e($row['iin_bin'] ?: '-') ?></td>
+              <td><?= e($row['phone'] ?: '-') ?></td>
+              <td><?= e($row['responsible_name'] ?: '-') ?></td>
               <td class="col-num"><?= (int)$row['invoice_count'] ?></td>
               <td>
                 <?= !empty($row['is_active'])
@@ -103,6 +105,68 @@ include __DIR__ . '/../../views/layouts/header.php';
         <?php endif; ?>
       </tbody>
     </table>
+  </div>
+
+  <div class="mobile-list show-on-mobile">
+    <?php if (!$rows): ?>
+      <div class="empty-state">
+        <div class="empty-state-icon"><?= feather_icon('briefcase', 36) ?></div>
+        <div class="empty-state-title"><?= __('no_results') ?></div>
+      </div>
+    <?php else: ?>
+      <?php foreach ($rows as $row): ?>
+        <div class="mobile-card">
+          <div class="mobile-card__header">
+            <div class="mobile-record-main">
+              <div class="mobile-record-title"><?= e($row['name']) ?></div>
+              <?php if (!empty($row['legal_name'])): ?>
+                <div class="mobile-record-subtitle"><?= e($row['legal_name']) ?></div>
+              <?php endif; ?>
+            </div>
+            <div class="mobile-badge-row">
+              <?= !empty($row['is_active'])
+                ? '<span class="badge badge-success">' . __('lbl_active') . '</span>'
+                : '<span class="badge badge-secondary">' . __('lbl_inactive') . '</span>' ?>
+            </div>
+          </div>
+
+          <div class="mobile-card__meta">
+            <div class="mobile-card__row">
+              <span class="mobile-card__row-label"><?= __('cust_inn') ?></span>
+              <span class="mobile-card__row-value"><?= e($row['iin_bin'] ?: '-') ?></span>
+            </div>
+            <div class="mobile-card__row">
+              <span class="mobile-card__row-label"><?= __('lbl_phone') ?></span>
+              <span class="mobile-card__row-value"><?= e($row['phone'] ?: '-') ?></span>
+            </div>
+            <div class="mobile-card__row">
+              <span class="mobile-card__row-label"><?= __('be_responsible_name') ?></span>
+              <span class="mobile-card__row-value"><?= e($row['responsible_name'] ?: '-') ?></span>
+            </div>
+            <div class="mobile-card__row">
+              <span class="mobile-card__row-label"><?= __('be_invoice_count') ?></span>
+              <span class="mobile-card__row-value"><?= (int)$row['invoice_count'] ?></span>
+            </div>
+          </div>
+
+          <div class="mobile-actions">
+            <a href="<?= url('modules/business_entities/view.php?id=' . $row['id']) ?>" class="btn btn-ghost">
+              <?= feather_icon('eye', 14) ?> <?= __('btn_view') ?>
+            </a>
+            <a href="<?= url('modules/business_entities/edit.php?id=' . $row['id']) ?>" class="btn btn-secondary">
+              <?= feather_icon('edit-2', 14) ?> <?= __('btn_edit') ?>
+            </a>
+            <form method="POST" action="<?= url('modules/business_entities/delete.php') ?>">
+              <?= csrf_field() ?>
+              <input type="hidden" name="id" value="<?= (int)$row['id'] ?>">
+              <button type="submit" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= e(__('confirm_delete')) ?>">
+                <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
+              </button>
+            </form>
+          </div>
+        </div>
+      <?php endforeach; ?>
+    <?php endif; ?>
   </div>
 
   <?php if ($pg['pages'] > 1): ?>

@@ -85,9 +85,9 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= __('wh_title') ?></h1>
 </div>
 
-<div style="display:grid;grid-template-columns:<?= $canManageWarehouses ? '1fr 340px' : '1fr' ?>;gap:16px;align-items:start">
+<div class="<?= $canManageWarehouses ? 'content-split content-split-sidebar-wide' : 'mobile-stack' ?>">
   <div class="card">
-    <div class="table-wrap">
+    <div class="table-wrap mobile-table-wrap hide-on-mobile">
       <table class="table">
         <thead>
           <tr>
@@ -121,6 +121,59 @@ include __DIR__ . '/../../views/layouts/header.php';
         </tbody>
       </table>
     </div>
+
+    <div class="mobile-list show-on-mobile">
+      <?php if (!$warehouses): ?>
+        <div class="empty-state">
+          <div class="empty-state-icon"><?= feather_icon('home', 36) ?></div>
+          <div class="empty-state-title"><?= __('no_results') ?></div>
+        </div>
+      <?php else: ?>
+        <?php foreach ($warehouses as $w): ?>
+          <div class="mobile-card">
+            <div class="mobile-card__header">
+              <div class="mobile-record-main">
+                <div class="mobile-record-title"><?= e($w['name']) ?></div>
+                <?php if (!empty($w['address'])): ?>
+                  <div class="mobile-record-subtitle"><?= e($w['address']) ?></div>
+                <?php endif; ?>
+              </div>
+              <div class="mobile-badge-row">
+                <?= $w['is_active']
+                  ? '<span class="badge badge-success">'.__('lbl_active').'</span>'
+                  : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?>
+              </div>
+            </div>
+
+            <div class="mobile-card__meta">
+              <div class="mobile-card__row">
+                <span class="mobile-card__row-label"><?= __('wh_docs') ?></span>
+                <span class="mobile-card__row-value"><?= (int)$w['doc_count'] ?></span>
+              </div>
+              <?php if (!empty($w['notes'])): ?>
+                <div class="mobile-card__row">
+                  <span class="mobile-card__row-label"><?= __('lbl_notes') ?></span>
+                  <span class="mobile-card__row-value text-left"><?= e($w['notes']) ?></span>
+                </div>
+              <?php endif; ?>
+            </div>
+
+            <?php if ($canManageWarehouses): ?>
+              <div class="mobile-actions">
+                <a href="?edit=<?= $w['id'] ?>" class="btn btn-secondary">
+                  <?= feather_icon('edit-2', 14) ?> <?= __('btn_edit') ?>
+                </a>
+                <?php if ((int)$w['doc_count'] === 0 && (int)$w['id'] !== 1): ?>
+                  <a href="?delete=<?= $w['id'] ?>" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= __('confirm_delete') ?>">
+                    <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
+                  </a>
+                <?php endif; ?>
+              </div>
+            <?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
   </div>
 
   <?php if ($canManageWarehouses): ?>
@@ -130,7 +183,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       <?php if ($editWh): ?><a href="<?= url('modules/warehouses/') ?>" class="btn btn-sm btn-ghost"><?= __('btn_cancel') ?></a><?php endif; ?>
     </div>
     <div class="card-body">
-      <form method="POST">
+      <form method="POST" class="mobile-form">
         <?= csrf_field() ?>
         <?php if ($editWh): ?><input type="hidden" name="edit_id" value="<?= $editWh['id'] ?>"><?php endif; ?>
         <div class="form-group">
@@ -152,7 +205,7 @@ include __DIR__ . '/../../views/layouts/header.php';
             <span class="form-check-label"><?= __('lbl_active') ?></span>
           </label>
         </div>
-        <div style="margin-top:14px">
+        <div class="mobile-form-actions" style="margin-top:14px">
           <button type="submit" class="btn btn-primary btn-block"><?= feather_icon('save',15) ?> <?= __('btn_save') ?></button>
         </div>
       </form>

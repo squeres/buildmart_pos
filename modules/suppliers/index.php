@@ -94,11 +94,11 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= __('sup_title') ?></h1>
 </div>
 
-<div style="display:grid;grid-template-columns:<?= $canManageSuppliers ? '1fr 380px' : '1fr' ?>;gap:16px;align-items:start">
+<div class="<?= $canManageSuppliers ? 'content-split content-split-sidebar-xl' : 'mobile-stack' ?>">
 
   <!-- List -->
   <div class="card">
-    <div class="table-wrap">
+    <div class="table-wrap mobile-table-wrap hide-on-mobile">
       <table class="table">
         <thead>
           <tr>
@@ -142,6 +142,71 @@ include __DIR__ . '/../../views/layouts/header.php';
         </tbody>
       </table>
     </div>
+
+    <div class="mobile-list show-on-mobile">
+      <?php if (!$suppliers): ?>
+        <div class="empty-state">
+          <div class="empty-state-icon"><?= feather_icon('truck', 36) ?></div>
+          <div class="empty-state-title"><?= __('no_results') ?></div>
+        </div>
+      <?php else: ?>
+        <?php foreach ($suppliers as $s): ?>
+          <div class="mobile-card">
+            <div class="mobile-card__header">
+              <div class="mobile-record-main">
+                <div class="mobile-record-title"><?= e($s['name']) ?></div>
+                <?php if (!empty($s['contact'])): ?>
+                  <div class="mobile-record-subtitle"><?= e($s['contact']) ?></div>
+                <?php endif; ?>
+              </div>
+              <div class="mobile-badge-row">
+                <?= $s['is_active']
+                  ? '<span class="badge badge-success">'.__('lbl_active').'</span>'
+                  : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?>
+              </div>
+            </div>
+
+            <div class="mobile-card__meta">
+              <?php if (!empty($s['phone'])): ?>
+                <div class="mobile-card__row">
+                  <span class="mobile-card__row-label"><?= __('lbl_phone') ?></span>
+                  <span class="mobile-card__row-value"><?= e($s['phone']) ?></span>
+                </div>
+              <?php endif; ?>
+              <?php if (!empty($s['email'])): ?>
+                <div class="mobile-card__row">
+                  <span class="mobile-card__row-label"><?= __('lbl_email') ?></span>
+                  <span class="mobile-card__row-value mobile-user-email"><?= e($s['email']) ?></span>
+                </div>
+              <?php endif; ?>
+              <?php if (!empty($s['inn'])): ?>
+                <div class="mobile-card__row">
+                  <span class="mobile-card__row-label"><?= __('sup_inn') ?></span>
+                  <span class="mobile-card__row-value"><?= e($s['inn']) ?></span>
+                </div>
+              <?php endif; ?>
+              <div class="mobile-card__row">
+                <span class="mobile-card__row-label"><?= __('sup_docs') ?></span>
+                <span class="mobile-card__row-value"><?= (int)$s['doc_count'] ?></span>
+              </div>
+            </div>
+
+            <?php if ($canManageSuppliers): ?>
+              <div class="mobile-actions">
+                <a href="?edit=<?= $s['id'] ?>" class="btn btn-secondary">
+                  <?= feather_icon('edit-2', 14) ?> <?= __('btn_edit') ?>
+                </a>
+                <?php if ((int)$s['doc_count'] === 0): ?>
+                  <a href="?delete=<?= $s['id'] ?>" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= __('confirm_delete') ?>">
+                    <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
+                  </a>
+                <?php endif; ?>
+              </div>
+            <?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
   </div>
 
   <!-- Add/Edit form -->
@@ -154,7 +219,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       <?php endif; ?>
     </div>
     <div class="card-body">
-      <form method="POST">
+      <form method="POST" class="mobile-form">
         <?= csrf_field() ?>
         <?php if ($editSup): ?><input type="hidden" name="edit_id" value="<?= $editSup['id'] ?>"><?php endif; ?>
 
@@ -201,7 +266,7 @@ include __DIR__ . '/../../views/layouts/header.php';
             <span class="form-check-label"><?= __('lbl_active') ?></span>
           </label>
         </div>
-        <div style="margin-top:14px">
+        <div class="mobile-form-actions" style="margin-top:14px">
           <button type="submit" class="btn btn-primary btn-block"><?= feather_icon('save',15) ?> <?= __('btn_save') ?></button>
         </div>
       </form>

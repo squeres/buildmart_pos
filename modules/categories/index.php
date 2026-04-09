@@ -89,11 +89,11 @@ include __DIR__ . '/../../views/layouts/header.php';
   <h1 class="page-heading"><?= __('nav_categories') ?></h1>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start">
+<div class="content-split content-split-sidebar-wide">
 
   <!-- Category list -->
   <div class="card">
-    <div class="table-wrap">
+    <div class="table-wrap mobile-table-wrap hide-on-mobile">
       <table class="table">
         <thead>
           <tr>
@@ -132,6 +132,65 @@ include __DIR__ . '/../../views/layouts/header.php';
         </tbody>
       </table>
     </div>
+
+    <div class="mobile-list show-on-mobile">
+      <?php if (!$categories): ?>
+        <div class="empty-state">
+          <div class="empty-state-icon"><?= feather_icon('layers', 36) ?></div>
+          <div class="empty-state-title"><?= __('no_results') ?></div>
+        </div>
+      <?php else: ?>
+        <?php foreach ($categories as $c): ?>
+          <div class="mobile-card">
+            <div class="mobile-card__header">
+              <div class="mobile-record-main">
+                <div class="mobile-record-title"><?= e(category_name($c)) ?></div>
+                <?php if (!empty($c['name_ru']) && !empty($c['name_en']) && $c['name_ru'] !== $c['name_en']): ?>
+                  <div class="mobile-record-subtitle"><?= e($c['name_en']) ?> / <?= e($c['name_ru']) ?></div>
+                <?php endif; ?>
+              </div>
+              <div class="mobile-badge-row">
+                <?= $c['is_active'] ? '<span class="badge badge-success">'.__('lbl_active').'</span>' : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?>
+              </div>
+            </div>
+
+            <div class="mobile-card__meta">
+              <div class="mobile-card__row">
+                <span class="mobile-card__row-label"><?= __('cat_icon') ?></span>
+                <span class="mobile-card__row-value text-left">
+                  <span class="category-visual">
+                    <span class="category-visual-dot" style="background:<?= e($c['color']) ?>"></span>
+                    <?= feather_icon($c['icon'], 14) ?>
+                    <span class="font-mono"><?= e($c['icon']) ?></span>
+                  </span>
+                </span>
+              </div>
+              <div class="mobile-card__row">
+                <span class="mobile-card__row-label"><?= __('nav_products') ?></span>
+                <span class="mobile-card__row-value"><?= (int)$c['product_count'] ?></span>
+              </div>
+              <div class="mobile-card__row">
+                <span class="mobile-card__row-label"><?= __('cat_sort_order') ?></span>
+                <span class="mobile-card__row-value"><?= (int)$c['sort_order'] ?></span>
+              </div>
+            </div>
+
+            <?php if ($canManageCategories): ?>
+              <div class="mobile-actions">
+                <a href="?edit=<?= $c['id'] ?>" class="btn btn-secondary">
+                  <?= feather_icon('edit-2', 14) ?> <?= __('btn_edit') ?>
+                </a>
+                <?php if ((int)$c['product_count'] === 0): ?>
+                  <a href="?delete=<?= $c['id'] ?>" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= __('confirm_delete') ?>">
+                    <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
+                  </a>
+                <?php endif; ?>
+              </div>
+            <?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
   </div>
 
   <!-- Add/Edit form -->
@@ -144,7 +203,7 @@ include __DIR__ . '/../../views/layouts/header.php';
         <?php endif; ?>
       </div>
       <div class="card-body">
-        <form method="POST">
+        <form method="POST" class="mobile-form">
           <?= csrf_field() ?>
           <?php if ($editCat): ?>
             <input type="hidden" name="edit_id" value="<?= $editCat['id'] ?>">
@@ -170,7 +229,7 @@ include __DIR__ . '/../../views/layouts/header.php';
             </div>
             <div class="form-group">
               <label class="form-label"><?= __('cat_color') ?></label>
-              <input type="color" name="color" class="form-control" value="<?= e($editCat['color'] ?? '#607D8B') ?>" style="height:38px;padding:4px">
+              <input type="color" name="color" class="form-control" value="<?= e($editCat['color'] ?? '#607D8B') ?>" style="padding:4px">
             </div>
           </div>
           <div class="form-row form-row-2">
@@ -185,7 +244,9 @@ include __DIR__ . '/../../views/layouts/header.php';
               </label>
             </div>
           </div>
-          <button type="submit" class="btn btn-primary btn-block"><?= feather_icon('save',15) ?> <?= __('btn_save') ?></button>
+          <div class="mobile-form-actions">
+            <button type="submit" class="btn btn-primary btn-block"><?= feather_icon('save',15) ?> <?= __('btn_save') ?></button>
+          </div>
         </form>
       </div>
     </div>
