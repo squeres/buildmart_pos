@@ -20,14 +20,17 @@ if (is_post()) {
     if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
 
     $editId  = (int)($_POST['edit_id'] ?? 0);
-    $nameEn  = sanitize($_POST['name_en'] ?? '');
-    $nameRu  = sanitize($_POST['name_ru'] ?? '');
+    $name    = sanitize($_POST['name'] ?? '');
+    $nameEn  = $name !== '' ? $name : sanitize($_POST['name_en'] ?? '');
+    $nameRu  = $name !== '' ? $name : sanitize($_POST['name_ru'] ?? '');
     $icon    = sanitize($_POST['icon']    ?? 'box');
     $color   = sanitize($_POST['color']   ?? '#607D8B');
     $sort    = (int)($_POST['sort_order'] ?? 0);
     $active  = isset($_POST['is_active']) ? 1 : 0;
 
-    if (!$nameEn) $errors['name_en'] = _r('lbl_required');
+    $nameEn = unified_name_value($nameRu, $nameEn);
+    $nameRu = $nameEn;
+    if (!$nameEn) $errors['name'] = _r('lbl_required');
 
     if (!$errors) {
         if ($editId) {
@@ -116,7 +119,6 @@ include __DIR__ . '/../../views/layouts/header.php';
         <thead>
           <tr>
             <th><?= __('lbl_name') ?></th>
-            <th><?= __('cat_name_ru') ?></th>
             <th><?= __('cat_icon') ?></th>
             <th class="col-num"><?= __('nav_products') ?></th>
             <th><?= __('lbl_status') ?></th>
@@ -129,10 +131,9 @@ include __DIR__ . '/../../views/layouts/header.php';
             <td>
               <span style="display:inline-flex;align-items:center;gap:8px">
                 <span style="width:10px;height:10px;border-radius:50%;background:<?= e($c['color']) ?>;flex-shrink:0;display:inline-block"></span>
-                <strong><?= e($c['name_en']) ?></strong>
+                <strong><?= e(category_name($c)) ?></strong>
               </span>
             </td>
-            <td><?= e($c['name_ru']) ?></td>
             <td><span class="text-muted" style="font-size:12px"><?= e($featherIconLabels[$c['icon']] ?? $c['icon']) ?></span></td>
             <td class="col-num"><?= $c['product_count'] ?></td>
             <td><?= $c['is_active'] ? '<span class="badge badge-success">'.__('lbl_active').'</span>' : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?></td>
@@ -163,9 +164,6 @@ include __DIR__ . '/../../views/layouts/header.php';
             <div class="mobile-card__header">
               <div class="mobile-record-main">
                 <div class="mobile-record-title"><?= e(category_name($c)) ?></div>
-                <?php if (!empty($c['name_ru']) && !empty($c['name_en']) && $c['name_ru'] !== $c['name_en']): ?>
-                  <div class="mobile-record-subtitle"><?= e($c['name_en']) ?> / <?= e($c['name_ru']) ?></div>
-                <?php endif; ?>
               </div>
               <div class="mobile-badge-row">
                 <?= $c['is_active'] ? '<span class="badge badge-success">'.__('lbl_active').'</span>' : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?>
@@ -228,13 +226,9 @@ include __DIR__ . '/../../views/layouts/header.php';
           <?php endif; ?>
 
           <div class="form-group">
-            <label class="form-label"><?= __('cat_name_en') ?> <span class="req">*</span></label>
-            <input type="text" name="name_en" class="form-control" value="<?= e($editCat['name_en'] ?? '') ?>" required>
-            <?php if (isset($errors['name_en'])): ?><div class="form-error"><?= e($errors['name_en']) ?></div><?php endif; ?>
-          </div>
-          <div class="form-group">
-            <label class="form-label"><?= __('cat_name_ru') ?></label>
-            <input type="text" name="name_ru" class="form-control" value="<?= e($editCat['name_ru'] ?? '') ?>">
+            <label class="form-label"><?= __('lbl_name') ?> <span class="req">*</span></label>
+            <input type="text" name="name" class="form-control" value="<?= e(unified_name_value($editCat['name_ru'] ?? '', $editCat['name_en'] ?? '')) ?>" required>
+            <?php if (isset($errors['name'])): ?><div class="form-error"><?= e($errors['name']) ?></div><?php endif; ?>
           </div>
           <div class="form-row form-row-2">
             <div class="form-group">

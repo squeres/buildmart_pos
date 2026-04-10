@@ -67,9 +67,9 @@ if (is_post() && $hasLibrary) {
         $colMap = array_flip($headers);
 
         // Нужные поля
-        $requiredCols = ['name_ru', 'name_en', 'sku', 'barcode'];
+        $requiredCols = ['name', 'name_ru', 'name_en', 'sku', 'barcode'];
         $foundCols = array_intersect($requiredCols, array_values($headers));
-        if (empty(array_intersect(['name_ru', 'name_en'], $foundCols))) {
+        if (empty(array_intersect(['name', 'name_ru', 'name_en'], $foundCols))) {
             flash_error(__('prod_import_bad_headers'));
             redirect($_SERVER['REQUEST_URI']);
         }
@@ -127,8 +127,9 @@ if (is_post() && $hasLibrary) {
 
                 $sku      = strtoupper(sanitize($g('sku')));
                 $barcode  = sanitize($g('barcode'));
-                $nameRu   = sanitize($g('name_ru'));
-                $nameEn   = sanitize($g('name_en'));
+                $name     = sanitize($g('name'));
+                $nameRu   = $name !== '' ? $name : sanitize($g('name_ru'));
+                $nameEn   = $name !== '' ? $name : sanitize($g('name_en'));
                 $catName  = sanitize($g('category'));
                 $brand    = sanitize($g('brand'));
                 $unitRaw  = strtolower(sanitize($g('unit')));
@@ -140,13 +141,14 @@ if (is_post() && $hasLibrary) {
                 $isActiveRaw = $g('is_active');
 
                 // ── Валидация ────────────────────────────────────
-                if (!$nameRu && !$nameEn) {
+                if (!$name && !$nameRu && !$nameEn) {
                     $errors[] = "Строка {$rowNum}: пустое название товара (name_ru и name_en) — пропущена.";
                     $skipped++;
                     continue;
                 }
 
                 // Нормализуем имена
+                if ($name !== '') $nameEn = $nameRu = $name;
                 if (!$nameEn) $nameEn = $nameRu;
                 if (!$nameRu) $nameRu = $nameEn;
 

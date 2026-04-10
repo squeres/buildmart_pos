@@ -1209,14 +1209,23 @@ function humanize_key(string $value): string
 
 // ── Product helpers ───────────────────────────────────────────────
 
+function unified_name_value(?string $primary = null, ?string $secondary = null): string
+{
+    $primary = trim((string)$primary);
+    if ($primary !== '') {
+        return $primary;
+    }
+    return trim((string)$secondary);
+}
+
 function product_name(array $p): string
 {
-    return Lang::isRu() && !empty($p['name_ru']) ? $p['name_ru'] : $p['name_en'];
+    return unified_name_value($p['name_ru'] ?? null, $p['name_en'] ?? null);
 }
 
 function category_name(array $c): string
 {
-    return Lang::isRu() && !empty($c['name_ru']) ? $c['name_ru'] : $c['name_en'];
+    return unified_name_value($c['name_ru'] ?? null, $c['name_en'] ?? null);
 }
 
 function customer_type_normalize(?string $type): string

@@ -37,7 +37,7 @@ $targetStockColumnReady = replenishment_has_product_column('target_stock_qty');
 $targetStockUnitColumnReady = replenishment_has_product_column('target_stock_display_unit_code');
 
 $emptyProduct = [
-    'name_en'=>'','name_ru'=>'','sku'=>'','barcode'=>'','brand'=>'',
+    'name'=>'','name_en'=>'','name_ru'=>'','sku'=>'','barcode'=>'','brand'=>'',
     'category_id'=>'','unit'=>'pcs','sale_price'=>'','cost_price'=>'',
     'tax_rate'=>setting('default_tax_rate',20),'stock_qty'=>0,'min_stock_qty'=>0,'min_stock_display_unit_code'=>'',
     'replenishment_class'=>'C','target_stock_qty'=>0,'target_stock_display_unit_code'=>'',
@@ -59,6 +59,7 @@ if ($inventoryPopupMode && !$isEdit && $inventorySeedQuery !== '') {
         }
     }
 }
+$f['name'] = product_name($f);
 $defaultSaleUnitCode = $f['unit'];
 $productUnits = $isEdit ? product_units($id, $f['unit']) : [[
     'unit_code' => $f['unit'],
@@ -116,9 +117,11 @@ if (is_post()) {
     $enteredStockQty = $inventoryPopupMode ? 0.0 : sanitize_float($_POST['stock_qty'] ?? 0);
     $enteredMinStockQty = sanitize_float($_POST['min_stock_qty'] ?? 0);
     $enteredTargetStockQty = sanitize_float($_POST['target_stock_qty'] ?? 0);
+    $submittedName = sanitize($_POST['name'] ?? '');
     $f = [
-        'name_en'       => sanitize($_POST['name_en']        ?? ''),
-        'name_ru'       => sanitize($_POST['name_ru']        ?? ''),
+        'name'          => $submittedName,
+        'name_en'       => $submittedName !== '' ? $submittedName : sanitize($_POST['name_en'] ?? ''),
+        'name_ru'       => $submittedName !== '' ? $submittedName : sanitize($_POST['name_ru'] ?? ''),
         'sku'           => strtoupper(sanitize($_POST['sku'] ?? '')),
         'barcode'       => sanitize($_POST['barcode']        ?? ''),
         'brand'         => sanitize($_POST['brand']          ?? ''),
@@ -144,6 +147,9 @@ if (is_post()) {
         'unit_price_rows' => $_POST['unit_price_rows'] ?? [],
         'base_unit_label' => sanitize($_POST['base_unit_label'] ?? ''),
     ];
+    $f['name'] = unified_name_value($f['name_ru'], $f['name_en']);
+    $f['name_en'] = $f['name'];
+    $f['name_ru'] = $f['name'];
     $baseUnitLabel = $f['base_unit_label'] ?: unit_label($f['unit']);
     $defaultSaleUnitCode = sanitize($_POST['default_sale_unit'] ?? $f['unit']);
 
@@ -157,7 +163,7 @@ if (is_post()) {
     $f['sale_price'] = sanitize_float($f['prices']['retail'] ?? $f['sale_price']);
     $f['cost_price'] = sanitize_float($f['prices']['purchase'] ?? $f['cost_price']);
 
-    if (!$f['name_en'])     $errors['name_en']    = _r('lbl_required');
+    if (!$f['name'])        $errors['name']       = _r('lbl_required');
     if (!$f['sku'])         $errors['sku']         = _r('lbl_required');
     if (!$f['category_id']) $errors['category_id'] = _r('lbl_required');
     if ($f['sale_price'] <= 0) $errors['sale_price'] = _r('lbl_required');
@@ -547,13 +553,13 @@ body.inventory-popup-mode .page-content > form {
       <div class="card-body">
         <div class="form-row form-row-2">
           <div class="form-group mb-0">
-            <label class="form-label">Name (EN) <span class="req">*</span></label>
-            <input type="text" name="name_en" class="form-control" value="<?= e($f['name_en']) ?>" required>
-            <?php if (isset($errors['name_en'])): ?><div class="form-error"><?= e($errors['name_en']) ?></div><?php endif; ?>
+            <label class="form-label"><?= __('lbl_name') ?> <span class="req">*</span></label>
+            <input type="text" name="name" class="form-control" value="<?= e($f['name']) ?>" required>
+            <?php if (isset($errors['name'])): ?><div class="form-error"><?= e($errors['name']) ?></div><?php endif; ?>
           </div>
-          <div class="form-group mb-0">
-            <label class="form-label">Название (RU)</label>
-            <input type="text" name="name_ru" class="form-control" value="<?= e($f['name_ru']) ?>">
+          <div class="form-group mb-0" style="display:none">
+            <label class="form-label"><?= __('lbl_name') ?></label>
+            <input type="text" name="legacy_name_ru" class="form-control" value="<?= e($f['name_ru']) ?>" tabindex="-1" autocomplete="off">
           </div>
         </div>
       </div>
@@ -1372,8 +1378,8 @@ feather.replace();
     updateUnitRatioFields();
     const units = currentUnits();
     const fields = {
-      name_ru: { label: getFieldLabel('[name="name_ru"]', 'Наименование (RU)'), value: normalizeText(form?.querySelector('[name="name_ru"]')?.value) },
-      name_en: { label: getFieldLabel('[name="name_en"]', 'Наименование (EN)'), value: normalizeText(form?.querySelector('[name="name_en"]')?.value) },
+      legacy_name_ru: { label: getFieldLabel('[name="legacy_name_ru"]', 'Наименование (legacy)'), value: normalizeText(form?.querySelector('[name="legacy_name_ru"]')?.value) },
+      name: { label: getFieldLabel('[name="name"]', 'Наименование'), value: normalizeText(form?.querySelector('[name="name"]')?.value) },
       sku: { label: getFieldLabel('[name="sku"]', 'Артикул'), value: normalizeText(form?.querySelector('[name="sku"]')?.value) },
       barcode: { label: getFieldLabel('[name="barcode"]', 'Штрихкод'), value: normalizeText(form?.querySelector('[name="barcode"]')?.value) },
       brand: { label: getFieldLabel('[name="brand"]', 'Бренд'), value: normalizeText(form?.querySelector('[name="brand"]')?.value) },

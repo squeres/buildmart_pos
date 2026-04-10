@@ -466,7 +466,7 @@ class UISettings
      */
     public static function priceTypeName(array $pt): string
     {
-        return Lang::isRu() ? $pt['name_ru'] : $pt['name_en'];
+        return unified_name_value($pt['name_ru'] ?? null, $pt['name_en'] ?? null);
     }
 
     /**

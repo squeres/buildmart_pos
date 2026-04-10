@@ -14,8 +14,9 @@ if (is_post()) {
     if ($action === 'save') {
         $id       = (int)($_POST['id'] ?? 0);
         $code     = preg_replace('/[^a-z0-9_]/', '', strtolower(sanitize($_POST['code'] ?? '')));
-        $nameEn   = sanitize($_POST['name_en'] ?? '');
-        $nameRu   = sanitize($_POST['name_ru'] ?? '');
+        $name     = sanitize($_POST['name'] ?? '');
+        $nameEn   = $name !== '' ? $name : sanitize($_POST['name_en'] ?? '');
+        $nameRu   = $name !== '' ? $name : sanitize($_POST['name_ru'] ?? '');
         $sort     = (int)($_POST['sort_order'] ?? 10);
         $isActive = isset($_POST['is_active']) ? 1 : 0;
         $isDef    = isset($_POST['is_default']) ? 1 : 0;
@@ -24,7 +25,10 @@ if (is_post()) {
         $visRec   = isset($_POST['visible_in_receipts']) ? 1 : 0;
         $color    = sanitize($_POST['color_hex'] ?? '');
 
-        if (!$code || !$nameEn || !$nameRu) {
+        $nameEn = unified_name_value($nameRu, $nameEn);
+        $nameRu = $nameEn;
+
+        if (!$code || !$nameEn) {
             flash_error(_r('pt_validation_required'));
             redirect('/modules/settings/price_types.php');
         }
@@ -120,8 +124,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
       <thead>
         <tr>
           <th><?= __('pt_code') ?></th>
-          <th><?= __('pt_name_en') ?></th>
-          <th><?= __('pt_name_ru') ?></th>
+          <th><?= __('lbl_name') ?></th>
           <th><?= __('pt_sort_order') ?></th>
           <th><?= __('pt_visible_pos') ?></th>
           <th><?= __('pt_visible_products') ?></th>
@@ -141,8 +144,7 @@ require_once ROOT_PATH . '/views/layouts/header.php';
               <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:<?= e($pt['color_hex']) ?>;margin-left:6px;vertical-align:middle"></span>
             <?php endif; ?>
           </td>
-          <td><?= e($pt['name_en']) ?></td>
-          <td><?= e($pt['name_ru']) ?></td>
+          <td><?= e(UISettings::priceTypeName($pt)) ?></td>
           <td><?= $pt['sort_order'] ?></td>
           <td><?= $pt['visible_in_pos'] ? '<span class="badge badge-success">✓</span>' : '<span class="badge badge-secondary">—</span>' ?></td>
           <td><?= $pt['visible_in_products'] ? '<span class="badge badge-success">✓</span>' : '<span class="badge badge-secondary">—</span>' ?></td>
@@ -253,12 +255,8 @@ require_once ROOT_PATH . '/views/layouts/header.php';
         </div>
 
         <div class="form-group">
-          <label class="form-label"><?= __('pt_name_en') ?> *</label>
-          <input type="text" name="name_en" class="form-control" required value="<?= e($e['name_en'] ?? '') ?>">
-        </div>
-        <div class="form-group">
-          <label class="form-label"><?= __('pt_name_ru') ?> *</label>
-          <input type="text" name="name_ru" class="form-control" required value="<?= e($e['name_ru'] ?? '') ?>">
+          <label class="form-label"><?= __('lbl_name') ?> *</label>
+          <input type="text" name="name" class="form-control" required value="<?= e(unified_name_value($e['name_ru'] ?? '', $e['name_en'] ?? '')) ?>">
         </div>
 
         <div class="form-group">

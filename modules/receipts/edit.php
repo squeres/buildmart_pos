@@ -518,12 +518,8 @@ include __DIR__ . '/../../views/layouts/header.php';
       <div class="qc-error" id="product-error"></div>
       <div class="form-row form-row-2">
         <div class="form-group">
-          <label class="form-label"><?= __('lbl_name') ?> (RU) <span class="req">*</span></label>
-          <input type="text" id="prod-name-ru" class="form-control" placeholder="<?= __('prod_name_ru_placeholder') ?>" maxlength="200">
-        </div>
-        <div class="form-group">
-          <label class="form-label"><?= __('lbl_name') ?> (EN)</label>
-          <input type="text" id="prod-name-en" class="form-control" placeholder="<?= __('prod_name_en_placeholder') ?>" maxlength="200">
+          <label class="form-label"><?= __('lbl_name') ?> <span class="req">*</span></label>
+          <input type="text" id="prod-name" class="form-control" placeholder="<?= __('prod_name_placeholder') ?>" maxlength="200">
         </div>
       </div>
       <div class="form-row form-row-2">
@@ -1251,8 +1247,7 @@ function addModalUnitRow(label = '', step = '1') {
 
 function fillProductModal(product) {
   _editingProductId = parseInt(product?.id || 0, 10) || 0;
-  document.getElementById('prod-name-ru').value = product?.name_ru || '';
-  document.getElementById('prod-name-en').value = product?.name_en || '';
+  document.getElementById('prod-name').value = product?.name || product?.name_ru || product?.name_en || '';
   document.getElementById('prod-sku').value = product?.sku || '';
   document.getElementById('prod-barcode').value = product?.barcode || '';
   document.getElementById('prod-category').value = String(product?.category_id || document.getElementById('prod-category').value || '');
@@ -1276,7 +1271,7 @@ function fillProductModal(product) {
 
 function resetProductModal() {
   _editingProductId = 0;
-  ['prod-name-ru','prod-name-en','prod-sku','prod-barcode'].forEach((id) => {
+  ['prod-name','prod-sku','prod-barcode'].forEach((id) => {
     document.getElementById(id).value = '';
   });
   document.getElementById('prod-category').selectedIndex = 0;
@@ -1767,7 +1762,7 @@ function openProductModal(tr, productId = 0) {
     fillProductModal(PROD_MAP[productId]);
   }
   openModal('modal-product');
-  setTimeout(() => document.getElementById('prod-name-ru').focus(), 80);
+  setTimeout(() => document.getElementById('prod-name').focus(), 80);
 }
 
 document.getElementById('prod-add-unit-row')?.addEventListener('click', () => addModalUnitRow());
@@ -1820,9 +1815,8 @@ unitPresetSaveBtn?.addEventListener('click', async function () {
 
 productSaveBtn?.addEventListener('click', async function () {
   clearError('product-error');
-  const nameRu = document.getElementById('prod-name-ru').value.trim();
-  const nameEn = document.getElementById('prod-name-en').value.trim();
-  if (!nameRu && !nameEn) {
+    const productName = document.getElementById('prod-name').value.trim();
+  if (!productName) {
     showError('product-error', <?= json_encode(_r('lbl_required') . ': ' . _r('lbl_name')) ?>);
     return;
   }
@@ -1836,8 +1830,7 @@ productSaveBtn?.addEventListener('click', async function () {
     if (isEdit) {
       fd.append('product_id', String(_editingProductId));
     }
-    fd.append('name_ru', nameRu);
-    fd.append('name_en', nameEn);
+    fd.append('name', productName);
     fd.append('sku', document.getElementById('prod-sku').value.trim());
     fd.append('barcode', document.getElementById('prod-barcode').value.trim());
     fd.append('category_id', document.getElementById('prod-category').value);

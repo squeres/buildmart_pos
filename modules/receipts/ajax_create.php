@@ -65,8 +65,8 @@ $buildProductPayload = static function (int $productId): array {
     return [
         'id' => (int)$product['id'],
         'name' => product_name($product),
-        'name_en' => (string)$product['name_en'],
-        'name_ru' => (string)$product['name_ru'],
+        'name_en' => product_name($product),
+        'name_ru' => product_name($product),
         'sku' => (string)$product['sku'],
         'barcode' => (string)$product['barcode'],
         'category_id' => (int)$product['category_id'],
@@ -171,8 +171,9 @@ try {
             json_response(['success' => false, 'error' => 'Product not found'], 404);
         }
 
-        $nameRu      = sanitize($_POST['name_ru'] ?? '');
-        $nameEn      = sanitize($_POST['name_en'] ?? '');
+        $nameValue   = sanitize($_POST['name'] ?? '');
+        $nameRu      = $nameValue !== '' ? $nameValue : sanitize($_POST['name_ru'] ?? '');
+        $nameEn      = $nameValue !== '' ? $nameValue : sanitize($_POST['name_en'] ?? '');
         $sku         = sanitize($_POST['sku'] ?? '');
         $barcode     = sanitize($_POST['barcode'] ?? '');
         $unit        = sanitize($_POST['unit'] ?? '');
@@ -185,14 +186,11 @@ try {
         $defaultSaleUnitCode = sanitize($_POST['default_sale_unit'] ?? $unit);
         $categoryId  = (int)($_POST['category_id'] ?? 0);
 
-        if ($nameRu === '' && $nameEn === '') {
-            json_response(['success' => false, 'error' => _r('lbl_required') . ': ' . _r('lbl_name')], 422);
-        }
+        $nameEn = unified_name_value($nameRu, $nameEn);
+        $nameRu = $nameEn;
+
         if ($nameEn === '') {
-            $nameEn = $nameRu;
-        }
-        if ($nameRu === '') {
-            $nameRu = $nameEn;
+            json_response(['success' => false, 'error' => _r('lbl_required') . ': ' . _r('lbl_name')], 422);
         }
 
         if ($sku === '') {
