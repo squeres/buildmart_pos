@@ -46,6 +46,10 @@ window._uiStrings = {
   errorSavingMenu:     '<?= addslashes(__('ui_error_saving_menu')) ?>',
   errorSavingSettings: '<?= addslashes(__('ui_error_saving_settings')) ?>',
 };
+window._confirmModalStrings = {
+  confirm: '<?= addslashes(__('btn_confirm')) ?>',
+  cancel:  '<?= addslashes(__('btn_cancel')) ?>',
+};
 window.PRODUCT_CAMERA_I18N = {
   title: '<?= addslashes(__('camera_scan_title')) ?>',
   hint: '<?= addslashes(__('camera_scan_hint')) ?>',

@@ -165,7 +165,8 @@ class Auth
             'language'             => $profileLanguage,
             'language_set_at'      => $user['language_set_at'] ?? null,
             'default_warehouse_id' => (int)($user['default_warehouse_id'] ?? 1),
-            'must_change_password' => !empty($user['must_change_password']),
+            'must_change_password'   => !empty($user['must_change_password']),
+            'permissions_updated_at' => $user['permissions_updated_at'] ?? null,
         ];
 
         // Sync session lang

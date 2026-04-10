@@ -81,7 +81,7 @@ include __DIR__ . '/../../views/layouts/header.php';
                value="<?= number_format($expectedCash,2,'.','') ?>"
                min="0" step="0.01" style="font-size:22px;padding:12px;text-align:right" autofocus>
         <div class="form-hint" id="diffDisplay" style="margin-top:8px;font-size:14px;font-weight:600">
-          Expected: <?= money($expectedCash) ?>
+          <?= __('shift_expected_cash') ?>: <?= money($expectedCash) ?>
         </div>
       </div>
       <div class="form-group">
@@ -102,12 +102,14 @@ include __DIR__ . '/../../views/layouts/header.php';
 <script>
 feather.replace();
 const expected = <?= $expectedCash ?>;
+const _lblExpected    = '<?= addslashes(__('shift_expected_cash')) ?>';
+const _lblDifference  = '<?= addslashes(__('shift_difference')) ?>';
 document.getElementById('closingCash').addEventListener('input', function() {
   const actual = parseFloat(this.value)||0;
   const diff   = actual - expected;
   const el     = document.getElementById('diffDisplay');
-  el.textContent = 'Expected: ' + expected.toLocaleString('ru-RU',{minimumFractionDigits:2})
-    + '  |  Difference: ' + (diff>=0?'+':'') + diff.toLocaleString('ru-RU',{minimumFractionDigits:2});
+  el.textContent = _lblExpected + ': ' + expected.toLocaleString('ru-RU',{minimumFractionDigits:2})
+    + '  |  ' + _lblDifference + ': ' + (diff>=0?'+':'') + diff.toLocaleString('ru-RU',{minimumFractionDigits:2});
   el.style.color = Math.abs(diff)<0.01 ? 'var(--success)' : diff<0 ? 'var(--danger)' : 'var(--warning)';
 });
 </script>

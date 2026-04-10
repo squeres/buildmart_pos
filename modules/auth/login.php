@@ -9,37 +9,21 @@ $errors = [];
 $email = '';
 $authMode = strtolower(trim((string)($_POST['auth_mode'] ?? $_GET['mode'] ?? 'password')));
 $authMode = in_array($authMode, ['password', 'pin'], true) ? $authMode : 'password';
-$pinRateLimitKey = 'auth_pin_login_rate_limit';
+$clientIp = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
 
-$getPinLockRemaining = static function () use ($pinRateLimitKey): int {
-    $lockedUntil = (int)($_SESSION[$pinRateLimitKey]['locked_until'] ?? 0);
-    return max(0, $lockedUntil - time());
+$getPinLockRemaining = static function () use ($clientIp): int {
+    return AuthService::getLoginLockRemaining('pin', $clientIp,
+        AuthService::PIN_LOGIN_MAX_ATTEMPTS, AuthService::PIN_LOGIN_LOCK_SECONDS);
 };
 
-$registerPinFailure = static function () use ($pinRateLimitKey): int {
-    $state = $_SESSION[$pinRateLimitKey] ?? ['count' => 0, 'locked_until' => 0];
-    $lockedUntil = (int)($state['locked_until'] ?? 0);
-    if ($lockedUntil > time()) {
-        return $lockedUntil - time();
-    }
-
-    $count = (int)($state['count'] ?? 0) + 1;
-    $state['count'] = $count;
-
-    if ($count >= AuthService::PIN_LOGIN_MAX_ATTEMPTS) {
-        $state['count'] = 0;
-        $state['locked_until'] = time() + AuthService::PIN_LOGIN_LOCK_SECONDS;
-    } else {
-        $state['locked_until'] = 0;
-    }
-
-    $_SESSION[$pinRateLimitKey] = $state;
-
-    return max(0, (int)($state['locked_until'] ?? 0) - time());
+$registerPinFailure = static function () use ($clientIp): int {
+    AuthService::recordLoginAttempt('pin', $clientIp);
+    return AuthService::getLoginLockRemaining('pin', $clientIp,
+        AuthService::PIN_LOGIN_MAX_ATTEMPTS, AuthService::PIN_LOGIN_LOCK_SECONDS);
 };
 
-$resetPinFailures = static function () use ($pinRateLimitKey): void {
-    unset($_SESSION[$pinRateLimitKey]);
+$resetPinFailures = static function () use ($clientIp): void {
+    AuthService::clearLoginAttempts('pin', $clientIp);
 };
 
 $modeQueryBase = $_GET;
@@ -76,12 +60,20 @@ if (is_post()) {
         } else {
             $email = sanitize($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
+            $passLockRemaining = $email !== ''
+                ? AuthService::getLoginLockRemaining('password', $email,
+                    AuthService::PASSWORD_LOGIN_MAX_ATTEMPTS, AuthService::PASSWORD_LOGIN_LOCK_SECONDS)
+                : 0;
 
             if ($email === '' || $password === '') {
                 $errors[] = _r('auth_invalid');
+            } elseif ($passLockRemaining > 0) {
+                $errors[] = _r('auth_too_many_attempts', ['seconds' => (string)$passLockRemaining]);
             } elseif (!Auth::attempt($email, $password)) {
+                AuthService::recordLoginAttempt('password', $email);
                 $errors[] = _r('auth_invalid');
             } else {
+                AuthService::clearLoginAttempts('password', $email);
                 $resetPinFailures();
                 $redir = $_SESSION['redirect_after_login'] ?? BASE_URL . '/index.php';
                 unset($_SESSION['redirect_after_login']);

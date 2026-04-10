@@ -11,6 +11,8 @@ final class AuthService
     public const PIN_MAX_LENGTH = 6;
     public const PIN_LOGIN_MAX_ATTEMPTS = 5;
     public const PIN_LOGIN_LOCK_SECONDS = 60;
+    public const PASSWORD_LOGIN_MAX_ATTEMPTS = 10;
+    public const PASSWORD_LOGIN_LOCK_SECONDS = 900;
     private static bool $legacyPinsMigrated = false;
 
     public static function getUserForSession(int $userId): ?array
@@ -453,5 +455,36 @@ final class AuthService
         );
 
         return true;
+    }
+
+    public static function recordLoginAttempt(string $type, string $identifier): void
+    {
+        Database::exec(
+            'INSERT INTO login_attempts (type, identifier, ip, attempted_at) VALUES (?, ?, ?, NOW())',
+            [$type, $identifier, $_SERVER['REMOTE_ADDR'] ?? '']
+        );
+    }
+
+    public static function getLoginLockRemaining(string $type, string $identifier, int $maxAttempts, int $lockSeconds): int
+    {
+        $rows = Database::all(
+            'SELECT attempted_at FROM login_attempts
+             WHERE type=? AND identifier=? AND attempted_at > DATE_SUB(NOW(), INTERVAL ? SECOND)
+             ORDER BY attempted_at ASC',
+            [$type, $identifier, $lockSeconds]
+        );
+        if (count($rows) < $maxAttempts) {
+            return 0;
+        }
+        $oldest = strtotime($rows[0]['attempted_at']);
+        return max(0, ($oldest + $lockSeconds) - time());
+    }
+
+    public static function clearLoginAttempts(string $type, string $identifier): void
+    {
+        Database::exec(
+            'DELETE FROM login_attempts WHERE type=? AND identifier=?',
+            [$type, $identifier]
+        );
     }
 }

@@ -231,6 +231,44 @@
     });
   }
 
+  function showConfirmModal(message, onConfirm) {
+    let modal = document.getElementById('confirmModal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'confirmModal';
+      modal.className = 'modal-overlay hidden';
+      modal.innerHTML =
+        '<div class="modal modal-sm">' +
+          '<div class="modal-header">' +
+            '<span class="modal-title" id="confirmModalTitle"></span>' +
+          '</div>' +
+          '<div class="modal-body" id="confirmModalBody" style="padding:20px 24px;font-size:15px;line-height:1.5"></div>' +
+          '<div class="modal-footer" style="display:flex;justify-content:flex-end;gap:8px;padding:12px 24px">' +
+            '<button type="button" class="btn btn-secondary" id="confirmModalCancel"></button>' +
+            '<button type="button" class="btn btn-danger" id="confirmModalOk"></button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(modal);
+    }
+    const strings = window._confirmModalStrings || { confirm: 'Подтвердить', cancel: 'Отмена' };
+    document.getElementById('confirmModalTitle').textContent = strings.confirm;
+    document.getElementById('confirmModalBody').textContent = message;
+    document.getElementById('confirmModalCancel').textContent = strings.cancel;
+    document.getElementById('confirmModalOk').textContent = strings.confirm;
+
+    const okBtn = document.getElementById('confirmModalOk');
+    const cancelBtn = document.getElementById('confirmModalCancel');
+    const newOk = okBtn.cloneNode(true);
+    const newCancel = cancelBtn.cloneNode(true);
+    okBtn.replaceWith(newOk);
+    cancelBtn.replaceWith(newCancel);
+
+    newOk.addEventListener('click', () => { closeModal('confirmModal'); onConfirm(); });
+    newCancel.addEventListener('click', () => { closeModal('confirmModal'); });
+
+    openModal('confirmModal');
+  }
+
   function initDataConfirm() {
     document.addEventListener('click', (event) => {
       const target = event.target.closest('[data-confirm]');
@@ -238,10 +276,30 @@
         return;
       }
       const message = target.getAttribute('data-confirm');
-      if (message && !window.confirm(message)) {
-        event.preventDefault();
-        event.stopPropagation();
+      if (!message) {
+        return;
       }
+      event.preventDefault();
+      event.stopPropagation();
+      showConfirmModal(message, () => {
+        if (target.tagName === 'A') {
+          window.location.href = target.href;
+        } else if (target.tagName === 'BUTTON' || target.tagName === 'INPUT') {
+          const form = target.closest('form');
+          if (form) {
+            const clone = target.cloneNode(true);
+            clone.removeAttribute('data-confirm');
+            clone.style.display = 'none';
+            form.appendChild(clone);
+            clone.click();
+            clone.remove();
+          } else {
+            target.removeAttribute('data-confirm');
+            target.click();
+            target.setAttribute('data-confirm', message);
+          }
+        }
+      });
     });
   }
 

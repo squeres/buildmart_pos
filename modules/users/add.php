@@ -94,6 +94,13 @@ if (is_post()) {
     $selectedRole = $rolesById[$f['role_id']] ?? null;
     $canCustomizePermissions = $selectedRole && permission_role_supports_custom_overrides($selectedRole);
 
+    if ($isEdit && $id === Auth::id() && Auth::can('all') && $selectedRole) {
+        $newRolePerms = json_decode($selectedRole['permissions'] ?? '{}', true) ?? [];
+        if (empty($newRolePerms['all'])) {
+            $errors['role_id'] = _r('usr_cannot_demote_self');
+        }
+    }
+
     if ($f['name'] === '') {
         $errors['name'] = _r('lbl_required');
     }
@@ -234,6 +241,11 @@ if (is_post()) {
 
         if ($isEdit && $id === Auth::id()) {
             Auth::refreshCurrentUser();
+        } else {
+            Database::exec(
+                'UPDATE users SET permissions_updated_at = NOW() WHERE id = ?',
+                [$userId]
+            );
         }
 
         flash_success(_r('usr_saved'));

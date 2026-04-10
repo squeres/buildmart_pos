@@ -59,6 +59,13 @@ if (Auth::check() && Auth::mustChangePassword() && !in_array($scriptPath, $passw
 if (Auth::check()) {
     AuthService::migrateLegacyPins();
     touch_current_user_presence();
+    $dbPermVersion = Database::value(
+        'SELECT permissions_updated_at FROM users WHERE id = ?',
+        [Auth::id()]
+    );
+    if ($dbPermVersion !== null && $dbPermVersion !== ($_SESSION['user']['permissions_updated_at'] ?? null)) {
+        Auth::refreshCurrentUser();
+    }
 }
 
 if (Auth::check() && $scriptPath === $saleInvoicePrintPath) {
