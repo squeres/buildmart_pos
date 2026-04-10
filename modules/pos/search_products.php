@@ -22,7 +22,8 @@ if ($q !== '') {
     $like = '%' . $q . '%';
     $normalizedLike = '%' . $normalizedQ . '%';
     $where[] = '(
-        p.name_en LIKE ? OR p.name_ru LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?
+        p.barcode = ? OR p.sku = ?
+        OR p.name_en LIKE ? OR p.name_ru LIKE ? OR p.sku LIKE ? OR p.barcode LIKE ?
         OR p.search_name_normalized LIKE ?
         OR EXISTS (
             SELECT 1

@@ -147,11 +147,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const url = new URL(window.POS_PRODUCT_SEARCH_URL, window.location.origin);
         url.searchParams.set("q", code);
         const response = await fetch(url.toString(), { headers: { "X-Requested-With": "XMLHttpRequest" } });
-        const products = await response.json();
-        const exact = (Array.isArray(products) ? products : []).find((product) => (
+        const payload = await response.json();
+        const products = Array.isArray(payload?.products) ? payload.products : [];
+        const exact = products.find((product) => (
           String(product.barcode || "").trim() === code
           || String(product.sku || "").trim().toLowerCase() === String(code).trim().toLowerCase()
-        )) || ((Array.isArray(products) ? products : []).length === 1 ? products[0] : null);
+        )) || (products.length === 1 ? products[0] : null);
         if (exact && window.POS?.addProduct) {
           await window.POS.addProduct(exact.id);
           searchInput.value = "";
