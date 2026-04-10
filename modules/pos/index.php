@@ -93,6 +93,7 @@ window.POS_CAN_SELL = ' . ($canSell ? 'true' : 'false') . ';
 window.POS_ALLOW_NEGATIVE_STOCK = ' . ($allowNegativeStock ? 'true' : 'false') . ';
 window.LANG = {
   cart_empty:           "' . _r('pos_cart_empty') . '",
+  pos_cart_empty:       "' . addslashes(_r('pos_cart_empty')) . '",
   out_of_stock:         "' . _r('out_of_stock') . '",
   negative_stock:       "' . _r('negative_stock') . '",
   low_stock:            "' . _r('low_stock') . '",

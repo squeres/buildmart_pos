@@ -81,6 +81,24 @@ $categories = Database::all(
 
 $featherIcons = ['box','layers','grid','tag','package','tool','droplet','zap','home','settings',
                  'shopping-bag','shield','align-justify','droplets','database','archive'];
+$featherIconLabels = [
+    'box' => __('icon_box'),
+    'layers' => __('icon_layers'),
+    'grid' => __('icon_grid'),
+    'tag' => __('icon_tag'),
+    'package' => __('icon_package'),
+    'tool' => __('icon_tool'),
+    'droplet' => __('icon_droplet'),
+    'zap' => __('icon_zap'),
+    'home' => __('icon_home'),
+    'settings' => __('icon_settings'),
+    'shopping-bag' => __('icon_shopping_bag'),
+    'shield' => __('icon_shield'),
+    'align-justify' => __('icon_align_justify'),
+    'droplets' => __('icon_droplets'),
+    'database' => __('icon_database'),
+    'archive' => __('icon_archive'),
+];
 
 include __DIR__ . '/../../views/layouts/header.php';
 ?>
@@ -115,7 +133,7 @@ include __DIR__ . '/../../views/layouts/header.php';
               </span>
             </td>
             <td><?= e($c['name_ru']) ?></td>
-            <td><span class="font-mono text-muted" style="font-size:12px"><?= e($c['icon']) ?></span></td>
+            <td><span class="text-muted" style="font-size:12px"><?= e($featherIconLabels[$c['icon']] ?? $c['icon']) ?></span></td>
             <td class="col-num"><?= $c['product_count'] ?></td>
             <td><?= $c['is_active'] ? '<span class="badge badge-success">'.__('lbl_active').'</span>' : '<span class="badge badge-secondary">'.__('lbl_inactive').'</span>' ?></td>
             <td class="col-actions">
@@ -161,7 +179,7 @@ include __DIR__ . '/../../views/layouts/header.php';
                   <span class="category-visual">
                     <span class="category-visual-dot" style="background:<?= e($c['color']) ?>"></span>
                     <?= feather_icon($c['icon'], 14) ?>
-                    <span class="font-mono"><?= e($c['icon']) ?></span>
+                    <span><?= e($featherIconLabels[$c['icon']] ?? $c['icon']) ?></span>
                   </span>
                 </span>
               </div>
@@ -223,13 +241,13 @@ include __DIR__ . '/../../views/layouts/header.php';
               <label class="form-label"><?= __('cat_icon') ?></label>
               <select name="icon" class="form-control">
                 <?php foreach ($featherIcons as $ico): ?>
-                  <option value="<?= $ico ?>" <?= ($editCat['icon']??'box')===$ico?'selected':'' ?>><?= $ico ?></option>
+                  <option value="<?= $ico ?>" <?= ($editCat['icon']??'box')===$ico?'selected':'' ?>><?= e($featherIconLabels[$ico] ?? $ico) ?></option>
                 <?php endforeach; ?>
               </select>
             </div>
             <div class="form-group">
               <label class="form-label"><?= __('cat_color') ?></label>
-              <input type="color" name="color" class="form-control" value="<?= e($editCat['color'] ?? '#607D8B') ?>" style="padding:4px">
+              <input type="color" name="color" class="form-control category-color-control" value="<?= e($editCat['color'] ?? '#607D8B') ?>">
             </div>
           </div>
           <div class="form-row form-row-2">

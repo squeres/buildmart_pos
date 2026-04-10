@@ -67,8 +67,26 @@ if ($availableWarehouseIds) {
 
 if ($search !== '') {
     $like = '%' . $search . '%';
-    $baseWhere[] = '(s.receipt_no LIKE ? OR c.name LIKE ? OR c.company LIKE ? OR u.name LIKE ? OR w.name LIKE ? OR si.invoice_number LIKE ?)';
-    array_push($baseParams, $like, $like, $like, $like, $like, $like);
+    $baseWhere[] = '(
+        s.receipt_no LIKE ?
+        OR c.name LIKE ?
+        OR c.company LIKE ?
+        OR u.name LIKE ?
+        OR w.name LIKE ?
+        OR si.invoice_number LIKE ?
+        OR EXISTS (
+            SELECT 1
+            FROM sale_items sale_item
+            LEFT JOIN products product_lookup ON product_lookup.id = sale_item.product_id
+            WHERE sale_item.sale_id = s.id
+              AND (
+                  sale_item.product_name LIKE ?
+                  OR sale_item.product_sku LIKE ?
+                  OR product_lookup.barcode LIKE ?
+              )
+        )
+    )';
+    array_push($baseParams, $like, $like, $like, $like, $like, $like, $like, $like, $like);
 }
 if ($from) {
     $baseWhere[] = 'DATE(s.created_at) >= ?';
@@ -162,6 +180,30 @@ function sale_invoice_prefill_number(array $sale): string
     $receipt = preg_replace('/[^A-Za-z0-9\-\/]/', '', (string)($sale['receipt_no'] ?? ''));
     return $receipt !== '' ? $receipt : ('INV-' . (int)($sale['id'] ?? 0));
 }
+
+$extraJs = '
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const cameraBtn = document.getElementById("salesHistoryCameraTrigger");
+  const searchInput = document.getElementById("salesHistorySearch");
+  const filterForm = document.getElementById("salesHistoryFilterForm");
+  if (!cameraBtn || !searchInput || !filterForm || !window.ProductCameraScanner) {
+    return;
+  }
+  window.ProductCameraScanner.attach(cameraBtn, {
+    onDetected: (code) => {
+      searchInput.value = code;
+      searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      searchInput.dispatchEvent(new Event("change", { bubbles: true }));
+      if (typeof filterForm.requestSubmit === "function") {
+        filterForm.requestSubmit();
+      } else {
+        filterForm.submit();
+      }
+    }
+  });
+});
+</script>';
 
 include __DIR__ . '/../../views/layouts/header.php';
 ?>
@@ -291,8 +333,19 @@ $contextWarehouseName = $selectedWarehouse
   </div>
 </div>
 
-<form method="GET" class="filter-bar mb-2">
-  <input type="text" name="search" class="form-control" placeholder="<?= e(__('sales_search_placeholder')) ?>" value="<?= e($search) ?>" style="max-width:260px">
+<form method="GET" class="filter-bar mb-2" id="salesHistoryFilterForm">
+  <div class="barcode-camera-field" style="max-width:320px;width:100%">
+    <input type="text" id="salesHistorySearch" name="search" class="form-control" placeholder="<?= e(__('sales_search_placeholder')) ?>" value="<?= e($search) ?>">
+    <button
+      type="button"
+      class="btn btn-secondary btn-icon product-camera-trigger"
+      id="salesHistoryCameraTrigger"
+      title="<?= e(__('camera_scan_title')) ?>"
+      hidden
+    >
+      <?= feather_icon('camera', 16) ?>
+    </button>
+  </div>
   <input type="date" name="from" class="form-control" value="<?= e($from) ?>" style="max-width:150px">
   <input type="date" name="to" class="form-control" value="<?= e($to) ?>" style="max-width:150px">
   <select name="status" class="form-control" style="max-width:180px">
@@ -302,7 +355,7 @@ $contextWarehouseName = $selectedWarehouse
     <option value="refunded" <?= $status === 'refunded' ? 'selected' : '' ?>><?= __('sales_status_refunded') ?></option>
     <option value="partial_refund" <?= $status === 'partial_refund' ? 'selected' : '' ?>><?= __('sales_status_partial_refund') ?></option>
   </select>
-  <button type="submit" class="btn btn-secondary"><?= feather_icon('filter', 14) ?></button>
+  <button type="submit" class="btn btn-secondary"><?= __('btn_filter') ?></button>
   <a href="<?= url('modules/sales/') ?>" class="btn btn-ghost"><?= __('btn_reset') ?></a>
 </form>
 

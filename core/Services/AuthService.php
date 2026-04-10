@@ -11,6 +11,7 @@ final class AuthService
     public const PIN_MAX_LENGTH = 6;
     public const PIN_LOGIN_MAX_ATTEMPTS = 5;
     public const PIN_LOGIN_LOCK_SECONDS = 60;
+    private static bool $legacyPinsMigrated = false;
 
     public static function getUserForSession(int $userId): ?array
     {
@@ -48,7 +49,7 @@ final class AuthService
             [$email]
         );
 
-        if (!$user || !password_verify($password, (string)$user['password'])) {
+        if (!$user || !self::verifyAndUpgradePassword((int)$user['id'], (string)$user['password'], $password)) {
             return null;
         }
 
@@ -217,7 +218,38 @@ final class AuthService
 
     public static function hashPassword(string $password): string
     {
-        return password_hash($password, PASSWORD_BCRYPT);
+        return password_hash($password, PASSWORD_DEFAULT);
+    }
+
+    public static function migrateLegacyPins(int $limit = 50): void
+    {
+        if (self::$legacyPinsMigrated || !self::hasPinHashColumn()) {
+            return;
+        }
+        self::$legacyPinsMigrated = true;
+
+        $limit = max(1, min(200, $limit));
+        $rows = Database::all(
+            "SELECT id, pin
+             FROM users
+             WHERE pin IS NOT NULL
+               AND pin <> ''
+               AND (pin_hash IS NULL OR pin_hash = '')
+             ORDER BY id ASC
+             LIMIT {$limit}"
+        );
+
+        foreach ($rows as $row) {
+            $normalizedPin = self::normalizeLegacyPinOrNull($row['pin'] ?? null);
+            if ($normalizedPin === null) {
+                continue;
+            }
+
+            Database::exec(
+                'UPDATE users SET pin = NULL, pin_hash = ?, updated_at = NOW() WHERE id = ?',
+                [password_hash($normalizedPin, PASSWORD_DEFAULT), (int)$row['id']]
+            );
+        }
     }
 
     public static function changePassword(
@@ -331,6 +363,16 @@ final class AuthService
         return $pin;
     }
 
+    private static function normalizeLegacyPinOrNull(?string $pin): ?string
+    {
+        $pin = preg_replace('/\D+/', '', trim((string)$pin)) ?? '';
+        if ($pin === '' || strlen($pin) < self::PIN_MIN_LENGTH || strlen($pin) > self::PIN_MAX_LENGTH) {
+            return null;
+        }
+
+        return $pin;
+    }
+
     /**
      * @return list<array{id:int,pin:?string,pin_hash:?string}>
      */
@@ -367,9 +409,49 @@ final class AuthService
         $pinHash = (string)($user['pin_hash'] ?? '');
 
         if ($pinHash !== '' && password_verify($pin, $pinHash)) {
+            if (password_needs_rehash($pinHash, PASSWORD_DEFAULT)) {
+                Database::exec(
+                    'UPDATE users SET pin_hash = ?, updated_at = NOW() WHERE id = ?',
+                    [password_hash($pin, PASSWORD_DEFAULT), (int)$user['id']]
+                );
+            }
             return true;
         }
 
         return $plainPin !== '' && hash_equals($plainPin, $pin);
+    }
+
+    private static function verifyAndUpgradePassword(int $userId, string $storedPassword, string $password): bool
+    {
+        if ($storedPassword === '') {
+            return false;
+        }
+
+        if (password_verify($password, $storedPassword)) {
+            if (password_needs_rehash($storedPassword, PASSWORD_DEFAULT)) {
+                Database::exec(
+                    'UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?',
+                    [self::hashPassword($password), $userId]
+                );
+            }
+            return true;
+        }
+
+        $passwordInfo = password_get_info($storedPassword);
+        $algoName = (string)($passwordInfo['algoName'] ?? '');
+        if ($algoName !== '' && $algoName !== 'unknown') {
+            return false;
+        }
+
+        if (!hash_equals($storedPassword, $password)) {
+            return false;
+        }
+
+        Database::exec(
+            'UPDATE users SET password = ?, updated_at = NOW() WHERE id = ?',
+            [self::hashPassword($password), $userId]
+        );
+
+        return true;
     }
 }

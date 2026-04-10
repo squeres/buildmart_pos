@@ -57,6 +57,7 @@ if (Auth::check() && Auth::mustChangePassword() && !in_array($scriptPath, $passw
 }
 
 if (Auth::check()) {
+    AuthService::migrateLegacyPins();
     touch_current_user_presence();
 }
 

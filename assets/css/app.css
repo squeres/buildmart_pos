@@ -534,6 +534,22 @@ hr { border: none; border-top: 1px solid var(--border-dim); margin: 1rem 0; }
 .form-control:disabled { opacity: .5; cursor: not-allowed; }
 .form-control.mono { font-family: var(--font-mono); }
 .form-control-sm { padding: 6px 10px; font-size: 12.5px; min-height: 34px; }
+input.category-color-control.form-control {
+  min-height: 42px;
+  padding: 4px;
+  cursor: pointer;
+}
+input.category-color-control.form-control::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+input.category-color-control.form-control::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 4px);
+}
+input.category-color-control.form-control::-moz-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-sm) - 4px);
+}
 
 select.form-control { cursor: pointer; }
 textarea.form-control { resize: vertical; min-height: 80px; }
@@ -1775,7 +1791,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .filter-bar {
   display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
   padding: 14px 16px;
-  border-bottom: 1px solid var(--border-dim);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius-lg);
   background: var(--bg-surface);
 }
 .filter-bar .form-control { font-size: 13px; }
@@ -2763,7 +2780,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: 6px;
   padding: 6px 14px;
   background: var(--bg-elevated, #1e2229);
-  border-bottom: 1px solid var(--border-dim);
+  border: 1px solid var(--border-dim);
+  border-radius: var(--radius);
   font-size: 12px;
   color: var(--text-muted);
   flex-shrink: 0;
@@ -2842,6 +2860,21 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .barcode-camera-field .form-control {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+.filter-bar .barcode-camera-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.filter-bar .barcode-camera-field .product-camera-trigger,
+.filter-bar .barcode-camera-field .product-camera-trigger.is-visible {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  padding: 0;
+  justify-content: center;
 }
 
 .product-search-results {
@@ -3035,6 +3068,10 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     left: 8%;
     right: 8%;
   }
+}
+
+.inventory-create-modal-overlay {
+  z-index: 1200;
 }
 
 .inventory-create-modal {

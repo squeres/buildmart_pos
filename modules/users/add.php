@@ -76,6 +76,7 @@ if (is_post()) {
         'pin' => sanitize($_POST['pin'] ?? ''),
         'default_warehouse_id' => (int)($_POST['default_warehouse_id'] ?? $defaultWarehouseId),
     ];
+    $shouldUpdatePin = !$isEdit || trim((string)$f['pin']) !== '';
     $permissionModes = [];
     foreach ((array)($_POST['permission_mode'] ?? []) as $permissionKey => $mode) {
         $permissionKey = trim((string)$permissionKey);
@@ -128,7 +129,7 @@ if (is_post()) {
         $errors['permissions'] = _r('usr_permissions_admin_locked');
     }
 
-    if (!$errors) {
+    if (!$errors && $shouldUpdatePin) {
         try {
             $pinStorage = AuthService::preparePinStorage($f['pin']);
             AuthService::assertPinAvailable($f['pin'], $isEdit ? $id : 0);
@@ -155,14 +156,16 @@ if (is_post()) {
                 $params[] = $languageSetAt;
             }
 
-            if (AuthService::hasPinHashColumn()) {
-                $fields[] = 'pin=?';
-                $fields[] = 'pin_hash=?';
-                $params[] = $pinStorage['pin'];
-                $params[] = $pinStorage['pin_hash'];
-            } else {
-                $fields[] = 'pin=?';
-                $params[] = $pinStorage['pin'];
+            if ($shouldUpdatePin) {
+                if (AuthService::hasPinHashColumn()) {
+                    $fields[] = 'pin=?';
+                    $fields[] = 'pin_hash=?';
+                    $params[] = $pinStorage['pin'];
+                    $params[] = $pinStorage['pin_hash'];
+                } else {
+                    $fields[] = 'pin=?';
+                    $params[] = $pinStorage['pin'];
+                }
             }
 
             if ($pass !== '') {
