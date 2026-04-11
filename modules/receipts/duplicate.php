@@ -10,7 +10,10 @@ require_once __DIR__ . '/../../core/bootstrap.php';
 Auth::requireLogin();
 Auth::requirePerm('receipts.create');
 
-$srcId = (int)($_GET['id'] ?? 0);
+if (!is_post()) { redirect('/modules/receipts/'); }
+require_csrf('/modules/receipts/');
+
+$srcId = (int)($_POST['id'] ?? 0);
 if (!$srcId) { redirect('/modules/receipts/'); }
 
 $src = Database::row("SELECT * FROM goods_receipts WHERE id=?", [$srcId]);

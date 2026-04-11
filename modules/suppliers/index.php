@@ -1,6 +1,6 @@
 <?php
 /**
- * Suppliers — List & Edit
+ * Suppliers - List & Edit
  * modules/suppliers/index.php
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
@@ -14,32 +14,29 @@ $breadcrumbs = [[$pageTitle, null]];
 $errors      = [];
 $editSup     = null;
 
-// ── Handle DELETE ──────────────────────────────────────────────
-if (isset($_GET['delete'])) {
-    if (!$canManageSuppliers) {
-        http_response_code(403);
-        include ROOT_PATH . '/views/partials/403.php';
-        exit;
-    }
-    $delId  = (int)$_GET['delete'];
-    $inUse  = Database::value("SELECT COUNT(*) FROM goods_receipts WHERE supplier_id=?", [$delId]);
-    if ($inUse) {
-        flash_error(_r('err_delete_in_use'));
-    } else {
-        Database::exec("DELETE FROM suppliers WHERE id=?", [$delId]);
-        flash_success(_r('sup_deleted'));
-    }
-    redirect('/modules/suppliers/');
-}
-
-// ── Handle POST (add/edit) ─────────────────────────────────────
+// Handle POST (add/edit/delete)
 if (is_post()) {
     if (!$canManageSuppliers) {
         http_response_code(403);
         include ROOT_PATH . '/views/partials/403.php';
         exit;
     }
-    if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
+
+    require_csrf($_SERVER['REQUEST_URI']);
+
+    $formAction = sanitize($_POST['form_action'] ?? 'save');
+
+    if ($formAction === 'delete') {
+        $delId = (int)($_POST['delete_id'] ?? 0);
+        $inUse = Database::value("SELECT COUNT(*) FROM goods_receipts WHERE supplier_id=?", [$delId]);
+        if ($inUse) {
+            flash_error(_r('err_delete_in_use'));
+        } elseif ($delId > 0) {
+            Database::exec("DELETE FROM suppliers WHERE id=?", [$delId]);
+            flash_success(_r('sup_deleted'));
+        }
+        redirect('/modules/suppliers/');
+    }
 
     $editId  = (int)($_POST['edit_id'] ?? 0);
     $f = [
@@ -54,18 +51,20 @@ if (is_post()) {
         'is_active'    => isset($_POST['is_active']) ? 1 : 0,
     ];
 
-    if (!$f['name']) $errors['name'] = _r('lbl_required');
+    if (!$f['name']) {
+        $errors['name'] = _r('lbl_required');
+    }
 
     if (!$errors) {
         if ($editId) {
             Database::exec(
                 "UPDATE suppliers SET name=?,contact=?,phone=?,email=?,address=?,inn=?,bank_details=?,notes=?,is_active=?,updated_at=NOW() WHERE id=?",
-                [$f['name'],$f['contact'],$f['phone'],$f['email'],$f['address'],$f['inn'],$f['bank_details'],$f['notes'],$f['is_active'],$editId]
+                [$f['name'], $f['contact'], $f['phone'], $f['email'], $f['address'], $f['inn'], $f['bank_details'], $f['notes'], $f['is_active'], $editId]
             );
         } else {
             Database::insert(
                 "INSERT INTO suppliers (name,contact,phone,email,address,inn,bank_details,notes,is_active) VALUES (?,?,?,?,?,?,?,?,?)",
-                [$f['name'],$f['contact'],$f['phone'],$f['email'],$f['address'],$f['inn'],$f['bank_details'],$f['notes'],$f['is_active']]
+                [$f['name'], $f['contact'], $f['phone'], $f['email'], $f['address'], $f['inn'], $f['bank_details'], $f['notes'], $f['is_active']]
             );
         }
         flash_success(_r('sup_saved'));
@@ -73,14 +72,16 @@ if (is_post()) {
     }
 }
 
-// ── Load for edit ──────────────────────────────────────────────
+// Load for edit
 $editId = (int)($_GET['edit'] ?? 0);
 if ($editId && !$canManageSuppliers) {
     http_response_code(403);
     include ROOT_PATH . '/views/partials/403.php';
     exit;
 }
-if ($editId) $editSup = Database::row("SELECT * FROM suppliers WHERE id=?", [$editId]);
+if ($editId) {
+    $editSup = Database::row("SELECT * FROM suppliers WHERE id=?", [$editId]);
+}
 
 $suppliers = Database::all(
     "SELECT s.*, (SELECT COUNT(*) FROM goods_receipts gr WHERE gr.supplier_id=s.id) AS doc_count
@@ -96,7 +97,6 @@ include __DIR__ . '/../../views/layouts/header.php';
 
 <div class="<?= $canManageSuppliers ? 'content-split content-split-sidebar-xl' : 'mobile-stack' ?>">
 
-  <!-- List -->
   <div class="card mobile-order-last">
     <div class="table-wrap mobile-table-wrap hide-on-mobile">
       <table class="table">
@@ -129,8 +129,13 @@ include __DIR__ . '/../../views/layouts/header.php';
               <?php if ($canManageSuppliers): ?>
               <a href="?edit=<?= $s['id'] ?>" class="btn btn-sm btn-ghost btn-icon"><?= feather_icon('edit-2',14) ?></a>
               <?php if ($s['doc_count'] == 0): ?>
-              <a href="?delete=<?= $s['id'] ?>" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
-                 data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></a>
+              <form method="POST" class="inline-action-form">
+                <?= csrf_field() ?>
+                <input type="hidden" name="form_action" value="delete">
+                <input type="hidden" name="delete_id" value="<?= (int)$s['id'] ?>">
+                <button type="submit" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
+                   data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></button>
+              </form>
               <?php endif; ?>
               <?php endif; ?>
             </td>
@@ -197,9 +202,14 @@ include __DIR__ . '/../../views/layouts/header.php';
                   <?= feather_icon('edit-2', 14) ?> <?= __('btn_edit') ?>
                 </a>
                 <?php if ((int)$s['doc_count'] === 0): ?>
-                  <a href="?delete=<?= $s['id'] ?>" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= __('confirm_delete') ?>">
-                    <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
-                  </a>
+                  <form method="POST" class="inline-action-form">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="form_action" value="delete">
+                    <input type="hidden" name="delete_id" value="<?= (int)$s['id'] ?>">
+                    <button type="submit" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= __('confirm_delete') ?>">
+                      <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
+                    </button>
+                  </form>
                 <?php endif; ?>
               </div>
             <?php endif; ?>
@@ -209,7 +219,6 @@ include __DIR__ . '/../../views/layouts/header.php';
     </div>
   </div>
 
-  <!-- Add/Edit form -->
   <?php if ($canManageSuppliers): ?>
   <div class="card mobile-order-first">
     <div class="card-header">
@@ -221,6 +230,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     <div class="card-body">
       <form method="POST" class="mobile-form">
         <?= csrf_field() ?>
+        <input type="hidden" name="form_action" value="save">
         <?php if ($editSup): ?><input type="hidden" name="edit_id" value="<?= $editSup['id'] ?>"><?php endif; ?>
 
         <div class="form-group">

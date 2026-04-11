@@ -10,14 +10,28 @@ $breadcrumbs = [[$pageTitle, null]];
 $errors      = [];
 $editCat     = null;
 
-// Handle POST (add or edit)
+// Handle POST (add, edit, delete)
 if (is_post()) {
     if (!$canManageCategories) {
         http_response_code(403);
         include ROOT_PATH . '/views/partials/403.php';
         exit;
     }
-    if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
+    require_csrf($_SERVER['REQUEST_URI']);
+
+    $formAction = sanitize($_POST['form_action'] ?? 'save');
+
+    if ($formAction === 'delete') {
+        $delId   = (int)($_POST['delete_id'] ?? 0);
+        $prodCnt = Database::value("SELECT COUNT(*) FROM products WHERE category_id=?", [$delId]);
+        if ($prodCnt) {
+            flash_error(_r('err_delete_in_use'));
+        } elseif ($delId > 0) {
+            Database::exec("DELETE FROM categories WHERE id=?", [$delId]);
+            flash_success(_r('prod_deleted'));
+        }
+        redirect('/modules/categories/');
+    }
 
     $editId  = (int)($_POST['edit_id'] ?? 0);
     $name    = sanitize($_POST['name'] ?? '');
@@ -58,24 +72,6 @@ if ($editId && !$canManageCategories) {
     exit;
 }
 if ($editId) $editCat = Database::row("SELECT * FROM categories WHERE id=?", [$editId]);
-
-// Delete
-if (isset($_GET['delete'])) {
-    if (!$canManageCategories) {
-        http_response_code(403);
-        include ROOT_PATH . '/views/partials/403.php';
-        exit;
-    }
-    $delId   = (int)$_GET['delete'];
-    $prodCnt = Database::value("SELECT COUNT(*) FROM products WHERE category_id=?", [$delId]);
-    if ($prodCnt) {
-        flash_error(_r('err_delete_in_use'));
-    } else {
-        Database::exec("DELETE FROM categories WHERE id=?", [$delId]);
-        flash_success(_r('prod_deleted'));
-    }
-    redirect('/modules/categories/');
-}
 
 $categories = Database::all(
     "SELECT c.*, (SELECT COUNT(*) FROM products p WHERE p.category_id=c.id AND p.is_active=1) AS product_count
@@ -141,8 +137,13 @@ include __DIR__ . '/../../views/layouts/header.php';
               <?php if ($canManageCategories): ?>
                 <a href="?edit=<?= $c['id'] ?>" class="btn btn-sm btn-ghost btn-icon" title="<?= __('btn_edit') ?>"><?= feather_icon('edit-2',14) ?></a>
                 <?php if ($c['product_count'] == 0): ?>
-                <a href="?delete=<?= $c['id'] ?>" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
-                   data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></a>
+                <form method="POST" class="inline-action-form">
+                  <?= csrf_field() ?>
+                  <input type="hidden" name="form_action" value="delete">
+                  <input type="hidden" name="delete_id" value="<?= (int)$c['id'] ?>">
+                  <button type="submit" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
+                     data-confirm="<?= __('confirm_delete') ?>" title="<?= __('btn_delete') ?>"><?= feather_icon('trash-2',14) ?></button>
+                </form>
                 <?php endif; ?>
               <?php endif; ?>
             </td>
@@ -197,9 +198,14 @@ include __DIR__ . '/../../views/layouts/header.php';
                   <?= feather_icon('edit-2', 14) ?> <?= __('btn_edit') ?>
                 </a>
                 <?php if ((int)$c['product_count'] === 0): ?>
-                  <a href="?delete=<?= $c['id'] ?>" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= __('confirm_delete') ?>">
-                    <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
-                  </a>
+                  <form method="POST" class="inline-action-form">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="form_action" value="delete">
+                    <input type="hidden" name="delete_id" value="<?= (int)$c['id'] ?>">
+                    <button type="submit" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= __('confirm_delete') ?>">
+                      <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
+                    </button>
+                  </form>
                 <?php endif; ?>
               </div>
             <?php endif; ?>
@@ -221,6 +227,7 @@ include __DIR__ . '/../../views/layouts/header.php';
       <div class="card-body">
         <form method="POST" class="mobile-form">
           <?= csrf_field() ?>
+          <input type="hidden" name="form_action" value="save">
           <?php if ($editCat): ?>
             <input type="hidden" name="edit_id" value="<?= $editCat['id'] ?>">
           <?php endif; ?>

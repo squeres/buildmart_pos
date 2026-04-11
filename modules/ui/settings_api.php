@@ -27,6 +27,13 @@ if (!is_ajax() && !is_post()) {
 }
 
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
+$readOnlyActions = ['get_config', 'list_presets', 'load_preset', 'price_types', 'get_prices'];
+
+if (is_post()) {
+    require_csrf();
+} elseif (!in_array($action, $readOnlyActions, true)) {
+    json_response(['error' => 'Invalid request'], 405);
+}
 
 switch ($action) {
 

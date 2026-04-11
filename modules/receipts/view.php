@@ -179,9 +179,13 @@ include __DIR__ . '/../../views/layouts/header.php';
     </a>
     <?php endif; ?>
     <?php if ($canCreateReceipts): ?>
-    <a href="<?= url('modules/receipts/duplicate.php?id='.$id) ?>" class="btn btn-ghost">
-      <?= feather_icon('copy',15) ?> <?= __('gr_duplicate') ?>
-    </a>
+    <form method="POST" action="<?= url('modules/receipts/duplicate.php') ?>" class="inline-action-form">
+      <?= csrf_field() ?>
+      <input type="hidden" name="id" value="<?= (int)$id ?>">
+      <button type="submit" class="btn btn-ghost">
+        <?= feather_icon('copy',15) ?> <?= __('gr_duplicate') ?>
+      </button>
+    </form>
     <?php endif; ?>
     <?php if ($canCancelReceipts && in_array($doc['status'], ['draft','pending_acceptance','accepted'], true)): ?>
     <form method="POST" action="<?= url('modules/receipts/cancel.php') ?>" class="inline-action-form">

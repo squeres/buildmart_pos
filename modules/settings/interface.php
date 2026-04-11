@@ -5,7 +5,8 @@ Auth::requirePerm('settings');
 $pageTitle   = __('set_ui_title');
 $breadcrumbs = [[__('nav_settings'), url('modules/settings/')], [__('set_ui_title'), null]];
 
-if (is_post() && csrf_verify()) {
+if (is_post()) {
+    require_csrf($_SERVER['REQUEST_URI']);
     $action = $_POST['action'] ?? '';
 
     if ($action === 'save_role_ui') {

@@ -222,8 +222,12 @@ include __DIR__ . '/../../views/layouts/header.php';
               <?php endif; ?>
               <!-- Duplicate -->
               <?php if ($canCreateReceipts): ?>
-              <a href="<?= url('modules/receipts/duplicate.php?id='.$r['id']) ?>"
-                 class="btn btn-sm btn-ghost btn-icon" title="<?= __('gr_duplicate') ?>"><?= feather_icon('copy',14) ?></a>
+              <form method="POST" action="<?= url('modules/receipts/duplicate.php') ?>" class="inline-action-form">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                <button type="submit"
+                   class="btn btn-sm btn-ghost btn-icon" title="<?= __('gr_duplicate') ?>"><?= feather_icon('copy',14) ?></button>
+              </form>
               <?php endif; ?>
               <!-- Post (only draft) -->
               <?php if ($r['status'] === 'draft' && $canPostReceipts): ?>
@@ -313,9 +317,13 @@ include __DIR__ . '/../../views/layouts/header.php';
               </a>
             <?php endif; ?>
             <?php if ($canCreateReceipts): ?>
-              <a href="<?= url('modules/receipts/duplicate.php?id='.$r['id']) ?>" class="btn btn-ghost">
-                <?= feather_icon('copy',14) ?> <?= __('gr_duplicate') ?>
-              </a>
+              <form method="POST" action="<?= url('modules/receipts/duplicate.php') ?>" class="inline-action-form">
+                <?= csrf_field() ?>
+                <input type="hidden" name="id" value="<?= (int)$r['id'] ?>">
+                <button type="submit" class="btn btn-ghost">
+                  <?= feather_icon('copy',14) ?> <?= __('gr_duplicate') ?>
+                </button>
+              </form>
             <?php endif; ?>
             <?php if ($r['status'] === 'draft' && $canPostReceipts): ?>
               <form method="POST" action="<?= url('modules/receipts/post.php') ?>" class="inline-action-form">

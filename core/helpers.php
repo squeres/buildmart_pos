@@ -29,6 +29,33 @@ function csrf_verify(): bool
     return hash_equals(csrf_token(), $token);
 }
 
+function csrf_error_message(): string
+{
+    return _r('err_csrf');
+}
+
+function csrf_reject(?string $redirectTo = null, int $status = 403): never
+{
+    $message = csrf_error_message();
+
+    if (is_ajax()) {
+        json_response([
+            'error' => $message,
+            'message' => $message,
+        ], $status);
+    }
+
+    flash_error($message);
+    redirect($redirectTo ?? ($_SERVER['REQUEST_URI'] ?? '/'));
+}
+
+function require_csrf(?string $redirectTo = null): void
+{
+    if (!csrf_verify()) {
+        csrf_reject($redirectTo, 403);
+    }
+}
+
 // ── HTTP ──────────────────────────────────────────────────────────
 
 function base_url_origin(): string

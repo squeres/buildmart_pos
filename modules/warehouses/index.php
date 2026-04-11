@@ -1,6 +1,6 @@
 <?php
 /**
- * Warehouses — List & Edit
+ * Warehouses - List & Edit
  * modules/warehouses/index.php
  */
 require_once __DIR__ . '/../../core/bootstrap.php';
@@ -14,30 +14,28 @@ $breadcrumbs = [[$pageTitle, null]];
 $errors      = [];
 $editWh      = null;
 
-if (isset($_GET['delete'])) {
-    if (!$canManageWarehouses) {
-        http_response_code(403);
-        include ROOT_PATH . '/views/partials/403.php';
-        exit;
-    }
-    $delId = (int)$_GET['delete'];
-    $inUse = Database::value("SELECT COUNT(*) FROM goods_receipts WHERE warehouse_id=?", [$delId]);
-    if ($inUse) {
-        flash_error(_r('err_delete_in_use'));
-    } else {
-        Database::exec("DELETE FROM warehouses WHERE id=?", [$delId]);
-        flash_success(_r('wh_deleted'));
-    }
-    redirect('/modules/warehouses/');
-}
-
 if (is_post()) {
     if (!$canManageWarehouses) {
         http_response_code(403);
         include ROOT_PATH . '/views/partials/403.php';
         exit;
     }
-    if (!csrf_verify()) { flash_error(_r('err_csrf')); redirect($_SERVER['REQUEST_URI']); }
+
+    require_csrf($_SERVER['REQUEST_URI']);
+
+    $formAction = sanitize($_POST['form_action'] ?? 'save');
+
+    if ($formAction === 'delete') {
+        $delId = (int)($_POST['delete_id'] ?? 0);
+        $inUse = Database::value("SELECT COUNT(*) FROM goods_receipts WHERE warehouse_id=?", [$delId]);
+        if ($inUse) {
+            flash_error(_r('err_delete_in_use'));
+        } elseif ($delId > 0) {
+            Database::exec("DELETE FROM warehouses WHERE id=?", [$delId]);
+            flash_success(_r('wh_deleted'));
+        }
+        redirect('/modules/warehouses/');
+    }
 
     $editId = (int)($_POST['edit_id'] ?? 0);
     $f = [
@@ -46,18 +44,20 @@ if (is_post()) {
         'notes'     => sanitize($_POST['notes']   ?? ''),
         'is_active' => isset($_POST['is_active']) ? 1 : 0,
     ];
-    if (!$f['name']) $errors['name'] = _r('lbl_required');
+    if (!$f['name']) {
+        $errors['name'] = _r('lbl_required');
+    }
 
     if (!$errors) {
         if ($editId) {
             Database::exec(
                 "UPDATE warehouses SET name=?,address=?,notes=?,is_active=? WHERE id=?",
-                [$f['name'],$f['address'],$f['notes'],$f['is_active'],$editId]
+                [$f['name'], $f['address'], $f['notes'], $f['is_active'], $editId]
             );
         } else {
             Database::insert(
                 "INSERT INTO warehouses (name,address,notes,is_active) VALUES (?,?,?,?)",
-                [$f['name'],$f['address'],$f['notes'],$f['is_active']]
+                [$f['name'], $f['address'], $f['notes'], $f['is_active']]
             );
         }
         flash_success(_r('wh_saved'));
@@ -71,7 +71,9 @@ if ($editId && !$canManageWarehouses) {
     include ROOT_PATH . '/views/partials/403.php';
     exit;
 }
-if ($editId) $editWh = Database::row("SELECT * FROM warehouses WHERE id=?", [$editId]);
+if ($editId) {
+    $editWh = Database::row("SELECT * FROM warehouses WHERE id=?", [$editId]);
+}
 
 $warehouses = Database::all(
     "SELECT w.*, (SELECT COUNT(*) FROM goods_receipts gr WHERE gr.warehouse_id=w.id) AS doc_count
@@ -111,8 +113,13 @@ include __DIR__ . '/../../views/layouts/header.php';
               <?php if ($canManageWarehouses): ?>
               <a href="?edit=<?= $w['id'] ?>" class="btn btn-sm btn-ghost btn-icon"><?= feather_icon('edit-2',14) ?></a>
               <?php if ($w['doc_count'] == 0 && $w['id'] != 1): ?>
-              <a href="?delete=<?= $w['id'] ?>" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
-                 data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></a>
+              <form method="POST" class="inline-action-form">
+                <?= csrf_field() ?>
+                <input type="hidden" name="form_action" value="delete">
+                <input type="hidden" name="delete_id" value="<?= (int)$w['id'] ?>">
+                <button type="submit" class="btn btn-sm btn-ghost btn-icon" style="color:var(--danger)"
+                   data-confirm="<?= __('confirm_delete') ?>"><?= feather_icon('trash-2',14) ?></button>
+              </form>
               <?php endif; ?>
               <?php endif; ?>
             </td>
@@ -164,9 +171,14 @@ include __DIR__ . '/../../views/layouts/header.php';
                   <?= feather_icon('edit-2', 14) ?> <?= __('btn_edit') ?>
                 </a>
                 <?php if ((int)$w['doc_count'] === 0 && (int)$w['id'] !== 1): ?>
-                  <a href="?delete=<?= $w['id'] ?>" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= __('confirm_delete') ?>">
-                    <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
-                  </a>
+                  <form method="POST" class="inline-action-form">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="form_action" value="delete">
+                    <input type="hidden" name="delete_id" value="<?= (int)$w['id'] ?>">
+                    <button type="submit" class="btn btn-ghost" style="color:var(--danger)" data-confirm="<?= __('confirm_delete') ?>">
+                      <?= feather_icon('trash-2', 14) ?> <?= __('btn_delete') ?>
+                    </button>
+                  </form>
                 <?php endif; ?>
               </div>
             <?php endif; ?>
@@ -185,6 +197,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     <div class="card-body">
       <form method="POST" class="mobile-form">
         <?= csrf_field() ?>
+        <input type="hidden" name="form_action" value="save">
         <?php if ($editWh): ?><input type="hidden" name="edit_id" value="<?= $editWh['id'] ?>"><?php endif; ?>
         <div class="form-group">
           <label class="form-label"><?= __('lbl_name') ?> <span class="req">*</span></label>
