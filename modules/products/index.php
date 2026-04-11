@@ -514,23 +514,23 @@ include __DIR__ . '/../../views/layouts/header.php';
   const btn = document.getElementById('productsViewConfigBtn');
   if (!btn || typeof ViewConfigurator === 'undefined') return;
 
-  const current = <?= json_encode($viewCfg, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-  const allColumns = <?= json_encode($allColumns, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+  const current = <?= json_for_html($viewCfg) ?>;
+  const allColumns = <?= json_for_html($allColumns) ?>;
   const allFilters = [
-    { key: 'search', label: <?= json_encode(__('btn_search'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'category_id', label: <?= json_encode(__('lbl_category'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'mode', label: <?= json_encode(__('lbl_status'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'stock', label: <?= json_encode(__('prod_stock_filter'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
+    { key: 'search', label: <?= json_for_html(__('btn_search')) ?> },
+    { key: 'category_id', label: <?= json_for_html(__('lbl_category')) ?> },
+    { key: 'mode', label: <?= json_for_html(__('lbl_status')) ?> },
+    { key: 'stock', label: <?= json_for_html(__('prod_stock_filter')) ?> },
   ];
   const sortFields = [
-    { key: 'name', label: <?= json_encode(__('lbl_name'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'sku', label: <?= json_encode(__('lbl_sku'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'category', label: <?= json_encode(__('lbl_category'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'replenishment', label: <?= json_encode(__('repl_class'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'stock', label: <?= json_encode(__('prod_stock_qty'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'min_stock', label: <?= json_encode(__('prod_min_stock'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'price_retail', label: <?= json_encode(__('prod_sale_price'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
-    { key: 'price_purchase', label: <?= json_encode(__('prod_cost_price'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?> },
+    { key: 'name', label: <?= json_for_html(__('lbl_name')) ?> },
+    { key: 'sku', label: <?= json_for_html(__('lbl_sku')) ?> },
+    { key: 'category', label: <?= json_for_html(__('lbl_category')) ?> },
+    { key: 'replenishment', label: <?= json_for_html(__('repl_class')) ?> },
+    { key: 'stock', label: <?= json_for_html(__('prod_stock_qty')) ?> },
+    { key: 'min_stock', label: <?= json_for_html(__('prod_min_stock')) ?> },
+    { key: 'price_retail', label: <?= json_for_html(__('prod_sale_price')) ?> },
+    { key: 'price_purchase', label: <?= json_for_html(__('prod_cost_price')) ?> },
   ];
 
   const drawer = new ViewConfigurator({
@@ -539,7 +539,7 @@ include __DIR__ . '/../../views/layouts/header.php';
     allColumns,
     allFilters,
     sortFields,
-    viewModes: [{ key: 'table', label: <?= json_encode(__('ui_view_table'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>, icon: 'table' }],
+    viewModes: [{ key: 'table', label: <?= json_for_html(__('ui_view_table')) ?>, icon: 'table' }],
     onApply: () => window.location.reload(),
   });
 

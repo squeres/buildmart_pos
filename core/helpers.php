@@ -31,17 +31,66 @@ function csrf_verify(): bool
 
 // ── HTTP ──────────────────────────────────────────────────────────
 
-function redirect(string $path, int $code = 302): never
+function base_url_origin(): string
 {
-    $url = (str_starts_with($path, 'http') || str_starts_with($path, '/'))
-        ? $path
-        : BASE_URL . '/' . ltrim($path, '/');
-
-    if (!str_starts_with($url, 'http')) {
-        $url = BASE_URL . $url;
+    $parts = parse_url(BASE_URL);
+    if (!$parts || empty($parts['scheme']) || empty($parts['host'])) {
+        return '';
     }
 
-    header('Location: ' . $url, true, $code);
+    $origin = $parts['scheme'] . '://' . $parts['host'];
+    if (isset($parts['port'])) {
+        $origin .= ':' . $parts['port'];
+    }
+
+    return $origin;
+}
+
+function normalize_redirect_target(string $path): string
+{
+    $path = preg_replace('/[\x00-\x1F\x7F]+/u', '', $path) ?? '';
+    $path = trim(str_replace('\\', '/', $path));
+
+    if ($path === '') {
+        return '/';
+    }
+
+    if (preg_match('#^https?://#i', $path)) {
+        $target = parse_url($path);
+        $base = parse_url(BASE_URL);
+        $targetPort = $target['port'] ?? (($target['scheme'] ?? 'https') === 'https' ? 443 : 80);
+        $basePort = $base['port'] ?? (($base['scheme'] ?? 'https') === 'https' ? 443 : 80);
+
+        if (
+            !$target || !$base
+            || empty($target['scheme']) || empty($target['host'])
+            || empty($base['scheme']) || empty($base['host'])
+            || strcasecmp((string)$target['scheme'], (string)$base['scheme']) !== 0
+            || strcasecmp((string)$target['host'], (string)$base['host']) !== 0
+            || $targetPort !== $basePort
+        ) {
+            return '/';
+        }
+
+        $path = (string)($target['path'] ?? '/');
+        if (!empty($target['query'])) {
+            $path .= '?' . $target['query'];
+        }
+        if (!empty($target['fragment'])) {
+            $path .= '#' . $target['fragment'];
+        }
+    }
+
+    if (str_starts_with($path, '//')) {
+        return '/';
+    }
+
+    return str_starts_with($path, '/') ? $path : '/' . ltrim($path, '/');
+}
+
+function redirect(string $path, int $code = 302): never
+{
+    header('Location: ' . base_url_origin() . normalize_redirect_target($path), true, $code);
     exit;
 }
 
@@ -82,9 +131,7 @@ function app_favicon_links(): string
 
 function current_url(): string
 {
-    return (isset($_SERVER['HTTPS']) ? 'https' : 'http')
-        . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')
-        . ($_SERVER['REQUEST_URI'] ?? '/');
+    return base_url_origin() . normalize_redirect_target((string)($_SERVER['REQUEST_URI'] ?? '/'));
 }
 
 function is_post(): bool
@@ -101,8 +148,48 @@ function json_response(array $data, int $code = 200): never
 {
     http_response_code($code);
     header('Content-Type: application/json; charset=utf-8');
-    echo json_encode($data, JSON_UNESCAPED_UNICODE);
+    header('X-Content-Type-Options: nosniff');
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
     exit;
+}
+
+function json_for_html(mixed $value): string
+{
+    $json = json_encode(
+        $value,
+        JSON_UNESCAPED_UNICODE
+        | JSON_UNESCAPED_SLASHES
+        | JSON_HEX_TAG
+        | JSON_HEX_AMP
+        | JSON_HEX_APOS
+        | JSON_HEX_QUOT
+    );
+
+    return $json === false ? 'null' : $json;
+}
+
+function excel_safe_text(mixed $value): string
+{
+    $text = str_replace(["\r\n", "\r"], "\n", (string)$value);
+    $trimmed = ltrim($text);
+
+    if ($trimmed !== '' && preg_match('/^[=\-+@]/', $trimmed)) {
+        $text = "'" . $text;
+    }
+
+    return $text;
+}
+
+function excel_set_text_cell(object $sheet, string $cell, mixed $value): void
+{
+    $text = excel_safe_text($value);
+
+    if (class_exists(\PhpOffice\PhpSpreadsheet\Cell\DataType::class)) {
+        $sheet->setCellValueExplicit($cell, $text, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+        return;
+    }
+
+    $sheet->setCellValue($cell, $text);
 }
 
 // ── Flash messages ────────────────────────────────────────────────

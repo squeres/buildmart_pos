@@ -82,12 +82,12 @@ $sheet->getStyle('A1:M1')->applyFromArray($headerStyle);
 $row = 2;
 foreach ($products as $p) {
     $sheet->setCellValue('A' . $row, $p['id']);
-    $sheet->setCellValue('B' . $row, $p['sku']);
-    $sheet->setCellValue('C' . $row, $p['barcode'] ?? '');
-    $sheet->setCellValue('D' . $row, $p['name']);
-    $sheet->setCellValue('E' . $row, $p['category']);
-    $sheet->setCellValue('F' . $row, $p['brand'] ?? '');
-    $sheet->setCellValue('G' . $row, $p['unit']);
+    excel_set_text_cell($sheet, 'B' . $row, $p['sku']);
+    excel_set_text_cell($sheet, 'C' . $row, $p['barcode'] ?? '');
+    excel_set_text_cell($sheet, 'D' . $row, $p['name']);
+    excel_set_text_cell($sheet, 'E' . $row, $p['category']);
+    excel_set_text_cell($sheet, 'F' . $row, $p['brand'] ?? '');
+    excel_set_text_cell($sheet, 'G' . $row, $p['unit']);
     $sheet->setCellValueExplicit('H' . $row, (float)$p['cost_price'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC);
     $sheet->setCellValueExplicit('I' . $row, (float)$p['sale_price'], \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC);
     $sheet->setCellValueExplicit('J' . $row, (float)$p['tax_rate'],   \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_NUMERIC);

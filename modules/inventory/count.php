@@ -22,7 +22,7 @@ $canCreateProduct = Auth::can('products.create') || Auth::can('inventory.create_
 
 $extraJs = '
 <script>
-window.INVENTORY_COUNT_CONFIG = ' . json_encode([
+window.INVENTORY_COUNT_CONFIG = ' . json_for_html([
     'searchUrl' => url('modules/inventory/search_products.php'),
     'saveUrl' => url('modules/inventory/save_count.php'),
     'createProductUrl' => url('modules/products/add.php'),
@@ -53,7 +53,7 @@ window.INVENTORY_COUNT_CONFIG = ' . json_encode([
         'warehouseStock' => __('inv_count_current_stock'),
         'notePlaceholder' => __('inv_count_note_placeholder'),
     ],
-], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . ';
+]) . ';
 </script>
 <script src="' . url('assets/js/inventory-count.js') . '"></script>';
 

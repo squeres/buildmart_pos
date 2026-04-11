@@ -100,10 +100,10 @@ foreach ($rows as $row) {
     $workedSeconds = shift_worked_seconds($row);
 
     $sheet->setCellValue('A' . $rowIndex, $counter++);
-    $sheet->setCellValue('B' . $rowIndex, $day);
-    $sheet->setCellValue('C' . $rowIndex, (string)$row['cashier_name']);
-    $sheet->setCellValue('D' . $rowIndex, date_fmt((string)$row['opened_at']));
-    $sheet->setCellValue('E' . $rowIndex, shift_report_closed_label($row));
+    excel_set_text_cell($sheet, 'B' . $rowIndex, $day);
+    excel_set_text_cell($sheet, 'C' . $rowIndex, (string)$row['cashier_name']);
+    excel_set_text_cell($sheet, 'D' . $rowIndex, date_fmt((string)$row['opened_at']));
+    excel_set_text_cell($sheet, 'E' . $rowIndex, shift_report_closed_label($row));
     $sheet->setCellValue('F' . $rowIndex, $receipts);
     $sheet->setCellValue('G' . $rowIndex, $salesTotal);
     $sheet->setCellValue('H' . $rowIndex, shift_format_duration($workedSeconds));
@@ -116,7 +116,7 @@ foreach ($rows as $row) {
 
 if ($rowIndex === 2) {
     $sheet->mergeCells('A2:H2');
-    $sheet->setCellValue('A2', __('no_results'));
+    excel_set_text_cell($sheet, 'A2', __('no_results'));
     $sheet->getStyle('A2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
     $rowIndex = 3;
 }

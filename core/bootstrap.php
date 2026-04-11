@@ -36,7 +36,13 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 if (PHP_SAPI !== 'cli' && !headers_sent()) {
+    header_remove('X-Powered-By');
     header('Content-Type: text/html; charset=UTF-8');
+    header('X-Frame-Options: SAMEORIGIN');
+    header('X-Content-Type-Options: nosniff');
+    header('Referrer-Policy: strict-origin-when-cross-origin');
+    header('X-Permitted-Cross-Domain-Policies: none');
+    header("Content-Security-Policy: base-uri 'self'; frame-ancestors 'self'; object-src 'none'");
 }
 
 // ── Language ───────────────────────────────────────────────────────

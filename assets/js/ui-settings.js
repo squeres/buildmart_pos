@@ -52,6 +52,15 @@ const UISettings = {
   },
 };
 
+function escHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 /* ── Drag-and-Drop for lists ─────────────────────────────────── */
 class DragList {
   constructor(container, itemSelector = '[data-key]') {
@@ -303,11 +312,11 @@ class ViewConfigurator {
     const activeCols = c.columns || allCols.map(x => x.key);
     const colRows = allCols.map(col => {
       const isOn = activeCols.includes(col.key);
-      return `<div class="column-config-row" data-key="${col.key}">
+      return `<div class="column-config-row" data-key="${escHtml(col.key)}">
         <span class="column-drag-handle">${_featherSvg('more-vertical',13)}</span>
-        <span class="column-config-label">${col.label}</span>
+        <span class="column-config-label">${escHtml(col.label)}</span>
         <label class="toggle-switch">
-          <input type="checkbox" class="col-vis-check" data-key="${col.key}" ${isOn ? 'checked' : ''}>
+          <input type="checkbox" class="col-vis-check" data-key="${escHtml(col.key)}" ${isOn ? 'checked' : ''}>
           <span class="toggle-slider"></span>
         </label>
       </div>`;
@@ -318,10 +327,10 @@ class ViewConfigurator {
     const activeFilters = c.filters ? Object.keys(c.filters) : allFilters.map(x => x.key);
     const filterRows = allFilters.map(f => {
       const isOn = activeFilters.includes(f.key);
-      return `<div class="filter-config-row" data-key="${f.key}">
-        <span class="filter-config-label">${f.label}</span>
+      return `<div class="filter-config-row" data-key="${escHtml(f.key)}">
+        <span class="filter-config-label">${escHtml(f.label)}</span>
         <label class="toggle-switch">
-          <input type="checkbox" class="filter-vis-check" data-key="${f.key}" ${isOn ? 'checked' : ''}>
+          <input type="checkbox" class="filter-vis-check" data-key="${escHtml(f.key)}" ${isOn ? 'checked' : ''}>
           <span class="toggle-slider"></span>
         </label>
       </div>`;
@@ -330,36 +339,36 @@ class ViewConfigurator {
     // Sort tab
     const sortFields = this.opts.sortFields || [];
     const sortRows = sortFields.map(f =>
-      `<option value="${f.key}" ${c.sort_by === f.key ? 'selected' : ''}>${f.label}</option>`
+      `<option value="${escHtml(f.key)}" ${c.sort_by === f.key ? 'selected' : ''}>${escHtml(f.label)}</option>`
     ).join('');
 
     // View mode tab
     const viewModes = this.opts.viewModes || [];
     const vmHtml = viewModes.map(vm =>
-      `<button class="view-switcher-btn ${c.view_mode === vm.key ? 'active' : ''}" data-vm="${vm.key}" type="button">
-        ${_featherSvg(vm.icon, 14)} ${vm.label}
+      `<button class="view-switcher-btn ${c.view_mode === vm.key ? 'active' : ''}" data-vm="${escHtml(vm.key)}" type="button">
+        ${_featherSvg(vm.icon, 14)} ${escHtml(vm.label)}
       </button>`
     ).join('');
 
     const tabs = [];
     const panels = [];
     if (allCols.length) {
-      tabs.push(`<button class="ui-drawer-tab active" data-panel="vcPanelCols">${s.tabColumns || 'Columns'}</button>`);
+      tabs.push(`<button class="ui-drawer-tab active" data-panel="vcPanelCols">${escHtml(s.tabColumns || 'Columns')}</button>`);
       panels.push(`<div class="ui-drawer-tab-panel active" id="vcPanelCols">
-        <div class="ui-section-title">${s.dragToReorder || 'Drag to reorder'}</div>
+        <div class="ui-section-title">${escHtml(s.dragToReorder || 'Drag to reorder')}</div>
         <div id="vcColList" class="column-config-list">${colRows}</div>
       </div>`);
     }
     if (allFilters.length) {
-      tabs.push(`<button class="ui-drawer-tab" data-panel="vcPanelFilters">${s.tabFilters || 'Filters'}</button>`);
+      tabs.push(`<button class="ui-drawer-tab" data-panel="vcPanelFilters">${escHtml(s.tabFilters || 'Filters')}</button>`);
       panels.push(`<div class="ui-drawer-tab-panel" id="vcPanelFilters">
         <div class="filter-config-list">${filterRows}</div>
       </div>`);
     }
     if (sortFields.length) {
-      tabs.push(`<button class="ui-drawer-tab" data-panel="vcPanelSort">${s.tabSort || 'Sorting'}</button>`);
+      tabs.push(`<button class="ui-drawer-tab" data-panel="vcPanelSort">${escHtml(s.tabSort || 'Sorting')}</button>`);
       panels.push(`<div class="ui-drawer-tab-panel" id="vcPanelSort">
-        <div class="ui-section-title">${s.sortBy || 'Sort by'}</div>
+        <div class="ui-section-title">${escHtml(s.sortBy || 'Sort by')}</div>
         <div class="sort-controls">
           <select id="vcSortBy" class="sort-select">${sortRows}</select>
           <button id="vcSortDir" class="sort-dir-btn" data-dir="${c.sort_dir || 'asc'}" type="button">
@@ -369,27 +378,27 @@ class ViewConfigurator {
           </button>
         </div>
         ${this.opts.showPerPage !== false ? `
-        <div class="ui-section-title" style="margin-top:14px">${s.perPage || 'Items per page'}</div>
+        <div class="ui-section-title" style="margin-top:14px">${escHtml(s.perPage || 'Items per page')}</div>
         <select id="vcPerPage" class="sort-select" style="width:100%">
           ${[15,20,30,50,100].map(n => `<option value="${n}" ${(c.per_page||30)==n?'selected':''}>${n}</option>`).join('')}
         </select>` : ''}
       </div>`);
     }
     if (viewModes.length) {
-      tabs.push(`<button class="ui-drawer-tab" data-panel="vcPanelView">${s.tabView || 'View'}</button>`);
+      tabs.push(`<button class="ui-drawer-tab" data-panel="vcPanelView">${escHtml(s.tabView || 'View')}</button>`);
       panels.push(`<div class="ui-drawer-tab-panel" id="vcPanelView">
-        <div class="ui-section-title">${s.viewMode || 'View mode'}</div>
+        <div class="ui-section-title">${escHtml(s.viewMode || 'View mode')}</div>
         <div class="view-switcher" style="width:100%;justify-content:stretch" id="vcViewModes">${vmHtml}</div>
       </div>`);
     }
     // Presets tab always
-    tabs.push(`<button class="ui-drawer-tab" data-panel="vcPanelPresets">${s.tabPresets || 'Presets'}</button>`);
+    tabs.push(`<button class="ui-drawer-tab" data-panel="vcPanelPresets">${escHtml(s.tabPresets || 'Presets')}</button>`);
     panels.push(`<div class="ui-drawer-tab-panel" id="vcPanelPresets">
       <div id="vcPresetList" class="presets-list"></div>
-      <div class="ui-section-title">${s.saveAsPreset || 'Save as preset'}</div>
+      <div class="ui-section-title">${escHtml(s.saveAsPreset || 'Save as preset')}</div>
       <div class="preset-save-row">
         <input id="vcPresetName" type="text" placeholder="${s.presetNamePh || 'Preset name…'}">
-        <button id="vcSavePreset" class="btn btn-secondary btn-sm" type="button">${s.save || 'Save'}</button>
+        <button id="vcSavePreset" class="btn btn-secondary btn-sm" type="button">${escHtml(s.save || 'Save')}</button>
       </div>
     </div>`);
 
@@ -397,7 +406,7 @@ class ViewConfigurator {
     <div class="ui-drawer-overlay"></div>
     <div class="ui-drawer-panel">
       <div class="ui-drawer-header">
-        <h3>${s.configureView || 'Configure view'}</h3>
+        <h3>${escHtml(s.configureView || 'Configure view')}</h3>
         <button class="ui-drawer-close" type="button">${_featherSvg('x', 18)}</button>
       </div>
       <div class="ui-drawer-body">
@@ -405,8 +414,8 @@ class ViewConfigurator {
         ${panels.join('')}
       </div>
       <div class="ui-drawer-footer">
-        <button id="vcReset" class="btn btn-secondary btn-sm" type="button">${_featherSvg('rotate-ccw',13)} ${s.restoreDefaults || 'Reset'}</button>
-        <button id="vcApply" class="btn btn-primary btn-sm" type="button">${_featherSvg('check',13)} ${s.apply || 'Apply'}</button>
+        <button id="vcReset" class="btn btn-secondary btn-sm" type="button">${_featherSvg('rotate-ccw',13)} ${escHtml(s.restoreDefaults || 'Reset')}</button>
+        <button id="vcApply" class="btn btn-primary btn-sm" type="button">${_featherSvg('check',13)} ${escHtml(s.apply || 'Apply')}</button>
       </div>
     </div>`;
   }
@@ -504,13 +513,13 @@ class ViewConfigurator {
     const d = await UISettings.listPresets(this.module);
     if (!d.ok) return;
     list.innerHTML = d.presets.map(p => `
-      <div class="preset-row" data-id="${p.id}">
-        <span class="preset-scope-badge preset-scope-${p.scope_type}">${p.scope_type}</span>
-        <span class="preset-name">${p.name}</span>
-        ${p.creator_name ? `<span class="preset-creator">${p.creator_name}</span>` : ''}
-        ${p.scope_type === 'user' ? `<div class="preset-actions"><button class="preset-action-btn delete" title="${window._uiStrings?.deleteLabel || ''}">${_featherSvg('trash-2',12)}</button></div>` : ''}
+      <div class="preset-row" data-id="${escHtml(p.id)}">
+        <span class="preset-scope-badge preset-scope-${escHtml(p.scope_type)}">${escHtml(p.scope_type)}</span>
+        <span class="preset-name">${escHtml(p.name)}</span>
+        ${p.creator_name ? `<span class="preset-creator">${escHtml(p.creator_name)}</span>` : ''}
+        ${p.scope_type === 'user' ? `<div class="preset-actions"><button class="preset-action-btn delete" title="${escHtml(window._uiStrings?.deleteLabel || '')}">${_featherSvg('trash-2',12)}</button></div>` : ''}
       </div>
-    `).join('') || `<p style="font-size:12px;color:#888;text-align:center;padding:12px 0">${window._uiStrings?.noPresets || 'No presets saved'}</p>`;
+    `).join('') || `<p style="font-size:12px;color:#888;text-align:center;padding:12px 0">${escHtml(window._uiStrings?.noPresets || 'No presets saved')}</p>`;
   }
 }
 

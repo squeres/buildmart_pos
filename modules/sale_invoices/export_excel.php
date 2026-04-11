@@ -21,12 +21,12 @@ function si_ru_plural_x(int $value, array $forms): string
 
 function si_ru_triplet_x(int $value, string $gender = 'm'): string
 {
-    $hundreds = ['', 'сто', 'двести', 'триста', 'четыреста', 'пятьсот', 'шестьсот', 'семьсот', 'восемьсот', 'девятьсот'];
-    $tens = ['', 'десять', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
-    $teens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
+    $hundreds = ['', 'Р РЋР С“Р РЋРІР‚С™Р В РЎвЂў', 'Р В РўвЂР В Р вЂ Р В Р’ВµР РЋР С“Р РЋРІР‚С™Р В РЎвЂ', 'Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂР РЋР С“Р РЋРІР‚С™Р В Р’В°', 'Р РЋРІР‚РЋР В Р’ВµР РЋРІР‚С™Р РЋРІР‚в„–Р РЋР вЂљР В Р’ВµР РЋР С“Р РЋРІР‚С™Р В Р’В°', 'Р В РЎвЂ”Р РЋР РЏР РЋРІР‚С™Р РЋР Р‰Р РЋР С“Р В РЎвЂўР РЋРІР‚С™', 'Р РЋРІвЂљВ¬Р В Р’ВµР РЋР С“Р РЋРІР‚С™Р РЋР Р‰Р РЋР С“Р В РЎвЂўР РЋРІР‚С™', 'Р РЋР С“Р В Р’ВµР В РЎВР РЋР Р‰Р РЋР С“Р В РЎвЂўР РЋРІР‚С™', 'Р В Р вЂ Р В РЎвЂўР РЋР С“Р В Р’ВµР В РЎВР РЋР Р‰Р РЋР С“Р В РЎвЂўР РЋРІР‚С™', 'Р В РўвЂР В Р’ВµР В Р вЂ Р РЋР РЏР РЋРІР‚С™Р РЋР Р‰Р РЋР С“Р В РЎвЂўР РЋРІР‚С™'];
+    $tens = ['', 'Р В РўвЂР В Р’ВµР РЋР С“Р РЋР РЏР РЋРІР‚С™Р РЋР Р‰', 'Р В РўвЂР В Р вЂ Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂР В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р РЋР С“Р В РЎвЂўР РЋР вЂљР В РЎвЂўР В РЎвЂќ', 'Р В РЎвЂ”Р РЋР РЏР РЋРІР‚С™Р РЋР Р‰Р В РўвЂР В Р’ВµР РЋР С“Р РЋР РЏР РЋРІР‚С™', 'Р РЋРІвЂљВ¬Р В Р’ВµР РЋР С“Р РЋРІР‚С™Р РЋР Р‰Р В РўвЂР В Р’ВµР РЋР С“Р РЋР РЏР РЋРІР‚С™', 'Р РЋР С“Р В Р’ВµР В РЎВР РЋР Р‰Р В РўвЂР В Р’ВµР РЋР С“Р РЋР РЏР РЋРІР‚С™', 'Р В Р вЂ Р В РЎвЂўР РЋР С“Р В Р’ВµР В РЎВР РЋР Р‰Р В РўвЂР В Р’ВµР РЋР С“Р РЋР РЏР РЋРІР‚С™', 'Р В РўвЂР В Р’ВµР В Р вЂ Р РЋР РЏР В Р вЂ¦Р В РЎвЂўР РЋР С“Р РЋРІР‚С™Р В РЎвЂў'];
+    $teens = ['Р В РўвЂР В Р’ВµР РЋР С“Р РЋР РЏР РЋРІР‚С™Р РЋР Р‰', 'Р В РЎвЂўР В РўвЂР В РЎвЂР В Р вЂ¦Р В Р вЂ¦Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р В РўвЂР В Р вЂ Р В Р’ВµР В Р вЂ¦Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂР В Р вЂ¦Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р РЋРІР‚РЋР В Р’ВµР РЋРІР‚С™Р РЋРІР‚в„–Р РЋР вЂљР В Р вЂ¦Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р В РЎвЂ”Р РЋР РЏР РЋРІР‚С™Р В Р вЂ¦Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р РЋРІвЂљВ¬Р В Р’ВµР РЋР С“Р РЋРІР‚С™Р В Р вЂ¦Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р РЋР С“Р В Р’ВµР В РЎВР В Р вЂ¦Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р В Р вЂ Р В РЎвЂўР РЋР С“Р В Р’ВµР В РЎВР В Р вЂ¦Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰', 'Р В РўвЂР В Р’ВµР В Р вЂ Р РЋР РЏР РЋРІР‚С™Р В Р вЂ¦Р В Р’В°Р В РўвЂР РЋРІР‚В Р В Р’В°Р РЋРІР‚С™Р РЋР Р‰'];
     $ones = [
-        'm' => ['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'],
-        'f' => ['', 'одна', 'две', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'],
+        'm' => ['', 'Р В РЎвЂўР В РўвЂР В РЎвЂР В Р вЂ¦', 'Р В РўвЂР В Р вЂ Р В Р’В°', 'Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂ', 'Р РЋРІР‚РЋР В Р’ВµР РЋРІР‚С™Р РЋРІР‚в„–Р РЋР вЂљР В Р’Вµ', 'Р В РЎвЂ”Р РЋР РЏР РЋРІР‚С™Р РЋР Р‰', 'Р РЋРІвЂљВ¬Р В Р’ВµР РЋР С“Р РЋРІР‚С™Р РЋР Р‰', 'Р РЋР С“Р В Р’ВµР В РЎВР РЋР Р‰', 'Р В Р вЂ Р В РЎвЂўР РЋР С“Р В Р’ВµР В РЎВР РЋР Р‰', 'Р В РўвЂР В Р’ВµР В Р вЂ Р РЋР РЏР РЋРІР‚С™Р РЋР Р‰'],
+        'f' => ['', 'Р В РЎвЂўР В РўвЂР В Р вЂ¦Р В Р’В°', 'Р В РўвЂР В Р вЂ Р В Р’Вµ', 'Р РЋРІР‚С™Р РЋР вЂљР В РЎвЂ', 'Р РЋРІР‚РЋР В Р’ВµР РЋРІР‚С™Р РЋРІР‚в„–Р РЋР вЂљР В Р’Вµ', 'Р В РЎвЂ”Р РЋР РЏР РЋРІР‚С™Р РЋР Р‰', 'Р РЋРІвЂљВ¬Р В Р’ВµР РЋР С“Р РЋРІР‚С™Р РЋР Р‰', 'Р РЋР С“Р В Р’ВµР В РЎВР РЋР Р‰', 'Р В Р вЂ Р В РЎвЂўР РЋР С“Р В Р’ВµР В РЎВР РЋР Р‰', 'Р В РўвЂР В Р’ВµР В Р вЂ Р РЋР РЏР РЋРІР‚С™Р РЋР Р‰'],
     ];
 
     $result = [];
@@ -46,13 +46,13 @@ function si_ru_triplet_x(int $value, string $gender = 'm'): string
 function si_ru_number_words_x(int $value): string
 {
     if ($value === 0) {
-        return 'ноль';
+        return 'Р В Р вЂ¦Р В РЎвЂўР В Р’В»Р РЋР Р‰';
     }
     $groups = [
         ['', 'm', ['', '', '']],
-        ['тысяча', 'f', ['тысяча', 'тысячи', 'тысяч']],
-        ['миллион', 'm', ['миллион', 'миллиона', 'миллионов']],
-        ['миллиард', 'm', ['миллиард', 'миллиарда', 'миллиардов']],
+        ['Р РЋРІР‚С™Р РЋРІР‚в„–Р РЋР С“Р РЋР РЏР РЋРІР‚РЋР В Р’В°', 'f', ['Р РЋРІР‚С™Р РЋРІР‚в„–Р РЋР С“Р РЋР РЏР РЋРІР‚РЋР В Р’В°', 'Р РЋРІР‚С™Р РЋРІР‚в„–Р РЋР С“Р РЋР РЏР РЋРІР‚РЋР В РЎвЂ', 'Р РЋРІР‚С™Р РЋРІР‚в„–Р РЋР С“Р РЋР РЏР РЋРІР‚РЋ']],
+        ['Р В РЎВР В РЎвЂР В Р’В»Р В Р’В»Р В РЎвЂР В РЎвЂўР В Р вЂ¦', 'm', ['Р В РЎВР В РЎвЂР В Р’В»Р В Р’В»Р В РЎвЂР В РЎвЂўР В Р вЂ¦', 'Р В РЎВР В РЎвЂР В Р’В»Р В Р’В»Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В Р’В°', 'Р В РЎВР В РЎвЂР В Р’В»Р В Р’В»Р В РЎвЂР В РЎвЂўР В Р вЂ¦Р В РЎвЂўР В Р вЂ ']],
+        ['Р В РЎВР В РЎвЂР В Р’В»Р В Р’В»Р В РЎвЂР В Р’В°Р РЋР вЂљР В РўвЂ', 'm', ['Р В РЎВР В РЎвЂР В Р’В»Р В Р’В»Р В РЎвЂР В Р’В°Р РЋР вЂљР В РўвЂ', 'Р В РЎВР В РЎвЂР В Р’В»Р В Р’В»Р В РЎвЂР В Р’В°Р РЋР вЂљР В РўвЂР В Р’В°', 'Р В РЎВР В РЎвЂР В Р’В»Р В Р’В»Р В РЎвЂР В Р’В°Р РЋР вЂљР В РўвЂР В РЎвЂўР В Р вЂ ']],
     ];
     $parts = [];
     $groupIndex = 0;
@@ -75,7 +75,7 @@ function si_amount_words_x(float $amount): string
     $whole = (int) floor($amount);
     $fraction = (int) round(($amount - $whole) * 100);
     if ($fraction === 100) { $whole++; $fraction = 0; }
-    return trim(sprintf('%s тенге %02d тиын', si_ru_number_words_x($whole), $fraction));
+    return trim(sprintf('%s Р РЋРІР‚С™Р В Р’ВµР В Р вЂ¦Р В РЎвЂ“Р В Р’Вµ %02d Р РЋРІР‚С™Р В РЎвЂР РЋРІР‚в„–Р В Р вЂ¦', si_ru_number_words_x($whole), $fraction));
 }
 
 function si_total_qty_words_x(array $items): string
@@ -116,8 +116,8 @@ $items = Database::all("SELECT * FROM sale_items WHERE sale_id=? ORDER BY id", [
 $senderName = trim((string) ($invoice['sender_legal_name_snapshot'] ?: $invoice['sender_name_snapshot']));
 $recipientName = trim((string) ($invoice['customer_company_snapshot'] ?: $invoice['customer_name_snapshot']));
 $recipientContact = trim((string) ($invoice['customer_contact_person_snapshot'] ?: $invoice['customer_name_snapshot']));
-$recipientBlock = trim(($recipientName ?: '—') . (($invoice['customer_address_snapshot'] ?? '') !== '' ? "\n" . $invoice['customer_address_snapshot'] : ''));
-$responsibleBlock = trim(($invoice['sender_responsible_name_snapshot'] ?: '—') . (($invoice['sender_responsible_position_snapshot'] ?? '') !== '' ? "\n" . $invoice['sender_responsible_position_snapshot'] : ''));
+$recipientBlock = trim(($recipientName ?: 'Р Р†Р вЂљРІР‚Сњ') . (($invoice['customer_address_snapshot'] ?? '') !== '' ? "\n" . $invoice['customer_address_snapshot'] : ''));
+$responsibleBlock = trim(($invoice['sender_responsible_name_snapshot'] ?: 'Р Р†Р вЂљРІР‚Сњ') . (($invoice['sender_responsible_position_snapshot'] ?? '') !== '' ? "\n" . $invoice['sender_responsible_position_snapshot'] : ''));
 $transportDoc = trim((string) $invoice['transport_waybill_no']);
 if (!empty($invoice['transport_waybill_date'])) {
     $transportDoc .= ($transportDoc !== '' ? ', ' : '') . date('d.m.Y', strtotime((string) $invoice['transport_waybill_date']));
@@ -153,14 +153,17 @@ if (file_exists($autoload)) {
     $sheet->getStyle('G1:I5')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_RIGHT);
 
     $sheet->mergeCells('A7:C7')->setCellValue('A7', __('invoice_org_label'));
-    $sheet->mergeCells('D7:G7')->setCellValue('D7', $senderName ?: '—');
+    $sheet->mergeCells('D7:G7')->setCellValue('D7', $senderName ?: 'Р Р†Р вЂљРІР‚Сњ');
     $sheet->setCellValue('H7', __('cust_inn'));
-    $sheet->setCellValue('I7', (string) ($invoice['sender_iin_bin_snapshot'] ?: '—'));
+    $sheet->setCellValue('I7', (string) ($invoice['sender_iin_bin_snapshot'] ?: 'Р Р†Р вЂљРІР‚Сњ'));
 
     $sheet->mergeCells('H9:H10')->setCellValue('H9', __('invoice_doc_number'));
     $sheet->mergeCells('I9:I10')->setCellValue('I9', __('invoice_doc_date'));
     $sheet->setCellValue('H11', (string) $invoice['invoice_number']);
     $sheet->setCellValue('I11', date('d.m.Y', strtotime((string) $invoice['invoice_date'])));
+    excel_set_text_cell($sheet, 'D7', $senderName ?: 'РІР‚вЂќ');
+    excel_set_text_cell($sheet, 'I7', (string) ($invoice['sender_iin_bin_snapshot'] ?: 'РІР‚вЂќ'));
+    excel_set_text_cell($sheet, 'H11', (string) $invoice['invoice_number']);
 
     $sheet->mergeCells('A13:I13')->setCellValue('A13', __('invoice_title'));
     $sheet->getStyle('A13:I13')->getFont()->setBold(true)->setSize(16);
@@ -171,14 +174,19 @@ if (file_exists($autoload)) {
     $sheet->mergeCells('E15:F15')->setCellValue('E15', __('invoice_responsible_supply'));
     $sheet->setCellValue('G15', __('invoice_transport'));
     $sheet->mergeCells('H15:I15')->setCellValue('H15', __('invoice_transport_waybill_header'));
-    $sheet->mergeCells('A16:B18')->setCellValue('A16', $senderName ?: '—');
+    $sheet->mergeCells('A16:B18')->setCellValue('A16', $senderName ?: 'Р Р†Р вЂљРІР‚Сњ');
     $sheet->mergeCells('C16:D18')->setCellValue('C16', $recipientBlock);
     $sheet->mergeCells('E16:F18')->setCellValue('E16', $responsibleBlock);
     $sheet->mergeCells('G16:G18')->setCellValue('G16', (string) ($invoice['transport_company'] ?: ''));
     $sheet->mergeCells('H16:I18')->setCellValue('H16', $transportDoc);
+    excel_set_text_cell($sheet, 'A16', $senderName ?: 'РІР‚вЂќ');
+    excel_set_text_cell($sheet, 'C16', $recipientBlock);
+    excel_set_text_cell($sheet, 'E16', $responsibleBlock);
+    excel_set_text_cell($sheet, 'G16', (string) ($invoice['transport_company'] ?: ''));
+    excel_set_text_cell($sheet, 'H16', $transportDoc);
     $sheet->getStyle('A15:I18')->getAlignment()->setWrapText(true)->setVertical(\PhpOffice\PhpSpreadsheet\Style\Alignment::VERTICAL_CENTER)->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
 
-    $sheet->mergeCells('A20:A21')->setCellValue('A20', '№');
+    $sheet->mergeCells('A20:A21')->setCellValue('A20', 'Р Р†РІР‚С›РІР‚вЂњ');
     $sheet->mergeCells('B20:B21')->setCellValue('B20', __('invoice_item_name'));
     $sheet->mergeCells('C20:C21')->setCellValue('C20', __('invoice_item_sku'));
     $sheet->mergeCells('D20:D21')->setCellValue('D20', __('lbl_unit'));
@@ -200,6 +208,9 @@ if (file_exists($autoload)) {
         $sheet->setCellValue('B' . $row, $item['product_name']);
         $sheet->setCellValue('C' . $row, $item['product_sku']);
         $sheet->setCellValue('D' . $row, unit_label((string) $item['unit']));
+        excel_set_text_cell($sheet, 'B' . $row, $item['product_name']);
+        excel_set_text_cell($sheet, 'C' . $row, $item['product_sku']);
+        excel_set_text_cell($sheet, 'D' . $row, unit_label((string) $item['unit']));
         $sheet->setCellValue('E' . $row, (float) $item['qty']);
         $sheet->setCellValue('F' . $row, (float) $item['qty']);
         $sheet->setCellValue('G' . $row, (float) $item['unit_price']);
@@ -225,16 +236,20 @@ if (file_exists($autoload)) {
     $sheet->mergeCells('D' . $row . ':E' . $row)->setCellValue('D' . $row, mb_convert_case(si_total_qty_words_x($items), MB_CASE_TITLE, 'UTF-8'));
     $sheet->mergeCells('F' . $row . ':G' . $row)->setCellValue('F' . $row, __('invoice_total_amount_words_label'));
     $sheet->mergeCells('H' . $row . ':I' . $row)->setCellValue('H' . $row, mb_convert_case(si_amount_words_x((float) $invoice['total']), MB_CASE_TITLE, 'UTF-8'));
+    excel_set_text_cell($sheet, 'D' . $row, mb_convert_case(si_total_qty_words_x($items), MB_CASE_TITLE, 'UTF-8'));
+    excel_set_text_cell($sheet, 'H' . $row, mb_convert_case(si_amount_words_x((float) $invoice['total']), MB_CASE_TITLE, 'UTF-8'));
 
     $row += 2;
     $sheet->setCellValue('A' . $row, __('invoice_release_authorized'));
     $sheet->setCellValue('B' . $row, '');
     $sheet->setCellValue('C' . $row, '');
-    $sheet->setCellValue('D' . $row, (string) ($invoice['sender_responsible_name_snapshot'] ?: '—'));
+    $sheet->setCellValue('D' . $row, (string) ($invoice['sender_responsible_name_snapshot'] ?: 'Р Р†Р вЂљРІР‚Сњ'));
     $sheet->setCellValue('E' . $row, __('invoice_by_power'));
     $sheet->setCellValue('F' . $row, (string) ($invoice['power_of_attorney_no'] ?: ''));
     $sheet->setCellValue('G' . $row, __('invoice_from_date'));
     $sheet->mergeCells('H' . $row . ':I' . $row)->setCellValue('H' . $row, $invoice['power_of_attorney_date'] ? date('d.m.Y', strtotime((string) $invoice['power_of_attorney_date'])) : '');
+    excel_set_text_cell($sheet, 'D' . $row, (string) ($invoice['sender_responsible_name_snapshot'] ?: 'РІР‚вЂќ'));
+    excel_set_text_cell($sheet, 'F' . $row, (string) ($invoice['power_of_attorney_no'] ?: ''));
 
     $row++;
     $sheet->setCellValue('B' . $row, __('invoice_position'));
@@ -246,21 +261,24 @@ if (file_exists($autoload)) {
     $sheet->setCellValue('A' . $row, __('invoice_chief_accountant'));
     $sheet->setCellValue('B' . $row, '');
     $sheet->mergeCells('C' . $row . ':D' . $row)->setCellValue('C' . $row, (string) ($invoice['sender_chief_accountant_snapshot'] ?: __('invoice_not_provided')));
+    excel_set_text_cell($sheet, 'C' . $row, (string) ($invoice['sender_chief_accountant_snapshot'] ?: __('invoice_not_provided')));
 
     $row++;
     $sheet->setCellValue('B' . $row, __('invoice_signature'));
     $sheet->mergeCells('C' . $row . ':D' . $row)->setCellValue('C' . $row, __('invoice_signature_name'));
 
     $row++;
-    $sheet->setCellValue('A' . $row, 'М.П.');
+    $sheet->setCellValue('A' . $row, 'Р В РЎС™.Р В РЎСџ.');
 
     $row++;
     $sheet->setCellValue('A' . $row, __('invoice_released_by'));
     $sheet->setCellValue('B' . $row, '');
-    $sheet->mergeCells('C' . $row . ':D' . $row)->setCellValue('C' . $row, (string) ($invoice['sender_released_by_snapshot'] ?: '—'));
+    $sheet->mergeCells('C' . $row . ':D' . $row)->setCellValue('C' . $row, (string) ($invoice['sender_released_by_snapshot'] ?: 'Р Р†Р вЂљРІР‚Сњ'));
     $sheet->setCellValue('E' . $row, __('invoice_received_by'));
     $sheet->setCellValue('F' . $row, '');
-    $sheet->mergeCells('G' . $row . ':I' . $row)->setCellValue('G' . $row, $recipientContact ?: '—');
+    $sheet->mergeCells('G' . $row . ':I' . $row)->setCellValue('G' . $row, $recipientContact ?: 'Р Р†Р вЂљРІР‚Сњ');
+    excel_set_text_cell($sheet, 'C' . $row, (string) ($invoice['sender_released_by_snapshot'] ?: 'РІР‚вЂќ'));
+    excel_set_text_cell($sheet, 'G' . $row, $recipientContact ?: 'РІР‚вЂќ');
 
     $row++;
     $sheet->setCellValue('B' . $row, __('invoice_signature'));
@@ -316,15 +334,15 @@ th { text-align: center; }
 <table>
   <tr>
     <td style="width:30%" class="center"><?= e(__('invoice_org_label')) ?></td>
-    <td style="width:44%" class="center"><strong><?= e($senderName ?: '—') ?></strong></td>
+    <td style="width:44%" class="center"><strong><?= e(excel_safe_text($senderName ?: 'вЂ”')) ?></strong></td>
     <td style="width:10%" class="center"><?= e(__('cust_inn')) ?></td>
-    <td style="width:16%" class="center"><strong><?= e($invoice['sender_iin_bin_snapshot'] ?: '—') ?></strong></td>
+    <td style="width:16%" class="center"><strong><?= e(excel_safe_text($invoice['sender_iin_bin_snapshot'] ?: 'вЂ”')) ?></strong></td>
   </tr>
 </table>
 <table style="margin-top:8px">
   <tr>
     <td style="border:none;width:78%"></td>
-    <td class="center" style="width:11%"><strong><?= e(__('invoice_doc_number')) ?></strong><br><?= e($invoice['invoice_number']) ?></td>
+    <td class="center" style="width:11%"><strong><?= e(__('invoice_doc_number')) ?></strong><br><?= e(excel_safe_text($invoice['invoice_number'])) ?></td>
     <td class="center" style="width:11%"><strong><?= e(__('invoice_doc_date')) ?></strong><br><?= e(date('d.m.Y', strtotime((string) $invoice['invoice_date']))) ?></td>
   </tr>
 </table>
@@ -338,16 +356,16 @@ th { text-align: center; }
     <th style="width:19%"><?= e(__('invoice_transport_waybill_header')) ?></th>
   </tr>
   <tr>
-    <td><?= nl2br(e($senderName ?: '—')) ?></td>
-    <td><?= nl2br(e($recipientBlock)) ?></td>
-    <td><?= nl2br(e($responsibleBlock)) ?></td>
-    <td><?= nl2br(e($invoice['transport_company'] ?: '')) ?></td>
-    <td><?= nl2br(e($transportDoc ?: '')) ?></td>
+    <td><?= nl2br(e(excel_safe_text($senderName ?: 'вЂ”'))) ?></td>
+    <td><?= nl2br(e(excel_safe_text($recipientBlock))) ?></td>
+    <td><?= nl2br(e(excel_safe_text($responsibleBlock))) ?></td>
+    <td><?= nl2br(e(excel_safe_text($invoice['transport_company'] ?: ''))) ?></td>
+    <td><?= nl2br(e(excel_safe_text($transportDoc ?: ''))) ?></td>
   </tr>
 </table>
 <table style="margin-top:10px">
   <tr>
-    <th rowspan="2" style="width:5%">№</th>
+    <th rowspan="2" style="width:5%">Р Р†РІР‚С›РІР‚вЂњ</th>
     <th rowspan="2" style="width:25%"><?= e(__('invoice_item_name')) ?></th>
     <th rowspan="2" style="width:9%"><?= e(__('invoice_item_sku')) ?></th>
     <th rowspan="2" style="width:6%"><?= e(__('lbl_unit')) ?></th>
@@ -364,9 +382,9 @@ th { text-align: center; }
   <?php $sumQty = 0.0; foreach ($items as $index => $item): $sumQty += (float) $item['qty']; ?>
     <tr>
       <td class="center"><?= $index + 1 ?></td>
-      <td><?= e($item['product_name']) ?></td>
-      <td class="center"><?= e($item['product_sku']) ?></td>
-      <td class="center"><?= e(unit_label((string) $item['unit'])) ?></td>
+      <td><?= e(excel_safe_text($item['product_name'])) ?></td>
+      <td class="center"><?= e(excel_safe_text($item['product_sku'])) ?></td>
+      <td class="center"><?= e(excel_safe_text(unit_label((string) $item['unit']))) ?></td>
       <td class="num"><?= fmtQty((float) $item['qty']) ?></td>
       <td class="num"><?= fmtQty((float) $item['qty']) ?></td>
       <td class="num"><?= e(si_money_plain_x((float) $item['unit_price'])) ?></td>

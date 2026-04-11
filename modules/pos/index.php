@@ -68,70 +68,90 @@ $customers = Database::all(
 
 $currencySymbol = currency_symbol();
 $taxRate        = (float)setting('default_tax_rate', 20);
-$initialShiftExtensionOptions = json_encode(array_values($openShiftExtensionState['request_options'] ?? []), JSON_UNESCAPED_UNICODE);
 $initialShiftExtensionRemaining = (int)($openShiftExtensionState['remaining_minutes'] ?? 0);
 $shiftCloseUrl = ($openShift && $canCloseShift) ? url('modules/shifts/close.php?id=' . (int)$openShift['id']) : '';
 $shiftExtensionUrl = 'modules/shifts/extension_request.php';
+$posBootstrap = [
+    'baseUrl' => BASE_URL,
+    'currencySymbol' => $currencySymbol,
+    'csrfToken' => csrf_token(),
+    'warehouseId' => $activeWhId,
+    'warehouseName' => (string)($activeWh['name'] ?? ''),
+    'shiftRequired' => (bool)$requireShift,
+    'hasOpenShift' => (bool)$openShift,
+    'canOpenShift' => (bool)$canOpenShift,
+    'activeShiftId' => (int)($openShift['id'] ?? 0),
+    'shiftExtensionUrl' => $shiftExtensionUrl,
+    'shiftCloseUrl' => $shiftCloseUrl,
+    'shiftExtensionOptions' => array_values($openShiftExtensionState['request_options'] ?? []),
+    'shiftExtensionRemaining' => $initialShiftExtensionRemaining,
+    'canRequestShiftExtension' => (bool)($canRequestShiftExtension && !empty($openShiftExtensionState['ok'])),
+    'canSell' => (bool)$canSell,
+    'allowNegativeStock' => (bool)$allowNegativeStock,
+    'lang' => [
+        'cart_empty' => _r('pos_cart_empty'),
+        'pos_cart_empty' => _r('pos_cart_empty'),
+        'out_of_stock' => _r('out_of_stock'),
+        'negative_stock' => _r('negative_stock'),
+        'low_stock' => _r('low_stock'),
+        'err_validation' => _r('err_validation'),
+        'prod_not_found' => _r('prod_not_found'),
+        'insufficient_stock' => _r('pos_insufficient_stock'),
+        'pos_insufficient_stock' => _r('pos_insufficient_stock'),
+        'sale_complete' => _r('pos_sale_complete'),
+        'pos_sale_complete' => _r('pos_sale_complete'),
+        'process_payment' => _r('pos_process_payment'),
+        'no_results' => _r('no_results'),
+        'loading' => _r('loading'),
+        'pos_discount_item' => _r('pos_discount_item'),
+        'pos_discount_receipt' => _r('pos_discount_receipt'),
+        'pos_discount_percent' => _r('pos_discount_percent'),
+        'pos_discount_amount' => _r('pos_discount_amount'),
+        'pos_discount_clear' => _r('pos_discount_clear'),
+        'pos_discount_apply_all' => _r('pos_discount_apply_all'),
+        'pos_discount_skip_discounted' => _r('pos_discount_skip_discounted'),
+        'pos_discount_conflict' => _r('pos_discount_conflict'),
+        'pos_discount_value' => _r('pos_discount_value'),
+        'pos_discount_none' => _r('pos_discount_none'),
+        'pos_add_unit_line' => _r('pos_add_unit_line'),
+        'pos_unit_relations' => _r('pos_unit_relations'),
+        'pos_remove_line' => _r('pos_remove_line'),
+        'pos_remove_product' => _r('pos_remove_product'),
+        'pos_unit_duplicate' => _r('pos_unit_duplicate'),
+        'pos_all_units_added' => _r('pos_all_units_added'),
+        'pos_no_shift' => _r('pos_no_shift'),
+        'auth_no_permission' => _r('auth_no_permission'),
+        'pos_legal_docs_ready' => _r('pos_legal_docs_ready'),
+        'pos_customer_legal' => _r('pos_customer_legal'),
+        'shift_opened' => _r('shift_opened'),
+        'shift_already_open' => _r('shift_already_open'),
+        'shift_sales_extension_required' => _r('shift_sales_extension_required'),
+        'shift_extension_pending' => _r('shift_extension_pending'),
+    ],
+    'productSearchUrl' => url('modules/pos/search_products.php'),
+];
 
 $extraJs = '
 <script>
-window.BASE_URL = "' . BASE_URL . '";
-window.CURRENCY_SYMBOL = "' . e($currencySymbol) . '";
-window.CSRF_TOKEN       = "' . csrf_token() . '";
-window.POS_WAREHOUSE_ID   = ' . $activeWhId . ';
-window.POS_WAREHOUSE_NAME = "' . addslashes(e($activeWh['name'] ?? '')) . '";
-window.POS_SHIFT_REQUIRED = ' . ($requireShift ? 'true' : 'false') . ';
-window.POS_HAS_OPEN_SHIFT = ' . ($openShift ? 'true' : 'false') . ';
-window.POS_CAN_OPEN_SHIFT = ' . ($canOpenShift ? 'true' : 'false') . ';
-window.POS_ACTIVE_SHIFT_ID = ' . (int)($openShift['id'] ?? 0) . ';
-window.POS_SHIFT_EXTENSION_URL = "' . addslashes($shiftExtensionUrl) . '";
-window.POS_SHIFT_CLOSE_URL = "' . addslashes($shiftCloseUrl) . '";
-window.POS_SHIFT_EXTENSION_OPTIONS = ' . $initialShiftExtensionOptions . ';
-window.POS_SHIFT_EXTENSION_REMAINING = ' . $initialShiftExtensionRemaining . ';
-window.POS_CAN_REQUEST_SHIFT_EXTENSION = ' . ($canRequestShiftExtension && !empty($openShiftExtensionState['ok']) ? 'true' : 'false') . ';
-window.POS_CAN_SELL = ' . ($canSell ? 'true' : 'false') . ';
-window.POS_ALLOW_NEGATIVE_STOCK = ' . ($allowNegativeStock ? 'true' : 'false') . ';
-window.LANG = {
-  cart_empty:           "' . _r('pos_cart_empty') . '",
-  pos_cart_empty:       "' . addslashes(_r('pos_cart_empty')) . '",
-  out_of_stock:         "' . _r('out_of_stock') . '",
-  negative_stock:       "' . _r('negative_stock') . '",
-  low_stock:            "' . _r('low_stock') . '",
-  err_validation:       "' . addslashes(_r('err_validation')) . '",
-  prod_not_found:       "' . addslashes(_r('prod_not_found')) . '",
-  insufficient_stock:   "' . addslashes(_r('pos_insufficient_stock')) . '",
-  pos_insufficient_stock: "' . addslashes(_r('pos_insufficient_stock')) . '",
-  sale_complete:        "' . _r('pos_sale_complete') . '",
-  pos_sale_complete:    "' . addslashes(_r('pos_sale_complete')) . '",
-  process_payment:      "' . _r('pos_process_payment') . '",
-  no_results:           "' . _r('no_results') . '",
-  loading:              "' . _r('loading') . '",
-  pos_discount_item:    "' . addslashes(_r('pos_discount_item')) . '",
-  pos_discount_receipt: "' . addslashes(_r('pos_discount_receipt')) . '",
-  pos_discount_percent: "' . addslashes(_r('pos_discount_percent')) . '",
-  pos_discount_amount:  "' . addslashes(_r('pos_discount_amount')) . '",
-  pos_discount_clear:   "' . addslashes(_r('pos_discount_clear')) . '",
-  pos_discount_apply_all: "' . addslashes(_r('pos_discount_apply_all')) . '",
-  pos_discount_skip_discounted: "' . addslashes(_r('pos_discount_skip_discounted')) . '",
-  pos_discount_conflict: "' . addslashes(_r('pos_discount_conflict')) . '",
-  pos_discount_value:   "' . addslashes(_r('pos_discount_value')) . '",
-  pos_discount_none:    "' . addslashes(_r('pos_discount_none')) . '",
-  pos_add_unit_line:    "' . addslashes(_r('pos_add_unit_line')) . '",
-  pos_unit_relations:   "' . addslashes(_r('pos_unit_relations')) . '",
-  pos_remove_line:      "' . addslashes(_r('pos_remove_line')) . '",
-  pos_remove_product:   "' . addslashes(_r('pos_remove_product')) . '",
-  pos_unit_duplicate:   "' . addslashes(_r('pos_unit_duplicate')) . '",
-  pos_all_units_added:  "' . addslashes(_r('pos_all_units_added')) . '",
-  pos_no_shift:         "' . addslashes(_r('pos_no_shift')) . '",
-  auth_no_permission:   "' . addslashes(_r('auth_no_permission')) . '",
-  pos_legal_docs_ready: "' . addslashes(_r('pos_legal_docs_ready')) . '",
-  pos_customer_legal:   "' . addslashes(_r('pos_customer_legal')) . '",
-  shift_opened:         "' . addslashes(_r('shift_opened')) . '",
-  shift_already_open:   "' . addslashes(_r('shift_already_open')) . '",
-  shift_sales_extension_required: "' . addslashes(_r('shift_sales_extension_required')) . '",
-  shift_extension_pending: "' . addslashes(_r('shift_extension_pending')) . '"
-};
-window.POS_PRODUCT_SEARCH_URL = "' . addslashes(url('modules/pos/search_products.php')) . '";
+window.POS_BOOTSTRAP = ' . json_for_html($posBootstrap) . ';
+window.BASE_URL = window.POS_BOOTSTRAP.baseUrl;
+window.CURRENCY_SYMBOL = window.POS_BOOTSTRAP.currencySymbol;
+window.CSRF_TOKEN = window.POS_BOOTSTRAP.csrfToken;
+window.POS_WAREHOUSE_ID = window.POS_BOOTSTRAP.warehouseId;
+window.POS_WAREHOUSE_NAME = window.POS_BOOTSTRAP.warehouseName;
+window.POS_SHIFT_REQUIRED = window.POS_BOOTSTRAP.shiftRequired;
+window.POS_HAS_OPEN_SHIFT = window.POS_BOOTSTRAP.hasOpenShift;
+window.POS_CAN_OPEN_SHIFT = window.POS_BOOTSTRAP.canOpenShift;
+window.POS_ACTIVE_SHIFT_ID = window.POS_BOOTSTRAP.activeShiftId;
+window.POS_SHIFT_EXTENSION_URL = window.POS_BOOTSTRAP.shiftExtensionUrl;
+window.POS_SHIFT_CLOSE_URL = window.POS_BOOTSTRAP.shiftCloseUrl;
+window.POS_SHIFT_EXTENSION_OPTIONS = window.POS_BOOTSTRAP.shiftExtensionOptions;
+window.POS_SHIFT_EXTENSION_REMAINING = window.POS_BOOTSTRAP.shiftExtensionRemaining;
+window.POS_CAN_REQUEST_SHIFT_EXTENSION = window.POS_BOOTSTRAP.canRequestShiftExtension;
+window.POS_CAN_SELL = window.POS_BOOTSTRAP.canSell;
+window.POS_ALLOW_NEGATIVE_STOCK = window.POS_BOOTSTRAP.allowNegativeStock;
+window.LANG = window.POS_BOOTSTRAP.lang;
+window.POS_PRODUCT_SEARCH_URL = window.POS_BOOTSTRAP.productSearchUrl;
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", () => {

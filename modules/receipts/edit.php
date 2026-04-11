@@ -686,27 +686,27 @@ include __DIR__ . '/../../views/layouts/header.php';
 <script>
 feather.replace();
 
-const PRODUCTS = <?= json_encode(array_values($productsJs), JSON_UNESCAPED_UNICODE) ?>;
+const PRODUCTS = <?= json_for_html(array_values($productsJs)) ?>;
 const PROD_MAP = {};
 PRODUCTS.forEach((product) => {
   PROD_MAP[product.id] = product;
 });
 
-const AJAX_URL = <?= json_encode(url('modules/receipts/ajax_create.php')) ?>;
-const PRODUCT_SEARCH_URL = <?= json_encode(url('modules/receipts/search_products.php')) ?>;
+const AJAX_URL = <?= json_for_html(url('modules/receipts/ajax_create.php')) ?>;
+const PRODUCT_SEARCH_URL = <?= json_for_html(url('modules/receipts/search_products.php')) ?>;
 const CSRF_TOKEN = document.querySelector('input[name="_token"]')?.value || '';
-const UNIT_PRESET_AJAX_URL = <?= json_encode(url('modules/common/ajax_units.php')) ?>;
-const UNIT_PRESETS = <?= json_encode(array_values(array_map(static fn($row) => ['label' => (string)$row['unit_label'], 'storageCode' => unit_storage_code_from_label((string)$row['unit_label'])], $unitPresets)), JSON_UNESCAPED_UNICODE) ?>;
+const UNIT_PRESET_AJAX_URL = <?= json_for_html(url('modules/common/ajax_units.php')) ?>;
+const UNIT_PRESETS = <?= json_for_html(array_values(array_map(static fn($row) => ['label' => (string)$row['unit_label'], 'storageCode' => unit_storage_code_from_label((string)$row['unit_label'])], $unitPresets))) ?>;
 const RECEIPT_SEARCH_STRINGS = {
-  recentTitle: <?= json_encode(__('gr_product_recent')) ?>,
-  recentHint: <?= json_encode(__('gr_product_recent_hint')) ?>,
-  searchMin: <?= json_encode(__('gr_product_search_min')) ?>,
-  noResults: <?= json_encode(__('gr_product_search_no_results')) ?>,
-  pickerEmpty: <?= json_encode(__('gr_product_picker_empty')) ?>,
-  sku: <?= json_encode(__('lbl_sku')) ?>,
-  barcode: <?= json_encode(__('lbl_barcode')) ?>,
-  aliases: <?= json_encode(__('inv_count_aliases')) ?>,
-  selected: <?= json_encode(__('gr_product_selected')) ?>,
+  recentTitle: <?= json_for_html(__('gr_product_recent')) ?>,
+  recentHint: <?= json_for_html(__('gr_product_recent_hint')) ?>,
+  searchMin: <?= json_for_html(__('gr_product_search_min')) ?>,
+  noResults: <?= json_for_html(__('gr_product_search_no_results')) ?>,
+  pickerEmpty: <?= json_for_html(__('gr_product_picker_empty')) ?>,
+  sku: <?= json_for_html(__('lbl_sku')) ?>,
+  barcode: <?= json_for_html(__('lbl_barcode')) ?>,
+  aliases: <?= json_for_html(__('inv_count_aliases')) ?>,
+  selected: <?= json_for_html(__('gr_product_selected')) ?>,
 };
 
 let rowIndex = <?= max(count($items) - 1, -1) ?>;
@@ -1687,7 +1687,7 @@ document.getElementById('btn-supplier-save')?.addEventListener('click', async fu
   clearError('supplier-error');
   const name = document.getElementById('sup-name').value.trim();
   if (!name) {
-    showError('supplier-error', <?= json_encode(_r('lbl_required') . ': ' . _r('lbl_name')) ?>);
+    showError('supplier-error', <?= json_for_html(_r('lbl_required') . ': ' . _r('lbl_name')) ?>);
     return;
   }
   setLoading(this, true);
@@ -1817,7 +1817,7 @@ productSaveBtn?.addEventListener('click', async function () {
   clearError('product-error');
     const productName = document.getElementById('prod-name').value.trim();
   if (!productName) {
-    showError('product-error', <?= json_encode(_r('lbl_required') . ': ' . _r('lbl_name')) ?>);
+    showError('product-error', <?= json_for_html(_r('lbl_required') . ': ' . _r('lbl_name')) ?>);
     return;
   }
 

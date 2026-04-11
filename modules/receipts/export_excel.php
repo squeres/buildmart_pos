@@ -69,23 +69,29 @@ function exportXlsx(array $doc, array $items, string $orgName, string $docTitle,
     $sheet->setCellValue('A1', $orgName);
     $sheet->getStyle('A1')->applyFromArray($bold);
     $sheet->mergeCells('A1:G1');
+    excel_set_text_cell($sheet, 'A1', $orgName);
 
     // Row 2: Doc title + number
     $sheet->setCellValue('A2', $docTitle . ' № ' . $doc['doc_no'] . ' | ' . _r('lbl_date') . ': ' . date_fmt($doc['doc_date'], 'd.m.Y'));
     $sheet->getStyle('A2')->applyFromArray(array_merge($bold, ['font' => ['bold' => true, 'size' => 13]]));
     $sheet->mergeCells('A2:G2');
+    excel_set_text_cell($sheet, 'A2', $docTitle . ' № ' . $doc['doc_no'] . ' | ' . _r('lbl_date') . ': ' . date_fmt($doc['doc_date'], 'd.m.Y'));
 
     // Row 3: Supplier / Warehouse
     $sheet->setCellValue('A3', _r('gr_supplier') . ': ' . ($doc['supplier_name'] ?? '—'));
     $sheet->setCellValue('E3', _r('gr_warehouse') . ': ' . ($doc['warehouse_name'] ?? '—'));
     $sheet->mergeCells('A3:D3');
     $sheet->mergeCells('E3:G3');
+    excel_set_text_cell($sheet, 'A3', _r('gr_supplier') . ': ' . ($doc['supplier_name'] ?? '—'));
+    excel_set_text_cell($sheet, 'E3', _r('gr_warehouse') . ': ' . ($doc['warehouse_name'] ?? '—'));
 
     // Row 4: Accepted by / Delivered by
     $sheet->setCellValue('A4', _r('gr_accepted_by') . ': ' . ($doc['accepted_by'] ?? ''));
     $sheet->setCellValue('E4', _r('gr_delivered_by') . ': ' . ($doc['delivered_by'] ?? ''));
     $sheet->mergeCells('A4:D4');
     $sheet->mergeCells('E4:G4');
+    excel_set_text_cell($sheet, 'A4', _r('gr_accepted_by') . ': ' . ($doc['accepted_by'] ?? ''));
+    excel_set_text_cell($sheet, 'E4', _r('gr_delivered_by') . ': ' . ($doc['delivered_by'] ?? ''));
 
     // Row 6: Table header
     $headerRow = 6;
@@ -100,8 +106,8 @@ function exportXlsx(array $doc, array $items, string $orgName, string $docTitle,
     $row = $headerRow + 1;
     foreach ($items as $n => $item) {
         $sheet->setCellValue('A' . $row, $n + 1);
-        $sheet->setCellValue('B' . $row, $item['name']);
-        $sheet->setCellValue('C' . $row, unit_label($item['unit']));
+        excel_set_text_cell($sheet, 'B' . $row, $item['name']);
+        excel_set_text_cell($sheet, 'C' . $row, unit_label($item['unit']));
         $sheet->setCellValue('D' . $row, (float)$item['qty']);
         $sheet->setCellValue('E' . $row, (float)$item['unit_price']);
         $sheet->setCellValue('F' . $row, (float)$item['tax_rate']);
@@ -177,10 +183,10 @@ function exportHtmlXls(array $doc, array $items, string $orgName, string $docTit
   h2 { font-size: 13pt; }
 </style></head>
 <body>
-<p><?= e($orgName) ?></p>
-<h2><?= e($docTitle) ?> № <?= e($doc['doc_no']) ?> | <?= __('lbl_date') ?>: <?= date_fmt($doc['doc_date'], 'd.m.Y') ?></h2>
-<p><?= __('gr_supplier') ?>: <?= e($doc['supplier_name'] ?? '—') ?> &nbsp;&nbsp; <?= __('gr_warehouse') ?>: <?= e($doc['warehouse_name'] ?? '—') ?></p>
-<p><?= __('gr_accepted_by') ?>: <?= e($doc['accepted_by'] ?? '') ?> &nbsp;&nbsp; <?= __('gr_delivered_by') ?>: <?= e($doc['delivered_by'] ?? '') ?></p>
+<p><?= e(excel_safe_text($orgName)) ?></p>
+<h2><?= e(excel_safe_text($docTitle)) ?> № <?= e(excel_safe_text($doc['doc_no'])) ?> | <?= __('lbl_date') ?>: <?= date_fmt($doc['doc_date'], 'd.m.Y') ?></h2>
+<p><?= __('gr_supplier') ?>: <?= e(excel_safe_text($doc['supplier_name'] ?? '—')) ?> &nbsp;&nbsp; <?= __('gr_warehouse') ?>: <?= e(excel_safe_text($doc['warehouse_name'] ?? '—')) ?></p>
+<p><?= __('gr_accepted_by') ?>: <?= e(excel_safe_text($doc['accepted_by'] ?? '')) ?> &nbsp;&nbsp; <?= __('gr_delivered_by') ?>: <?= e(excel_safe_text($doc['delivered_by'] ?? '')) ?></p>
 <br>
 <table>
   <thead>
@@ -198,8 +204,8 @@ function exportHtmlXls(array $doc, array $items, string $orgName, string $docTit
     <?php foreach ($items as $n => $item): ?>
     <tr>
       <td><?= $n+1 ?></td>
-      <td><?= e($item['name']) ?></td>
-      <td><?= unit_label($item['unit']) ?></td>
+      <td><?= e(excel_safe_text($item['name'])) ?></td>
+      <td><?= e(excel_safe_text(unit_label($item['unit']))) ?></td>
       <td class="num"><?= fmtQty((float)$item['qty']) ?></td>
       <td class="num"><?= number_format((float)$item['unit_price'], 2, '.', '') ?></td>
       <td class="num"><?= $item['tax_rate'] > 0 ? e($item['tax_rate']).'%' : '' ?></td>

@@ -39,8 +39,7 @@ class Lang
             $clean = strtok($_SERVER['REQUEST_URI'], '?');
             $qs    = $_GET;
             unset($qs['lang']);
-            header('Location: ' . $clean . ($qs ? '?' . http_build_query($qs) : ''));
-            exit;
+            redirect((string)$clean . ($qs ? '?' . http_build_query($qs) : ''));
         }
 
         $user = is_array($_SESSION['user'] ?? null) ? $_SESSION['user'] : null;

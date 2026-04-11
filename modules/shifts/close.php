@@ -102,8 +102,8 @@ include __DIR__ . '/../../views/layouts/header.php';
 <script>
 feather.replace();
 const expected = <?= $expectedCash ?>;
-const _lblExpected    = '<?= addslashes(__('shift_expected_cash')) ?>';
-const _lblDifference  = '<?= addslashes(__('shift_difference')) ?>';
+const _lblExpected    = <?= json_for_html(__('shift_expected_cash')) ?>;
+const _lblDifference  = <?= json_for_html(__('shift_difference')) ?>;
 document.getElementById('closingCash').addEventListener('input', function() {
   const actual = parseFloat(this.value)||0;
   const diff   = actual - expected;

@@ -406,21 +406,21 @@ include __DIR__ . '/../../views/layouts/header.php';
 </form>
 
 <script>
-const PRODUCTS = <?= json_encode($productPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-const INITIAL_ROWS = <?= json_encode($initialRows, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
-const STOCK_URL = <?= json_encode(url('modules/transfers/get_stock.php'), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+const PRODUCTS = <?= json_for_html($productPayload) ?>;
+const INITIAL_ROWS = <?= json_for_html($initialRows) ?>;
+const STOCK_URL = <?= json_for_html(url('modules/transfers/get_stock.php')) ?>;
 const PREFERRED_FROM_WAREHOUSE_ID = <?= (int)$preferredFromWhId ?>;
 const I18N = {
-  select: <?= json_encode(__('lbl_select'), JSON_UNESCAPED_UNICODE) ?>,
-  availableSelected: <?= json_encode(__('tr_available_selected'), JSON_UNESCAPED_UNICODE) ?>,
-  equivalent: <?= json_encode(__('tr_equivalent'), JSON_UNESCAPED_UNICODE) ?>,
-  baseUnit: <?= json_encode(__('tr_in_base_unit'), JSON_UNESCAPED_UNICODE) ?>,
-  addUnitLine: <?= json_encode(__('pos_add_unit_line'), JSON_UNESCAPED_UNICODE) ?>,
-  allUnitsAdded: <?= json_encode(__('pos_all_units_added'), JSON_UNESCAPED_UNICODE) ?>,
-  unitRelations: <?= json_encode(__('pos_unit_relations'), JSON_UNESCAPED_UNICODE) ?>,
-  selectSourceWarehouseFirst: <?= json_encode(__('tr_select_source_warehouse_first'), JSON_UNESCAPED_UNICODE) ?>,
-  insufficientShort: <?= json_encode(__('tr_err_insufficient_short'), JSON_UNESCAPED_UNICODE) ?>,
-  fixStockErrors: <?= json_encode(__('tr_fix_stock_errors'), JSON_UNESCAPED_UNICODE) ?>,
+  select: <?= json_for_html(__('lbl_select')) ?>,
+  availableSelected: <?= json_for_html(__('tr_available_selected')) ?>,
+  equivalent: <?= json_for_html(__('tr_equivalent')) ?>,
+  baseUnit: <?= json_for_html(__('tr_in_base_unit')) ?>,
+  addUnitLine: <?= json_for_html(__('pos_add_unit_line')) ?>,
+  allUnitsAdded: <?= json_for_html(__('pos_all_units_added')) ?>,
+  unitRelations: <?= json_for_html(__('pos_unit_relations')) ?>,
+  selectSourceWarehouseFirst: <?= json_for_html(__('tr_select_source_warehouse_first')) ?>,
+  insufficientShort: <?= json_for_html(__('tr_err_insufficient_short')) ?>,
+  fixStockErrors: <?= json_for_html(__('tr_fix_stock_errors')) ?>,
 };
 
 let rowIndex = 0;
@@ -782,7 +782,7 @@ function addRow(productId = '', qty = '', unitCode = '', insertAfter = null) {
   tr.dataset.idx = idx;
   tr.dataset.productId = String(productId || '');
   tr.innerHTML = `
-    <td data-label="${escapeHtml(<?= json_encode(__('lbl_name'), JSON_UNESCAPED_UNICODE) ?>)}">
+    <td data-label="${escapeHtml(<?= json_for_html(__('lbl_name')) ?>)}">
       <div class="transfer-product-cell">
         <select name="items[${idx}][product_id]" class="form-control prod-select" required>
           ${renderProductOptions(productId)}
@@ -801,11 +801,11 @@ function addRow(productId = '', qty = '', unitCode = '', insertAfter = null) {
         </div>
       </div>
     </td>
-    <td class="col-num" data-label="${escapeHtml(<?= json_encode(__('tr_available'), JSON_UNESCAPED_UNICODE) ?>)}">
+    <td class="col-num" data-label="${escapeHtml(<?= json_for_html(__('tr_available')) ?>)}">
       <div class="avail-breakdown text-muted transfer-stock-breakdown">-</div>
       <div class="avail-selected text-muted transfer-stock-selected"></div>
     </td>
-    <td class="col-num" data-label="${escapeHtml(<?= json_encode(__('lbl_qty'), JSON_UNESCAPED_UNICODE) ?>)}">
+    <td class="col-num" data-label="${escapeHtml(<?= json_for_html(__('lbl_qty')) ?>)}">
       <input type="number"
              name="items[${idx}][qty]"
              class="form-control mono qty-input"
@@ -816,7 +816,7 @@ function addRow(productId = '', qty = '', unitCode = '', insertAfter = null) {
       <div class="form-hint qty-base-hint"></div>
       <div class="form-error qty-stock-error hidden"></div>
     </td>
-    <td data-label="${escapeHtml(<?= json_encode(__('tr_transfer_unit'), JSON_UNESCAPED_UNICODE) ?>)}">
+    <td data-label="${escapeHtml(<?= json_for_html(__('tr_transfer_unit')) ?>)}">
       <select name="items[${idx}][unit_code]" class="form-control unit-select"></select>
     </td>
     <td data-label="" class="transfer-row-remove">

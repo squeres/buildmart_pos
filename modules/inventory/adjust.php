@@ -154,7 +154,7 @@ updateHint();
 if (adjustCameraBtn && window.ProductCameraScanner) {
   window.ProductCameraScanner.attach(adjustCameraBtn, {
     onDetected: async (code) => {
-      const searchUrl = new URL(<?= json_encode(url('modules/inventory/search_products.php')) ?>, window.location.origin);
+      const searchUrl = new URL(<?= json_for_html(url('modules/inventory/search_products.php')) ?>, window.location.origin);
       searchUrl.searchParams.set('warehouse_id', <?= (int)$warehouseId ?>);
       searchUrl.searchParams.set('q', code);
       const response = await fetch(searchUrl.toString(), { headers: { 'X-Requested-With': 'XMLHttpRequest' } });

@@ -387,7 +387,7 @@ if (is_post()) {
             <body>
             <script>
             (function(){
-              const payload = <?= json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?>;
+              const payload = <?= json_for_html($payload) ?>;
               if (window.parent && window.parent !== window) {
                 window.parent.postMessage(payload, window.location.origin);
                 return;
@@ -984,17 +984,17 @@ feather.replace();
   const confirmEmpty = document.getElementById('product-confirm-empty');
   const confirmCheck = document.getElementById('product-confirm-check');
   const confirmSubmitBtn = document.getElementById('product-confirm-submit');
-  const unitPresetAjaxUrl = <?= json_encode(url('modules/common/ajax_units.php')) ?>;
+  const unitPresetAjaxUrl = <?= json_for_html(url('modules/common/ajax_units.php')) ?>;
   const csrfToken = document.querySelector('input[name="_token"]')?.value || '';
   const isEditMode = <?= $isEdit ? 'true' : 'false' ?>;
-  const unitPresets = <?= json_encode(array_values(array_map(static fn($row) => ['label' => (string)$row['unit_label'], 'storageCode' => unit_storage_code_from_label((string)$row['unit_label'])], $unitPresets)), JSON_UNESCAPED_UNICODE) ?>;
-  const priceTypes = <?= json_encode(array_map(static fn($pt) => ['code' => $pt['code'], 'label' => UISettings::priceTypeName($pt)], $priceTypes), JSON_UNESCAPED_UNICODE) ?>;
-  const minStockSavedAsText = <?= json_encode(__('prod_min_stock_saved_as'), JSON_UNESCAPED_UNICODE) ?>;
-  const targetStockSavedAsText = <?= json_encode(__('repl_target_stock_saved_as'), JSON_UNESCAPED_UNICODE) ?>;
+  const unitPresets = <?= json_for_html(array_values(array_map(static fn($row) => ['label' => (string)$row['unit_label'], 'storageCode' => unit_storage_code_from_label((string)$row['unit_label'])], $unitPresets))) ?>;
+  const priceTypes = <?= json_for_html(array_map(static fn($pt) => ['code' => $pt['code'], 'label' => UISettings::priceTypeName($pt)], $priceTypes)) ?>;
+  const minStockSavedAsText = <?= json_for_html(__('prod_min_stock_saved_as')) ?>;
+  const targetStockSavedAsText = <?= json_for_html(__('repl_target_stock_saved_as')) ?>;
   const priceInputs = {};
-  const priceState = <?= json_encode(array_map(static function ($row) {
+  const priceState = <?= json_for_html(array_map(static function ($row) {
     return array_map(static fn($value) => number_format((float)$value, 2, '.', ''), $row['prices']);
-  }, $unitPriceRows), JSON_UNESCAPED_UNICODE) ?>;
+  }, $unitPriceRows)) ?>;
   let lastRenderedUnits = [];
   let allowConfirmedSubmit = false;
   let initialProductState = null;
